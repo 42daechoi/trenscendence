@@ -1,4 +1,5 @@
 import React from 'react'
+import '../css/GameWaiting.css'
 
 export default function GameWaiting() {
   return (

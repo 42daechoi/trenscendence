@@ -1,5 +1,5 @@
 import React from 'react'
-import './LeaderBoard.css'
+import '../css/LeaderBoard.css'
 
 export default function LeaderBoard() {
   return (
