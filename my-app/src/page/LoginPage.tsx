@@ -1,9 +1,35 @@
-import React, { Component } from "react";
-import './LoginPage.css';
-import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
+import React from "react";
+import '../css/LoginPage.css';
+import { useNavigate } from 'react-router-dom';
+import axios from "axios";
 
 
 function LoginPage() {
+	const navigate = useNavigate();
+	const loginCall = () => {
+		const dataToSend = {
+			email : 'email@test.com',
+			password : 'password',
+		};
+		axios.post('http://10.19.218.63:3000/auth/signin', dataToSend)
+			.then(response => {
+				if (response.data)
+				navigate('/create-account');
+		  	})
+		  	.catch(error => {
+				if (error.response) {
+			  	// 서버가 요청을 받았으나 응답 상태 코드가 실패인 경우
+			  	console.error(error.response.data);
+			  	console.error(error.response.status);
+				} else if (error.request) {
+				// 요청이 브라우저에 도달하지 않은 경우 (CORS 등의 이유)
+				console.error(error.request);
+				} else {
+				// 기타 다른 오류
+				console.error('Error', error.message);
+				}
+			});
+	}
 	return (
 		<div className="hero min-h-screen bg-base-200">
 		<div className="hero-content flex-col lg:flex-row-reverse">
@@ -29,7 +55,8 @@ function LoginPage() {
 				</label>
 			  </div>
 			  <div className="form-control mt-6">
-				<Link to={"/main"} className="btn btn-primary">Login</Link>
+				{/* <Link to={"/main"} className="btn btn-primary"> Login</Link> */}
+				<button className="btn btn-primary" onClick={loginCall}>Login</button>
 			  </div>
 			</div>
 		  </div>

@@ -1,12 +1,10 @@
-import React, { Component, useState } from "react";
-import "./MainPage.css";
-import chat_bubble from "./chat_bubble";
-import check_box from "./check_box";
-import MyProfile from "./MyProfile";
-import GameWaiting from "./GameWaiting";
-import LeaderBoard from "./LeaderBoard";
-import FriendsList from "./FriendsList";
-import ChannelsList from "./ChannelsList";
+import React, { useState } from "react";
+import "../css/MainPage.css";
+import MyProfile from "../component/MyProfile";
+import GameWaiting from "../component/GameWaiting";
+import LeaderBoard from "../component/LeaderBoard";
+import FriendsList from "../component/FriendsList";
+import ChannelsList from "../component/ChannelsList";
 
 export default function MainPage() {
   const [curPage, setCurPage] = useState("my_profile");
@@ -27,7 +25,7 @@ export default function MainPage() {
   const [channelsButtonClass, setChannelsButtonClass] =
     useState("default-button");
 
-  const handleButtonClick = (side: any) => {
+  const handleButtonClick = (side) => {
     if (side === "friends_list") {
       setCurSide("friends_list");
       setFriendsButtonClass("clicked-button");
@@ -115,6 +113,27 @@ export default function MainPage() {
               />
               <button className="btn btn-active btn-primary">↵</button>
             </div>
+            <div className="chat-member-list">
+              <ul>
+                <li>
+                  <input type="checkbox" />
+                  daechoi
+                </li>
+                <li>
+                  <input type="checkbox" />
+                  dhwlddj
+                </li>
+                <li>
+                  <input type="checkbox" />
+                  qnfekfr
+                </li>
+              </ul>
+              <div className="chat-member-button">
+                <button>home</button>
+                <button>mute</button>
+                <button>kick</button>
+              </div>
+            </div>
           </section>
           <section className="swap-container">{renderPage()}</section>
           <label
@@ -126,7 +145,10 @@ export default function MainPage() {
         </div>
         <div className="drawer-side">
           <label htmlFor="my-drawer-4" className="drawer-overlay"></label>
-          <ul className="menu p-4 w-80 h-full bg-base-200 text-base-content">
+          <ul
+            className="menu p-4 w-80 h-full bg-base-200 text-base-content"
+            style={{ color: "#8a8a8a" }}
+          >
             <div className="button-side">
               <button
                 className={friendsButtonClass}
