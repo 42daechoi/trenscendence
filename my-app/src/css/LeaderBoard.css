@@ -14,20 +14,20 @@
 
 .leaderboard-container .rank {
   font-size: 30px;
-  width: 60px;
+  width: 10%;
 }
 
 .leaderboard-container .nickname {
   margin-left: 30px;
-  width: 130px;
+  width: 40%;
 }
 
 .leaderboard-container .number {
   margin-left: 50px;
-  width: 150px;
+  width: 40%;
 }
 
 .leaderboard-container .ratio {
   margin-left: 50px;
-  width: 50px;
+  width: 10%;
 }

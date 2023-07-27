@@ -7,7 +7,7 @@ import FriendsList from "../component/FriendsList";
 import ChannelsList from "../component/ChannelsList";
 
 export default function MainPage() {
-  const [curPage, setCurPage] = useState("my_profile");
+  const [curPage, setCurPage] = useState("leaderboard");
 
   const renderPage = () => {
     switch (curPage) {
@@ -149,21 +149,23 @@ export default function MainPage() {
             className="menu p-4 w-80 h-full bg-base-200 text-base-content"
             style={{ color: "#8a8a8a" }}
           >
-            <div className="button-side">
-              <button
-                className={friendsButtonClass}
-                onClick={() => handleButtonClick("friends_list")}
-              >
-                FRIENDS
-              </button>
-              <button
-                className={channelsButtonClass}
-                onClick={() => handleButtonClick("channels_list")}
-              >
-                CHANNELS
-              </button>
-            </div>
-            {renderSide()}
+			<div className="button-side">
+			<button
+				className={friendsButtonClass}
+				onClick={() => handleButtonClick("friends_list")}
+			>
+				FRIENDS
+			</button>
+			<button
+				className={channelsButtonClass}
+				onClick={() => handleButtonClick("channels_list")}
+			>
+				CHANNELS
+			</button>
+			</div>
+			<div className='list'>
+            	{renderSide()}
+			</div>
             <div className="search-side">
               <input type="text"></input>
               <button>🔍</button>
