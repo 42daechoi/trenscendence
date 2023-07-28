@@ -1,16 +1,16 @@
 all : up
 
 up:
-	docker compose -f ./srcs/docker-compose.yml up --build
+	docker-compose -f ./srcs/docker-compose.yml up --build
 
 down:
-	docker compose -f ./srcs/docker-compose.yml down
+	docker-compose -f ./srcs/docker-compose.yml down
 
 clean:
-	docker compose -f ./srcs/docker-compose.yml down --rmi all
+	docker-compose -f ./srcs/docker-compose.yml down --rmi all
 
 fclean: 
-	docker compose -f ./srcs/docker-compose.yml down -v --rmi all
+	docker-compose -f ./srcs/docker-compose.yml down -v --rmi all
 	make prune
 prune: 
 	docker system prune -a -f
