@@ -1,13 +1,14 @@
 import React, { useState } from "react";
 import "../css/Modal.css";
+import MyProfile from "./MyProfile";
 
 type ProfileModalProps = {
   name: string;
 };
 
 const Modal = ({ closeModal }) => {
-  const stopPropagation = (e: any) => {
-    e.stopPropagation();
+  const stopPropagation = (event: React.MouseEvent) => {
+    event.stopPropagation();
   };
   return (
     <>
@@ -24,13 +25,13 @@ const Modal = ({ closeModal }) => {
           backgroundColor: "rgba(0, 0, 0, 0.3)",
         }}
         onClick={closeModal}
-      ></div>
-      <div className="profile-modal" onClick={stopPropagation}>
-        <button className="close" onClick={closeModal}>
-          Close
-        </button>
-        <h2>This is a modal</h2>
-        <p>Some content...</p>
+      >
+        <div className="profile-modal" onClick={stopPropagation}>
+          <MyProfile></MyProfile>
+          <button className="close" onClick={closeModal}>
+            Close
+          </button>
+        </div>
       </div>
     </>
   );
@@ -38,11 +39,11 @@ const Modal = ({ closeModal }) => {
 
 export default function ProfileModal({ name }: ProfileModalProps) {
   const [isModalOpen, setModalOpen] = useState(false);
-  const openModal = () => {
+  const openModal = (): void => {
     setModalOpen(true);
   };
 
-  const closeModal = () => {
+  const closeModal = (): void => {
     setModalOpen(false);
   };
 

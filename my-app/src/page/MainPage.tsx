@@ -81,7 +81,7 @@ export default function MainPage() {
                 <div className="chat chat-start">
                   <div className="chat-image avatar">
                     <div className="w-10 rounded-full">
-                      <img src="./images/profile.jpeg" />
+                      <img src="/img/img.jpg" />
                     </div>
                   </div>
                   <div className="chat-header">
@@ -94,7 +94,7 @@ export default function MainPage() {
                 <div className="chat chat-end">
                   <div className="chat-image avatar">
                     <div className="w-10 rounded-full">
-                      <img src="./images/profile.jpeg" />
+                      <img src="/img/img.jpg" />
                     </div>
                   </div>
                   <div className="chat-header">
