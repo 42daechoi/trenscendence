@@ -30,9 +30,14 @@ function LoginPage() {
 				}
 			});
 	}
+	const login42 = () => {
+		window.open('https://api.intra.42.fr/oauth/authorize');
+	}
 	return (
 		<div className="hero min-h-screen bg-base-200">
-		<div className="hero-content flex-col lg:flex-row-reverse">
+			<button onClick={login42} className="login">LOGIN WITH 42</button>
+			<div>해당 홈페이지는 PC와 태블릿에 최적화 되어 있습니다.</div>
+		{/* <div className="hero-content flex-col lg:flex-row-reverse">
 		  <div className="text-center lg:text-left">
 			<h1 className="text-5xl font-bold">Login</h1>
 			<p className="py-6">42 인트라넷 계정을 통해서만 로그인 할 수 있습니다.</p>
@@ -55,12 +60,11 @@ function LoginPage() {
 				</label>
 			  </div>
 			  <div className="form-control mt-6">
-				{/* <Link to={"/main"} className="btn btn-primary"> Login</Link> */}
 				<button className="btn btn-primary" onClick={loginCall}>Login</button>
 			  </div>
 			</div>
 		  </div>
-		</div>
+		</div> */}
 	  	</div>
 	);
 }
