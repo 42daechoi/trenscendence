@@ -81,7 +81,7 @@
 }
 
 .chat-box {
-  width: 80%;
+  width: 73%;
   height: 90%;
   background-color: #3c3c3c;
   box-shadow: 5px 5px 5px 5px rgb(39, 39, 39);
@@ -92,7 +92,7 @@
 
 .chat-container .chat-input {
   display: flex;
-  width: 80%;
+  width: 75%;
   height: 10%;
   text-align: center;
   justify-content: center;
@@ -116,7 +116,7 @@
 }
 
 .chat-container .chat-member-list {
-  width: 17%;
+  width: 22%;
   height: 100%;
   position: absolute;
   right: 0;
