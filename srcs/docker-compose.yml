@@ -17,5 +17,6 @@ volumes:
   front_vol:
     driver_opts:
       type: none
-      device: ${PWD}/my-app
+      device: ${PWD}/srcs/front/my-app
+      # device: ./front/my-app
       o: bind
