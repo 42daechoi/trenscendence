@@ -74,68 +74,6 @@ export default function MainPage() {
           </section>
           <section className="chat-container">
             <Chat></Chat>
-            {/* <div className="chat-box">
-              <ul>
-                <li>daecho : hi</li>
-              </ul>
-              <div>
-                <div className="chat chat-start">
-                  <div className="chat-image avatar">
-                    <div className="w-10 rounded-full">
-                      <img src="/img/img.jpg" />
-                    </div>
-                  </div>
-                  <div className="chat-header">
-                    Obi-Wan Kenobi{" "}
-                    <time className="text-xs opacity-50">12:45</time>
-                  </div>
-                  <div className="chat-bubble">You were the Chosen One!</div>
-                  <div className="chat-footer opacity-50">Delivered</div>
-                </div>
-                <div className="chat chat-end">
-                  <div className="chat-image avatar">
-                    <div className="w-10 rounded-full">
-                      <img src="/img/img.jpg" />
-                    </div>
-                  </div>
-                  <div className="chat-header">
-                    Anakin
-                    <time className="text-xs opacity-50">12:46</time>
-                  </div>
-                  <div className="chat-bubble">I hate you!</div>
-                  <div className="chat-footer opacity-50">Seen at 12:46</div>
-                </div>
-              </div>
-            </div>
-            <div className="chat-input">
-              <input
-                type="text"
-                placeholder="채팅을 입력하세요."
-                className="input input-bordered input-accent w-full max-w-xs"
-              />
-              <button className="btn btn-active btn-primary">↵</button>
-            </div>
-            <div className="chat-member-list">
-              <ul>
-                <li>
-                  <input type="checkbox" />
-                  <ProfileModal name="daechoi"></ProfileModal>
-                </li>
-                <li>
-                  <input type="checkbox" />
-                  <ProfileModal name="youhan"></ProfileModal>
-                </li>
-                <li>
-                  <input type="checkbox" />
-                  <ProfileModal name="gyyu"></ProfileModal>
-                </li>
-              </ul>
-              <div className="chat-member-button">
-                <button>home</button>
-                <button>mute</button>
-                <button>kick</button>
-              </div>
-            </div> */}
           </section>
           <section className="swap-container">{renderPage()}</section>
           <label
