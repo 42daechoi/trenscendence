@@ -1,0 +1,115 @@
+.chat_btn {
+  border-bottom: black;
+}
+
+.chat_memeber_count {
+  position: absolute;
+  right: 10%;
+}
+
+.drawer-side li {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #8a8a8a;
+}
+
+.chat-container {
+  margin-top: 150px;
+  width: 45%;
+  height: 80%;
+  position: absolute;
+  padding: 10px 10px 10px 80px;
+}
+
+.chat-box {
+  width: 73%;
+  height: 90%;
+  background-color: #3c3c3c;
+  box-shadow: 5px 5px 5px 5px rgb(39, 39, 39);
+  border-radius: 5px;
+  padding: 20px 20px 20px 20px;
+  text-align: left;
+  overflow-y: scroll;
+}
+
+.chat-box::-webkit-scrollbar {
+  display: none;
+}
+
+.chat-container .chat-input {
+  display: flex;
+  width: 75%;
+  height: 10%;
+  text-align: center;
+  justify-content: center;
+  align-items: center;
+}
+
+.chat-container .input {
+  width: 80%;
+  background-color: rgb(37, 37, 37);
+  color: white;
+  border-radius: 0px;
+  border-color: rgb(189, 189, 189);
+  outline: 1px solid rgb(189, 189, 189);
+}
+
+.chat-container .chat-input button {
+  background-color: rgb(206, 133, 37) !important;
+  border-color: rgb(206, 133, 37) !important;
+  border-radius: 0px;
+  margin-bottom: 50px;
+}
+
+.chat-container .chat-member-list {
+  width: 22%;
+  height: 100%;
+  position: absolute;
+  right: 0;
+  top: 2%;
+  min-width: 100px;
+  min-height: 450px;
+  text-align: left;
+}
+
+.chat-member-list ul {
+  height: 80%;
+  border: 1px solid #3c3c3c;
+  align-items: center;
+  overflow-y: auto;
+  font-size: 20px;
+}
+
+.chat-member-list li {
+  border-bottom: 1px solid #3c3c3c;
+  padding-left: 5px;
+  display: flex;
+  align-items: center;
+}
+
+.chat-member-list li input {
+  margin-right: 10px;
+  margin-left: 5px;
+  width: 20px;
+  height: 20px;
+}
+
+.chat-member-list .chat-member-button {
+  width: 100%;
+  height: 20%;
+  text-align: center;
+  align-items: center;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+.chat-member-list .chat-member-button button {
+  margin-left: 2px;
+  margin-right: 2px;
+  width: 30%;
+  height: 20%;
+  background-color: #3c3c3c;
+  border: 1px solid #3c3c3c;
+  border-radius: 3px;
+  align-items: center;
+}

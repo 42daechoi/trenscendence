@@ -6,6 +6,7 @@ import LeaderBoard from "../component/LeaderBoard";
 import FriendsList from "../component/FriendsList";
 import ChannelsList from "../component/ChannelsList";
 import ProfileModal from "../component/ProfileModal";
+import Chat from "../component/Chat";
 
 export default function MainPage() {
   const [curPage, setCurPage] = useState("leaderboard");
@@ -72,9 +73,9 @@ export default function MainPage() {
             </button>
           </section>
           <section className="chat-container">
-            <div className="chat-box">
+            <Chat></Chat>
+            {/* <div className="chat-box">
               <ul>
-                {/* <li><chat_bubble/></li> */}
                 <li>daecho : hi</li>
               </ul>
               <div>
@@ -134,7 +135,7 @@ export default function MainPage() {
                 <button>mute</button>
                 <button>kick</button>
               </div>
-            </div>
+            </div> */}
           </section>
           <section className="swap-container">{renderPage()}</section>
           <label
