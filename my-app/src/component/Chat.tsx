@@ -15,10 +15,29 @@ interface IMessage {
   time: string;
 }
 
+const initTmpUsers: IUsers[] = [
+  { name: "Obi-Wan Kenobi", profile: null, id: 0 },
+  { name: "daechoi", profile: null, id: 0 },
+  { name: "youhan", profile: null, id: 0 },
+  { name: "gyyu", profile: null, id: 0 },
+];
+const initTmpMessages: IMessage[] = [
+  {
+    user: { name: "Obi-Wan Kenobi", profile: null, id: 1 },
+    sender: "chat chat-start",
+    text: "You were the Chosen One!",
+    time: new Date().toLocaleTimeString(),
+  },
+];
+
 export default function Chat() {
-  const [users, setUsers] = useState<IUsers[]>([]);
-  const [messages, setMessages] = useState<IMessage[]>([]);
+  // 임시 초기값 지정
+  const [users, setUsers] = useState<IUsers[]>(initTmpUsers);
+  const [messages, setMessages] = useState<IMessage[]>(initTmpMessages);
+  // const [users, setUsers] = useState<IUsers[]>([]);
+  // const [messages, setMessages] = useState<IMessage[]>([]);
   const lastMessageRef = useRef<HTMLDivElement>(null);
+
   function addUsers(name: string) {
     setUsers([...users, { name: name, profile: null, id: 1 }]);
   }
@@ -33,7 +52,7 @@ export default function Chat() {
 
     setMessages([
       ...messages,
-      { user: user, sender: "s", text: text, time: time },
+      { user: user, sender: className, text: text, time: time },
     ]);
   };
 
@@ -64,23 +83,10 @@ export default function Chat() {
       <div className="chat-box">
         <h1>채팅방 제목</h1>
         {/* 상대방 채팅 임시 */}
-        <div className="chat chat-start">
-          <div className="chat-image avatar">
-            <div className="w-10 rounded-full">
-              <img src="/img/img.jpg" alt="chat profile img" />
-            </div>
-          </div>
-          <div className="chat-header">
-            Obi-Wan Kenobi <time className="text-xs opacity-50">12:45</time>
-          </div>
-          <div className="chat-bubble">You were the Chosen One!</div>
-          {/* <div className="chat-footer opacity-50">Delivered</div> */}
-        </div>
-        {/* 상대방 채팅 임시 */}
         <div ref={lastMessageRef}>
           {messages.map((message, index) => (
             <div
-              className={"chat chat-end"}
+              className={message.sender}
               ref={index === messages.length - 1 ? lastMessageRef : null}
               key={index}
             >
