@@ -7,9 +7,25 @@ services:
     restart: always
     ports:
       - "3000:3000"
+    networks:
+      - tran_net
     volumes:
       - front_vol:/front/my-app
-      # - ${PWD}/data:/front/my-app
+    env_file:
+      - .env
+
+  back:
+    container_name: back
+    build: ./back
+    restart: always
+    networks:
+      - tran_net
+    volumes:
+      - back_vol:/back/my-app
+    # expose:
+    #   - "3001"
+    ports:
+      - "3001:3001"
     env_file:
       - .env
 
@@ -18,5 +34,13 @@ volumes:
     driver_opts:
       type: none
       device: ${PWD}/srcs/front/my-app
-      # device: ./front/my-app
       o: bind
+  back_vol:
+    driver_opts:
+      type: none
+      device: ${PWD}/srcs/back/my-app
+      o: bind
+
+networks:
+  tran_net:
+    driver: bridge
