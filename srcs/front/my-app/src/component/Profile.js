@@ -1,7 +1,7 @@
 import React, { useState } from "react";
-import "../css/MyProfile.css";
+import "../css/Profile.css";
 
-export default function MyProfile() {
+export default function Profile() {
   const [selectedFile, setSelectedFile] = useState(null);
   const handleFileChange = (event) => {
     setSelectedFile(event.target.files[0]);

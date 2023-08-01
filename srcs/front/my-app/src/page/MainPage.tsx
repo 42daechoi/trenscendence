@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import "../css/MainPage.css";
-import MyProfile from "../component/MyProfile";
+import Profile from "../component/Profile";
 import GameWaiting from "../component/GameWaiting";
 import LeaderBoard from "../component/LeaderBoard";
 import FriendsList from "../component/FriendsList";
@@ -14,7 +14,7 @@ export default function MainPage() {
   const renderPage = () => {
     switch (curPage) {
       case "my_profile":
-        return <MyProfile />;
+        return <Profile />;
       case "game_waiting":
         return <GameWaiting />;
       case "leaderboard":

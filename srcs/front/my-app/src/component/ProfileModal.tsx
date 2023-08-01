@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import "../css/Modal.css";
-import MyProfile from "./MyProfile";
+import MyProfile from "./Profile";
 
 type ProfileModalProps = {
   name: string;
