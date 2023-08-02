@@ -14,7 +14,7 @@ export default function MainPage() {
   const renderPage = () => {
     switch (curPage) {
       case "my_profile":
-        return <Profile currUser="me" />;
+        return <Profile currUser="me" somefunc={null} />;
       case "game_waiting":
         return <GameWaiting />;
       case "leaderboard":

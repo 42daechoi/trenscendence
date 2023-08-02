@@ -27,7 +27,7 @@ const Modal = ({ closeModal }) => {
         onClick={closeModal}
       >
         <div className="profile-modal" onClick={stopPropagation}>
-          <Profile currUser="other"></Profile>
+          <Profile currUser="other" somefunc={null}></Profile>
           <button className="close" onClick={closeModal}>
             Close
           </button>
