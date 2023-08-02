@@ -14,21 +14,32 @@ services:
     env_file:
       - .env
 
-  back:
-    container_name: back
-    build: ./back
+  # back:
+  #   container_name: back
+  #   build: ./back
+  #   restart: always
+  #   networks:
+  #     - tran_net
+  #   volumes:
+  #     - back_vol:/back/my-app
+  #   # expose:
+  #   #   - "3001"
+  #   ports:
+  #     - "3001:3001"
+  #   env_file:
+  #     - .env
+  temp_serv:
+    container_name: temp
+    build: ./temp_serv
     restart: always
+    ports:
+      - "3001:3001"
     networks:
       - tran_net
     volumes:
-      - back_vol:/back/my-app
-    # expose:
-    #   - "3001"
-    ports:
-      - "3001:3001"
+      - temp_vol:/server
     env_file:
       - .env
-
 
 volumes:
   front_vol:
@@ -36,11 +47,16 @@ volumes:
       type: none
       device: ${PWD}/srcs/front/my-app
       o: bind
-  back_vol:
+  temp_vol:
     driver_opts:
       type: none
-      device: ${PWD}/srcs/back/my-app
+      device: ${PWD}/srcs/temp_serv/server
       o: bind
+  # back_vol:
+  #   driver_opts:
+  #     type: none
+  #     device: ${PWD}/srcs/back/my-app
+  #     o: bind
 
 networks:
   tran_net:
