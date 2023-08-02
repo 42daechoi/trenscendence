@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import "../css/Profile.css";
+import Modal from "./Modal"
 
 interface ProfileNode {
   currUser: string;
@@ -23,7 +24,7 @@ function ModifyModalButton(props: { num: number }) {
         : props.num === 4
         ? "친구 추가"
         : props.num === 5
-        ? "게임 신청"
+        ? "게임 초대"
         : "기본 텍스트"}
     </button>
   );
@@ -52,6 +53,14 @@ function ModalWindow(props: { num: number }) {
         </form>
       </dialog>
     );
+}
+
+function Addfriend(props: { num: number }) {
+	//return <Modal></Modal>
+}
+
+function InviteGame(props: { num: number }) {
+	
 }
 
 function ModifyAvatarSetting() {
@@ -106,6 +115,8 @@ function ModifyNicknameSetting() {
   );
 }
 
+
+
 export default function Profile(pn: ProfileNode) {
   return (
     <div className="my-profile-container">
@@ -116,8 +127,7 @@ export default function Profile(pn: ProfileNode) {
         <div className="my-nickname">daechoi</div>
         <div className="fix-profile">
           <div className="modal-avatar">
-            {/* <ModifyModalButton num={pn.currUser === "me" ? 3 : 5} /> */}
-            <ModifyModalButton num={2} />
+            <ModifyModalButton num={pn.currUser === "me" ? 2 : 4} />
             <ModalWindow num={pn.currUser === "me" ? 2 : 4} />
           </div>
           <div className="modal-nickname">
