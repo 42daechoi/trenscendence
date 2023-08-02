@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import "../css/Modal.css";
-import MyProfile from "./Profile";
+import Profile from "./Profile";
 
 type ProfileModalProps = {
   name: string;
@@ -27,7 +27,7 @@ const Modal = ({ closeModal }) => {
         onClick={closeModal}
       >
         <div className="profile-modal" onClick={stopPropagation}>
-          <MyProfile></MyProfile>
+          <Profile currUser="other"></Profile>
           <button className="close" onClick={closeModal}>
             Close
           </button>
