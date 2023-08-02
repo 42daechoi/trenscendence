@@ -29,6 +29,7 @@ services:
     env_file:
       - .env
 
+
 volumes:
   front_vol:
     driver_opts:
