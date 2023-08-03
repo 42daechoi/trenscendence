@@ -83,7 +83,7 @@ export default function MainPage() {
           </label>
         </div>
         <div className="drawer-side">
-          <label htmlFor="my-drawer-4" className="drawer-overlay"></label>
+          <label htmlFor="my-drawer-4" className="drawer-overlay" />
           <ul
             className="menu p-4 w-80 h-full bg-base-200 text-base-content"
             style={{ color: "#8a8a8a" }}
