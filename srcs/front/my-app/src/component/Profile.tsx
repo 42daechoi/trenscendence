@@ -1,39 +1,43 @@
 import React, { useState } from "react";
 import "../css/Profile.css";
-import Modal from "./Modal"
 
 interface ProfileNode {
   currUser: string;
-  somefunc(): any;
 }
 
-function ModifyModalButton(props: { num: number }) {
+const mAM: string = "modifyAvatarModal";
+const mNM: string = "modifyNicknameModal";
+const aFM: string = "addFriendModal";
+const iGM: string = "inviteGameModal";
+
+function ModifyModalButton(props: { modalType: string }) {
   return (
     <button
       onClick={() => {
-        if (props.num === 2) window["my_modal_2"].showModal();
-        if (props.num === 3) window["my_modal_3"].showModal();
-        if (props.num === 4) window["my_modal_4"].showModal();
+        if (props.modalType === mAM) window[mAM].showModal();
+        else if (props.modalType === mNM) window[mNM].showModal();
+        else if (props.modalType === aFM) window[aFM].showModal();
+        else if (props.modalType === iGM) window[iGM].showModal();
       }}
       className="btn-fix glass"
     >
-      {props.num === 2
+      {props.modalType === mAM
         ? "아바타 수정"
-        : props.num === 3
+        : props.modalType === mNM
         ? "닉네임 수정"
-        : props.num === 4
+        : props.modalType === aFM
         ? "친구 추가"
-        : props.num === 5
+        : props.modalType === iGM
         ? "게임 초대"
         : "기본 텍스트"}
     </button>
   );
 }
 
-function ModalWindow(props: { num: number }) {
-  if (props.num === 2)
+function ModalWindow(props: { modalType: string }) {
+  if (props.modalType === mAM)
     return (
-      <dialog id="my_modal_2" className="modal">
+      <dialog id={mAM} className="modal">
         <form method="dialog" className="modal-box">
           <ModifyAvatarSetting />
         </form>
@@ -42,9 +46,9 @@ function ModalWindow(props: { num: number }) {
         </form>
       </dialog>
     );
-  else if (props.num === 3)
+  else if (props.modalType === mNM)
     return (
-      <dialog id="my_modal_3" className="modal">
+      <dialog id={mNM} className="modal">
         <form method="dialog" className="modal-box">
           <ModifyNicknameSetting />
         </form>
@@ -53,14 +57,39 @@ function ModalWindow(props: { num: number }) {
         </form>
       </dialog>
     );
+  else if (props.modalType === aFM)
+    return (
+      <dialog id={aFM} className="modal">
+        <form method="dialog" className="modal-box">
+          <AddFriendSetting num={1} />
+        </form>
+        <form method="dialog" className="modal-backdrop">
+          {/* close의 용도? */}
+          <button>close</button>
+        </form>
+      </dialog>
+    );
+  else if (props.modalType === iGM)
+    return (
+      <dialog id={iGM} className="modal">
+        <form method="dialog" className="modal-box">
+          <InviteGameSetting num={1} />
+        </form>
+        <form method="dialog" className="modal-backdrop">
+          <button>close</button>
+        </form>
+      </dialog>
+    );
 }
 
-function Addfriend(props: { num: number }) {
-	//return <Modal></Modal>
+function AddFriendSetting(props: { num: number }) {
+  // console.log(aFM);
+  return <div>AddFriend</div>;
 }
 
-function InviteGame(props: { num: number }) {
-	
+function InviteGameSetting(props: { num: number }) {
+  // console.log(iGM);
+  return <div>InviteGame</div>;
 }
 
 function ModifyAvatarSetting() {
@@ -115,8 +144,6 @@ function ModifyNicknameSetting() {
   );
 }
 
-
-
 export default function Profile(pn: ProfileNode) {
   return (
     <div className="my-profile-container">
@@ -127,20 +154,20 @@ export default function Profile(pn: ProfileNode) {
         <div className="my-nickname">daechoi</div>
         <div className="fix-profile">
           <div className="modal-avatar">
-            <ModifyModalButton num={pn.currUser === "me" ? 2 : 4} />
-            <ModalWindow num={pn.currUser === "me" ? 2 : 4} />
+            <ModifyModalButton modalType={pn.currUser === "me" ? mAM : aFM} />
+            <ModalWindow modalType={pn.currUser === "me" ? mAM : aFM} />
           </div>
           <div className="modal-nickname">
-            <ModifyModalButton num={pn.currUser === "me" ? 3 : 5} />
-            <ModalWindow num={pn.currUser === "me" ? 3 : 5} />
+            <ModifyModalButton modalType={pn.currUser === "me" ? mNM : iGM} />
+            <ModalWindow modalType={pn.currUser === "me" ? mNM : iGM} />
           </div>
         </div>
       </div>
       <div className="nickname-history-div">
         <div className="history">
           <ul>
-            <li>daechoi vs king 4:3 win</li>
-            <li>eunji vs hello 4:5 lose</li>
+            <li>daechoi vs king 2:1 win</li>
+            <li>eunji vs hello 1:2 lose</li>
           </ul>
         </div>
       </div>

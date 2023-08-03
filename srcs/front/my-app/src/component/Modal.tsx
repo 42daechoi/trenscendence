@@ -1,10 +1,12 @@
 import "../css/Modal.css";
 
-export default function Modal ({ closeModal , ConfigureModal}){
-	const stopPropagation = (event: React.MouseEvent) => {
-	  event.stopPropagation();
-	};
-	return (
+// closeModal = Functions required to close modal window
+// ConfigureModal = Functions required to decorate modal window
+export default function Modal({ closeModal, ConfigureModal }) {
+  const stopPropagation = (event: React.MouseEvent) => {
+    event.stopPropagation();
+  };
+  return (
     <>
       <div
         className="modal-overlay"
@@ -22,7 +24,6 @@ export default function Modal ({ closeModal , ConfigureModal}){
       >
         <div className="profile-modal" onClick={stopPropagation}>
           {ConfigureModal()}
-
           <button className="close" onClick={closeModal}>
             Close
           </button>
@@ -30,4 +31,4 @@ export default function Modal ({ closeModal , ConfigureModal}){
       </div>
     </>
   );
-};
+}
