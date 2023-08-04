@@ -1,4 +1,4 @@
-
 # sleep infinity
 # sudo npm install
-node index
+cd my-app
+npm run start:dev

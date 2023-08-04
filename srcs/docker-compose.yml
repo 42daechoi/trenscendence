@@ -1,19 +1,19 @@
 version: "3.9"
 
 services:
-  front:
-    container_name: front
-    build: ./front
-    restart: always
-    ports:
-      - "3000:3000"
-    networks:
-      - tran_net
-    volumes:
-      - front_vol:/front/my-app
-    env_file:
-      - .env
-
+  # Nest.js backend service
+  #  front:
+  #    container_name: front
+  #    build: ./front
+  #    restart: always
+  #    ports:
+  #      - "3000:3000"
+  #    networks:
+  #      - tran_net
+  #    volumes:
+  #      - front_vol:/front/my-app
+  #    env_file:
+  #      - .env
   back:
     container_name: back
     build: ./back
@@ -22,23 +22,45 @@ services:
       - tran_net
     volumes:
       - back_vol:/back/my-app
-    # expose:
-    #   - "3001"
     ports:
       - "3001:3001"
     env_file:
       - .env
+    depends_on:
+      - db
+
+  # PostgreSQL service
+  db:
+    container_name: postgres
+    image: postgres:latest
+    restart: unless-stopped
+    environment:
+        - POSTGRES_USER=postgres
+        - POSTGRES_PASSWORD=postgres
+        - POSTGRES_DB=tr42
+        - TZ=Asia/Seoul
+    volumes:
+        - postgres_vol:/var/lib/postgresql/data
+    ports:
+        - "5432:5432"
+    networks:
+      - tran_net
 
 volumes:
-  front_vol:
-    driver_opts:
-      type: none
-      device: ${PWD}/srcs/front/my-app
-      o: bind
+  #  front_vol:
+  #    driver_opts:
+  #      type: none
+  #      device: ${PWD}/srcs/front/my-app
+  #      o: bind
   back_vol:
     driver_opts:
       type: none
       device: ${PWD}/srcs/back/my-app
+      o: bind
+  postgres_vol: # This volume will persist the PostgreSQL data
+    driver_opts:
+      type: none
+      device: ${PWD}/srcs/database/postgres
       o: bind
 
 networks:
