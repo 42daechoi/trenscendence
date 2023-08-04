@@ -2,18 +2,18 @@ version: "3.9"
 
 services:
   # Nest.js backend service
-  #  front:
-  #    container_name: front
-  #    build: ./front
-  #    restart: always
-  #    ports:
-  #      - "3000:3000"
-  #    networks:
-  #      - tran_net
-  #    volumes:
-  #      - front_vol:/front/my-app
-  #    env_file:
-  #      - .env
+  front:
+    container_name: front
+    build: ./front
+    restart: always
+    ports:
+      - "3000:3000"
+    networks:
+      - tran_net
+    volumes:
+      - front_vol:/front/my-app
+    env_file:
+      - .env
   back:
     container_name: back
     build: ./back
@@ -47,11 +47,11 @@ services:
       - tran_net
 
 volumes:
-  #  front_vol:
-  #    driver_opts:
-  #      type: none
-  #      device: ${PWD}/srcs/front/my-app
-  #      o: bind
+  front_vol:
+    driver_opts:
+      type: none
+      device: ${PWD}/srcs/front/my-app
+      o: bind
   back_vol:
     driver_opts:
       type: none
