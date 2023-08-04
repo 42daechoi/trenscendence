@@ -1,0 +1,10 @@
+.channel-access {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.join-button {
+  background-color: rgb(50, 185, 230);
+}
