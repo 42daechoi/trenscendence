@@ -2,7 +2,16 @@ import React, { useRef, useState } from "react";
 import Modal from "./Modal";
 import "../css/ChannelList.css";
 
+const initChannels: string[] = ["a", "b", "c"];
+
 export default function ChannelsList() {
+  // 초기 채널 설정
+  const [channelList, setChannelList] = useState<string[]>(initChannels);
+  // const [channelList, setChannelList] = useState<string[]>([]);
+
+  function addChannelList(channelName: string) {
+    setChannelList([...channelList, channelName]);
+  }
   const [isModalOpen, setModalOpen] = useState(false);
   const openModal = (): void => {
     setModalOpen(true);
@@ -39,163 +48,25 @@ export default function ChannelsList() {
 
   return (
     <div>
-      <li>
-        <a className="chat_btn" onClick={openModal}>
-          {isModalOpen && (
-            <Modal closeModal={closeModal} ConfigureModal={ChannelConfigure} />
-          )}
-          <div>🔒</div>
-          <div>daechoi's chat</div>
-          <div className="chat_memeber_count">10/25</div>
-        </a>
-      </li>
-      <li>
-        <a className="chat_btn">
-          <div>🔓</div>
-          <div>endisnl's chat</div>
-          <div className="chat_memeber_count">8/25</div>
-        </a>
-      </li>
-      <li>
-        <a className="chat_btn">
-          <div>🔐</div>
-          <div>endisnl's chat</div>
-          <div className="chat_memeber_count">8/25</div>
-        </a>
-      </li>
-      <li>
-        <a className="chat_btn">
-          <div>🔐</div>
-          <div>endisnl's chat</div>
-          <div className="chat_memeber_count">8/25</div>
-        </a>
-      </li>
-      <li>
-        <a className="chat_btn">
-          <div>🔐</div>
-          <div>endisnl's chat</div>
-          <div className="chat_memeber_count">8/25</div>
-        </a>
-      </li>
-      <li>
-        <a className="chat_btn">
-          <div>🔐</div>
-          <div>endisnl's chat</div>
-          <div className="chat_memeber_count">8/25</div>
-        </a>
-      </li>
-      <li>
-        <a className="chat_btn">
-          <div>🔐</div>
-          <div>endisnl's chat</div>
-          <div className="chat_memeber_count">8/25</div>
-        </a>
-      </li>
-      <li>
-        <a className="chat_btn">
-          <div>🔐</div>
-          <div>endisnl's chat</div>
-          <div className="chat_memeber_count">8/25</div>
-        </a>
-      </li>
-      <li>
-        <a className="chat_btn">
-          <div>🔐</div>
-          <div>endisnl's chat</div>
-          <div className="chat_memeber_count">8/25</div>
-        </a>
-      </li>
-      <li>
-        <a className="chat_btn">
-          <div>🔐</div>
-          <div>endisnl's chat</div>
-          <div className="chat_memeber_count">8/25</div>
-        </a>
-      </li>
-      <li>
-        <a className="chat_btn">
-          <div>🔐</div>
-          <div>endisnl's chat</div>
-          <div className="chat_memeber_count">8/25</div>
-        </a>
-      </li>
-      <li>
-        <a className="chat_btn">
-          <div>🔐</div>
-          <div>endisnl's chat</div>
-          <div className="chat_memeber_count">8/25</div>
-        </a>
-      </li>
-      <li>
-        <a className="chat_btn">
-          <div>🔐</div>
-          <div>endisnl's chat</div>
-          <div className="chat_memeber_count">8/25</div>
-        </a>
-      </li>
-      <li>
-        <a className="chat_btn">
-          <div>🔐</div>
-          <div>endisnl's chat</div>
-          <div className="chat_memeber_count">8/25</div>
-        </a>
-      </li>
-      <li>
-        <a className="chat_btn">
-          <div>🔐</div>
-          <div>endisnl's chat</div>
-          <div className="chat_memeber_count">8/25</div>
-        </a>
-      </li>
-      <li>
-        <a className="chat_btn">
-          <div>🔐</div>
-          <div>endisnl's chat</div>
-          <div className="chat_memeber_count">8/25</div>
-        </a>
-      </li>
-      <li>
-        <a className="chat_btn">
-          <div>🔐</div>
-          <div>endisnl's chat</div>
-          <div className="chat_memeber_count">8/25</div>
-        </a>
-      </li>
-      <li>
-        <a className="chat_btn">
-          <div>🔐</div>
-          <div>endisnl's chat</div>
-          <div className="chat_memeber_count">8/25</div>
-        </a>
-      </li>
-      <li>
-        <a className="chat_btn">
-          <div>🔐</div>
-          <div>endisnl's chat</div>
-          <div className="chat_memeber_count">8/25</div>
-        </a>
-      </li>
-      <li>
-        <a className="chat_btn">
-          <div>🔐</div>
-          <div>endisnl's chat</div>
-          <div className="chat_memeber_count">8/25</div>
-        </a>
-      </li>
-      <li>
-        <a className="chat_btn">
-          <div>🔐</div>
-          <div>endisnl's chat</div>
-          <div className="chat_memeber_count">8/25</div>
-        </a>
-      </li>
-      <li>
-        <a className="chat_btn">
-          <div>🔐</div>
-          <div>endisnl's chat</div>
-          <div className="chat_memeber_count">8/25</div>
-        </a>
-      </li>
+      <button
+        onClick={() => {
+          addChannelList("channel");
+        }}
+      >
+        AddFriend
+      </button>
+      {channelList.map((channel, index) => (
+        <li key={"channelList" + index}>
+          <a className="chat_btn" onClick={openModal}>
+            <div>🔓</div>
+            <div>{channel}</div>
+            <div className="chat_memeber_count">8/25</div>
+          </a>
+        </li>
+      ))}
+      {isModalOpen && (
+        <Modal closeModal={closeModal} ConfigureModal={ChannelConfigure} />
+      )}
     </div>
   );
 }

@@ -117,7 +117,7 @@ export default function Chat() {
         <ul>
           {users.map((user, index) => (
             // {/* 추후 key 값을 index 대신 id로 대체 */}
-            <li key={index}>
+            <li key={"chat" + index}>
               <input type="checkbox" />
               <ProfileModal name={user.name + index} currUser="ohter" />
             </li>
