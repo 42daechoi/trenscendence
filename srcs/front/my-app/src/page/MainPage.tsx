@@ -78,6 +78,8 @@ export default function MainPage() {
           <label
             htmlFor="my-drawer-4"
             className="drawer-button btn btn-primary"
+            // 컴포넌트를 항상 오른쪽에 위치시킴
+            style={{ position: "fixed", right: "0" }}
           >
             COMM<br></br>◀︎
           </label>

@@ -53,7 +53,7 @@ export default function ChannelsList() {
           addChannelList("channel");
         }}
       >
-        AddFriend
+        AddChannel
       </button>
       {channelList.map((channel, index) => (
         <li key={"channelList" + index}>

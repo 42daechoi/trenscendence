@@ -30,9 +30,9 @@ export default function Friends_list() {
       </button>
       {friendList.map((friend, index) => (
         <li key={"friendList" + index}>
-          <a className="chat_btn">
+          <a className="chat_btn" onClick={openModal}>
             <div>{index / 2 ? "🔴" : "🟢"}</div>
-            <div onClick={openModal}>{friendList[index]}</div>
+            <div>{friend}</div>
           </a>
         </li>
       ))}
