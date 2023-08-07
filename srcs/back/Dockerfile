@@ -1,8 +1,15 @@
 # Use the official Node.js 16 image as the base image
-FROM node:16
+FROM node:alpine
 
 # Set the working directory inside the container
-WORKDIR /app
+
+RUN mkdir /back
+RUN mkdir /my-app
+WORKDIR /back
+RUN apk add sudo
+WORKDIR /back/my-app
+
+COPY init.sh /back
 
 # Copy the package.json and package-lock.json files into the container
 COPY my-app/package*.json ./
@@ -20,4 +27,5 @@ RUN npm run build
 EXPOSE 3001
 
 # Start the Nest.js application
-CMD ["npm", "run", "start:dev"]
+CMD [ "sh", "../init.sh" ]
+

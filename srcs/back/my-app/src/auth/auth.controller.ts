@@ -27,6 +27,7 @@ import {currentAuthUser} from './decorators/auth-user.decorator';
 import { User } from 'src/typeorm';
 import {LocalAuthGuard} from './guards/auth-local.guard';
 import {AuthGuard} from '@nestjs/passport';
+import {JwtAuthGuard} from './guards/auth-jwt.guard';
 
 @Controller('auth')
 export class AuthController {
@@ -47,17 +48,21 @@ export class AuthController {
 //		console.log(req.user.usual_full_name);
 		const [intraId, intraIdNum, full_name, photo] = [res.req.user.login, res.req.user.id, res.req.user.usual_full_name, res.req.user.image];
 		const find_user = await this.usersService.findUserByIntraId(intraId);
-
 		const user_info = {intraId, intraIdNum, full_name, photo};
+
 		//new user
+		//wait for sign up requst
 		if (!find_user)
 		{
 			console.log("new user logged in!");
 			return { url: 'http://localhost:3000/create-account', statusCode: 302, user_info };
-    // } else {
 		}
 		else
 		{
+			//jwt response attachment
+			const user_find  = await this.authService.validateUser(intraId);
+			res.setHeader('Authorization', 'Bearer '+user_find.accessToken);
+			console.log(res);
 			console.log("found user intraId in our database");
 			return { url: 'http://localhost:3000/main', statusCode: 302, user_info };
 		}
@@ -65,12 +70,13 @@ export class AuthController {
 
 	@Post('/signup')
 	@Serialize(CreateUserDto)
-	async createUser(@Body() body: CreateUserDto, @Session() session : any) {
-		console.log(body);
-		console.log("In controller finding userid: " + body.intraId);
-		const user = await this.authService.signup(body.intraId);
-		session.userIntraId = user.intraId;
-		return user;
+	async createUser(@Body() body: CreateUserDto) {
+		const user_intraId = body.intraId;
+		console.log("In controller finding userid: " + user_intraId);
+		//create new user
+		const new_user = await this.authService.signup(user_intraId);
+			//jwt response attachment
+		return (new_user)
 	}
 
 	@Post('/signin')
@@ -79,5 +85,12 @@ export class AuthController {
 		const user = await this.authService.signin(body.intraId);
 		session.userId = user.id;
 		return user;
+	}
+
+	@Get('/authentication')
+	@UseGuards(JwtAuthGuard)
+	async isAuth(@Request() req) : Promise<any>{
+		const user: any = req.user;
+		return (user);
 	}
 }

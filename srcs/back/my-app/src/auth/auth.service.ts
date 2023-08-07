@@ -5,11 +5,14 @@ import { randomBytes, scrypt as _scrypt } from 'crypto';
 import { promisify } from "util";
 import { FortytwoStrategy } from "./strategy/fortytwo.strategy";
 import { LocalStrategy } from "./strategy/local.startegy";
+import {JwtService} from "@nestjs/jwt";
+import { TokenPayload, TokenType } from "./interfaces/token-payload.interface";
+import { User } from "src/typeorm";
 
 @Injectable()
 export class AuthService{
 
-	constructor(private usersService: UsersService){}
+	constructor(private usersService: UsersService, private jwtService: JwtService){}
 
 //	async kakaoLoginAuth(code: string, domain : string){
 //		const kakao_user = await this.kakaostrategy.kakaoLogin({code, domain});
@@ -45,6 +48,29 @@ export class AuthService{
 		}
 		return user;
 	}
+
+	//find user and make his token
+	async validateUser(intraId: string) : Promise<any | null>{
+		const user = await this.usersService.findUserByIntraId(intraId);
+			console.log("checking user : " + user);
+		if (user)
+		{
+			console.log("checking existing : " + user.intraId);
+			const { intraId, ...rest} = user;
+			const payload: TokenPayload = { 
+				sub: user.id, 
+				intraId: user.intraId, 
+				type : TokenType.FULL
+			};
+			return {accessToken: this.jwtService.sign(payload)};
+		}
+		else
+			return null;
+	}
+
+	async tokenValidateUser(payload: TokenPayload): Promise<User| undefined> {
+        return await this.usersService.findUserByIntraId(payload.intraId);
+    }
 	
 	async existUser(intraId : string) : Promise<any | null>{
 		const user = await this.usersService.findUserByIntraId(intraId);
