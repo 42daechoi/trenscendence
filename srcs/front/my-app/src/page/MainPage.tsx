@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import "../css/MainPage.css";
 import Profile from "../component/Profile";
 import GameWaiting from "../component/GameWaiting";
@@ -6,9 +6,20 @@ import LeaderBoard from "../component/LeaderBoard";
 import FriendsList from "../component/FriendsList";
 import ChannelsList from "../component/ChannelsList";
 import Chat from "../component/Chat";
+import io from "socket.io-client";
+
+const socket = io('http://localhost:3001');
 
 export default function MainPage() {
   const [curPage, setCurPage] = useState("leaderboard");
+
+  socket.emit('message', "hello");
+
+  useEffect(() => {
+    return () => {
+      socket.disconnect();
+    }
+  },[socket]);
 
   const renderPage = () => {
     switch (curPage) {
@@ -72,7 +83,7 @@ export default function MainPage() {
             </button>
           </section>
           <section className="chat-container">
-            <Chat />
+            <Chat socket={socket} />
           </section>
           <section className="swap-container">{renderPage()}</section>
           <label
