@@ -1,4 +1,3 @@
-import React, { useState } from "react";
 import ProfileModal from "./ProfileModal";
 
 export default function Friends_list() {
@@ -7,19 +6,19 @@ export default function Friends_list() {
       <li>
         <a className="chat_btn">
           <div>🟢</div>
-          <ProfileModal name="daechoi"></ProfileModal>
+          <ProfileModal name="daechoi" currUser="other"></ProfileModal>
         </a>
       </li>
       <li>
         <a className="chat_btn">
           <div>🔴</div>
-          <ProfileModal name="youhan"></ProfileModal>
+          <ProfileModal name="youhan" currUser="other"></ProfileModal>
         </a>
       </li>
       <li>
         <a className="chat_btn">
           <div>🔴</div>
-          <ProfileModal name="gyyu"></ProfileModal>
+          <ProfileModal name="gyyu" currUser="other"></ProfileModal>
         </a>
       </li>
     </div>

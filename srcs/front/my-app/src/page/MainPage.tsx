@@ -1,11 +1,10 @@
 import React, { useState } from "react";
 import "../css/MainPage.css";
-import MyProfile from "../component/MyProfile";
+import Profile from "../component/Profile";
 import GameWaiting from "../component/GameWaiting";
 import LeaderBoard from "../component/LeaderBoard";
 import FriendsList from "../component/FriendsList";
 import ChannelsList from "../component/ChannelsList";
-import ProfileModal from "../component/ProfileModal";
 import Chat from "../component/Chat";
 
 export default function MainPage() {
@@ -14,7 +13,7 @@ export default function MainPage() {
   const renderPage = () => {
     switch (curPage) {
       case "my_profile":
-        return <MyProfile />;
+        return <Profile currUser="me" />;
       case "game_waiting":
         return <GameWaiting />;
       case "leaderboard":
@@ -73,7 +72,7 @@ export default function MainPage() {
             </button>
           </section>
           <section className="chat-container">
-            <Chat></Chat>
+            <Chat />
           </section>
           <section className="swap-container">{renderPage()}</section>
           <label

@@ -82,7 +82,6 @@ export default function Chat() {
     <>
       <div className="chat-box">
         <h1>채팅방 제목</h1>
-        {/* 상대방 채팅 임시 */}
         <div ref={lastMessageRef}>
           {messages.map((message, index) => (
             <div
@@ -120,7 +119,7 @@ export default function Chat() {
             // {/* 추후 key 값을 index 대신 id로 대체 */}
             <li key={index}>
               <input type="checkbox" />
-              <ProfileModal name={user.name + index}></ProfileModal>
+              <ProfileModal name={user.name + index} currUser="ohter" />
             </li>
           ))}
         </ul>
