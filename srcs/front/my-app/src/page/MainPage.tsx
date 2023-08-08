@@ -78,36 +78,40 @@ export default function MainPage() {
           <label
             htmlFor="my-drawer-4"
             className="drawer-button btn btn-primary"
+            // 컴포넌트를 항상 오른쪽에 위치시킴
+            style={{ position: "fixed", right: "0" }}
           >
             COMM<br></br>◀︎
           </label>
         </div>
         <div className="drawer-side">
-          <label htmlFor="my-drawer-4" className="drawer-overlay"></label>
-          <ul
+          <label htmlFor="my-drawer-4" className="drawer-overlay" />
+          <div
             className="menu p-4 w-80 h-full bg-base-200 text-base-content"
             style={{ color: "#8a8a8a" }}
           >
-            <div className="button-side">
-              <button
-                className={friendsButtonClass}
-                onClick={() => handleButtonClick("friends_list")}
-              >
-                FRIENDS
-              </button>
-              <button
-                className={channelsButtonClass}
-                onClick={() => handleButtonClick("channels_list")}
-              >
-                CHANNELS
-              </button>
+            <div className="side-list">
+              <div className="button-side">
+                <button
+                  className={friendsButtonClass}
+                  onClick={() => handleButtonClick("friends_list")}
+                >
+                  FRIENDS
+                </button>
+                <button
+                  className={channelsButtonClass}
+                  onClick={() => handleButtonClick("channels_list")}
+                >
+                  CHANNELS
+                </button>
+              </div>
+              <div className="list">{renderSide()}</div>
             </div>
-            <div className="list">{renderSide()}</div>
-            <div className="search-side">
+            <div className="search-side ">
               <input type="text"></input>
               <button>🔍</button>
             </div>
-          </ul>
+          </div>
         </div>
       </div>
     </div>

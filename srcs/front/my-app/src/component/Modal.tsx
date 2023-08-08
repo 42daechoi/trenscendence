@@ -2,10 +2,23 @@ import "../css/Modal.css";
 
 // closeModal = Functions required to close modal window
 // ConfigureModal = Functions required to decorate modal window
-export default function Modal({ closeModal, ConfigureModal }) {
+export default function Modal({
+  closeModal,
+  ConfigureModal,
+  children,
+}: {
+  closeModal: () => void;
+  ConfigureModal: () => JSX.Element;
+  children?: JSX.Element | JSX.Element[];
+}) {
   const stopPropagation = (event: React.MouseEvent) => {
     event.stopPropagation();
   };
+  const close = (event: React.MouseEvent) => {
+    event.stopPropagation();
+    closeModal();
+  };
+
   return (
     <>
       <div
@@ -16,15 +29,15 @@ export default function Modal({ closeModal, ConfigureModal }) {
           height: "100vh",
           right: "0%",
           top: "0%",
-          zIndex: "999",
+          zIndex: "1000",
           // 배경을 투명하게 한다. 이미 모달을 연상태에서는 배경이 더진해진다
           backgroundColor: "rgba(0, 0, 0, 0.3)",
         }}
-        onClick={closeModal}
+        onClick={close}
       >
         <div className="profile-modal" onClick={stopPropagation}>
           {ConfigureModal()}
-          <button className="close" onClick={closeModal}>
+          <button className="close" onClick={close}>
             Close
           </button>
         </div>

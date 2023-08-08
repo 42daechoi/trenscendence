@@ -1,26 +1,47 @@
-import ProfileModal from "./ProfileModal";
+import React, { useState } from "react";
+import Modal from "./Modal";
+import Profile from "./Profile";
+
+const initFriends: string[] = ["daechoi", "youhan", "gyyu"];
 
 export default function Friends_list() {
+  const [friendList, setFriendList] = useState<string[]>(initFriends);
+  // const [friendList, setFriendList] = useState<string[]>([]);
+
+  function addFriendList(channelName: string) {
+    setFriendList([...friendList, channelName]);
+  }
+  const [isModalOpen, setModalOpen] = useState(false);
+  const openModal = (): void => {
+    setModalOpen(true);
+  };
+
+  const closeModal = (): void => {
+    setModalOpen(false);
+  };
   return (
     <div>
-      <li>
-        <a className="chat_btn">
-          <div>🟢</div>
-          <ProfileModal name="daechoi" currUser="other"></ProfileModal>
-        </a>
-      </li>
-      <li>
-        <a className="chat_btn">
-          <div>🔴</div>
-          <ProfileModal name="youhan" currUser="other"></ProfileModal>
-        </a>
-      </li>
-      <li>
-        <a className="chat_btn">
-          <div>🔴</div>
-          <ProfileModal name="gyyu" currUser="other"></ProfileModal>
-        </a>
-      </li>
+      <button
+        onClick={() => {
+          addFriendList("ma");
+        }}
+      >
+        AddFriend
+      </button>
+      {friendList.map((friend, index) => (
+        <li key={"friendList" + index}>
+          <a className="chat_btn" onClick={openModal}>
+            <div>{index / 2 ? "🔴" : "🟢"}</div>
+            <div>{friend}</div>
+          </a>
+        </li>
+      ))}
+      {isModalOpen && (
+        <Modal
+          closeModal={closeModal}
+          ConfigureModal={() => <Profile currUser={"other"} />}
+        />
+      )}
     </div>
   );
 }

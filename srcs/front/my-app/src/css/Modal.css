@@ -7,12 +7,10 @@
   /* max-width: 1000px; */
   /* max-height: 1000px; */
   /* z 포지션을 최상위로  */
-  z-index: 1000;
+  z-index: 1001;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  /* left: 30%; */
-  /* transform: translate(50%, 20%); */
 
   background-color: gray;
   border: 1px solid black;

@@ -151,7 +151,10 @@ export default function Profile(pn: ProfileNode) {
         <div className="avatar-wrapper">
           <img src="/img/img.jpg" alt="" className="avatar-img"></img>
         </div>
-        <div className="my-nickname">daechoi</div>
+        <div className="my-nickname">
+          daechoi
+          <h1 style={{ fontSize: "20px", paddingTop: "10px" }}>Rank : 1</h1>
+        </div>
         <div className="fix-profile">
           <div className="modal-avatar">
             <ModifyModalButton modalType={pn.currUser === "me" ? mAM : aFM} />
