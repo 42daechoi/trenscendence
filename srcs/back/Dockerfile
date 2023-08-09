@@ -15,13 +15,13 @@ COPY init.sh /back
 COPY my-app/package*.json ./
 
 # Install project dependencies
-RUN npm install
+# RUN npm install
 
 # Copy all files from the current directory into the container
 COPY my-app/ ./
 
 # Build the TypeScript project
-RUN npm run build
+# RUN npm run build
 
 # Expose the port that your Nest.js application is running on (change it to your application's port if needed)
 EXPOSE 3001
