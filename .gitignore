@@ -117,7 +117,7 @@ dist
 .dynamodb/
 
 # no DB git
-./srcs/database/postgres/*
+postgres/
 # TernJS port file
 .tern-port
 
