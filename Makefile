@@ -1,6 +1,7 @@
 all : up
 
 up:
+	mkdir ${PWD}/srcs/database/postgres
 	docker-compose -f ./srcs/docker-compose.yml up --build
 
 down:
