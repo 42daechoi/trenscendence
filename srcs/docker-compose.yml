@@ -35,14 +35,14 @@ services:
     image: postgres:latest
     restart: unless-stopped
     environment:
-        - POSTGRES_USER=postgres
-        - POSTGRES_PASSWORD=postgres
-        - POSTGRES_DB=tr42
-        - TZ=Asia/Seoul
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=tr42
+      - TZ=Asia/Seoul
     volumes:
-        - postgres_vol:/var/lib/postgresql/data
+      - postgres_vol:/var/lib/postgresql/data
     ports:
-        - "5432:5432"
+      - "5432:5432"
     networks:
       - tran_net
 

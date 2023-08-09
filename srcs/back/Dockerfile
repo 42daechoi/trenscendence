@@ -4,8 +4,8 @@ FROM node:alpine
 # Set the working directory inside the container
 
 RUN mkdir /back
-RUN mkdir /my-app
 WORKDIR /back
+RUN mkdir /my-app
 RUN apk add sudo
 WORKDIR /back/my-app
 
