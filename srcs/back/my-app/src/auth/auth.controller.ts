@@ -93,4 +93,10 @@ export class AuthController {
 		const user: any = req.user;
 		return (user);
 	}
+
+	@Post('/signout')
+	@UseGuards(JwtAuthGuard)
+	async signOut(@Request() req, @Response() res) : Promise<any> {
+		return (null);
+	}
 }

@@ -37,7 +37,7 @@ export class UsersController {
 	}
 
 	@Get('/:id')
-	async findUser(@Param('id') id: string){
+	async findUserById(@Param('id') id: string){
 //		console.log("GET PARAM called");
 		console.log("Handler is running");
 		const user : User = await this.usersService.findUserById(parseInt(id));
@@ -47,13 +47,26 @@ export class UsersController {
 		return user;
 	}
 
-	@Get('/:intraId')
+	@Get('/intraId/:intraId')
 	async findUserByIntraId(@Param('intraId') intraId: string){
 //		console.log("GET PARAM called");
 		console.log("Handler is running");
 		const user = await this.usersService.findUserByIntraId(intraId);
 		if (!user) {
-		  throw new NotFoundException('user not found');
+			return (null);
+//		  throw new NotFoundException('user not found');
+		}
+		return user;
+	}
+
+	@Get('/nickname/:nickname')
+	async findUserByNick(@Param('nickname') nickname: string){
+//		console.log("GET PARAM called");
+		console.log("Handler is running");
+		const user = await this.usersService.findUserByNick(nickname);
+		if (!user) {
+			return (null);
+//		  throw new NotFoundException('user not found');
 		}
 		return user;
 	}
@@ -62,7 +75,6 @@ export class UsersController {
 	removeUser(@Param('id') id: string) {
 		return this.usersService.remove(parseInt(id));
 	}
-
 
 	@Patch('/:id')
 	updateUser(@Param('id') id: string, @Body() body: UpdateUserDto){

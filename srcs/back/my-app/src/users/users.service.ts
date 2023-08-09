@@ -45,6 +45,14 @@ export class UsersService {
 		return (user);
 	}
 
+	async findUserByNick(findNick: string) : Promise<User | null>{
+		console.log("finding User by nickname in use service");
+		const user  = await this.userRepository.findOneBy({nickname: findNick});
+		if (!user)
+			return (null);
+		return (user);
+	}
+
 	async update(id: number, attrs: Partial<User>) {
 		const user = await this.findUserById(id);
 		if (!user) {
