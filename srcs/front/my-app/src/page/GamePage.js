@@ -16,17 +16,9 @@ export default function GamePage() {
     score = parseInt(score) + 1;
     score_2.innerText = score;
   }
-
-
-
-// For using Socket.io in a Node.js JavaScript project
-    const io = require('socket.io-client');
-    const socket = io('http://localhost:3001');
-    socket.on('message', (data) => {
-        console.log('Received message:', data);
-      });
-      socket.emit('message', 'Hello, asdasd!');
-
+  let client = -1;
+  const io = require('socket.io-client');
+  const socket = io('http://localhost:3001');
   class padItem {
     constructor(x, y, width, height, color, radi) {
       this.x = x;
@@ -45,12 +37,29 @@ export default function GamePage() {
       this.height = height;
     }
   }
-  function updatedirection() {
-    dy = 0.5 * Math.random() + 0.5;
-    dx = 1;
-    dx *= Math.random() < 0.5 ? -1 : 1;
-    dy *= Math.random() < 0.5 ? -1 : 1;
+
+  class ballItem {
+    constructor(){
+      this.x = 0;
+      this.y = 0;
+      this.dx = 0;
+      this.dy = 0;
+      this.v = 0;
+      this.r = 0;
+      this.temp = -1;
+    }
+    init(x, y, dx, dy, v, r, temp){
+      this.x = x;
+      this.y = y;
+      this.dx = dx;
+      this.dy = dy;
+      this.v = v;
+      this.r = r;
+      this.temp = temp;
+    }
   }
+  let ball = new ballItem();
+  let start = 0;
   const canvasRef = useRef(null);
   const gameRef = useRef(null);
   const obsRef = useRef(null);
@@ -60,43 +69,38 @@ export default function GamePage() {
   let obstacle = [];
   let board_x;
   let board_y;
-  let dx;
-  let dy;
-  let x;
-  let y;
   let ctx;
-  let v = 5;
+  let v = 10;
   let r = 20;
-
-  updatedirection();
   let a = 20;
   let move_px = 2;
   function bounce() {
-    if (x + r > board_x) {
-      x = board_x / 2;
-      y = board_y / 2;
-      updatedirection();
-      player1_win();
-    } else if (x - r < 0) {
-      x = board_x / 2;
-      y = board_y / 2;
-      updatedirection();
-      player2_win();
-    } else if (y + r > board_y || y - r < 0) {
-      dy *= -1;
-      y += dy * v;
+    if (ball.x + ball.r > board_x) {
+      // ball.x = board_x / 2;
+      // ball.y = board_y / 2;
+      // updatedirection(ball);
+      ball.dx *= -1;
+      ball.x += ball.dx * ball.v;
+
+      // player1_win();
+    } else if (ball.x - ball.r < 0) {
+      // ball.x = board_x / 2;
+      // ball.y = board_y / 2;
+      // updatedirection(ball);
+      ball.temp = -1;
+      ball.dx *= -1;
+      ball.x += ball.dx * ball.v;
+      // player2_win();
+    } else if (ball.y + ball.r > board_y || ball.y - ball.r < 0) {
+      ball.dy *= -1;
+      ball.y += ball.dy * ball.v;
+      ball.temp = -1;
     }
-    // bounce_obstacle();
   }
   function draw() {
-    x += dx * v;
-    y += dy * v;
-    bounce();
-    bounce_obstacle(obstacle);
-    bounce_obstacle(pad);
     ctx.clearRect(0, 0, board_x, board_y);
     ctx.beginPath();
-    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.arc(ball.x, ball.y, ball.r, 0, Math.PI * 2);
     ctx.fillStyle = "#ffffff";
     ctx.fill();
     ctx.beginPath();
@@ -115,56 +119,69 @@ export default function GamePage() {
         obstacle[i].width,
         obstacle[i].height
       );
-      ctx.closePath();
     }
-    requestAnimationFrame(draw);
+    ctx.closePath();
+  }
+  function pong() {
+    ball.x += ball.dx * ball.v;
+    ball.y += ball.dy * ball.v;
+    bounce();
+    bounce_obstacle(obstacle);
+    bounce_obstacle(pad);
+    draw();
+    requestAnimationFrame(pong);
   }
   function bounce_obstacle(obs) {
     // console.log(obs.length);
     for (let i = 0; i < obs.length; i++) {
-      if (x > obs[i].x && x < obs[i].x + obs[i].width)
+      if (ball.temp != i)
       {
-        if (y > obs[i].y - r && y < obs[i].y + obs[i].height + r)
+        if (ball.x > obs[i].x && ball.x < obs[i].x + obs[i].width)
         {
-          dy *= -1;
-          y += dy * v;
+          if (ball.y > obs[i].y - ball.r && ball.y < obs[i].y + obs[i].height + ball.r)
+          {
+            ball.dy *= -1;
+            ball.y += ball.dy * ball.v;
+            ball.temp = i;
+          }
+        }
+        else if (ball.y > obs[i].y && ball.y < obs[i].y + obs[i].height)
+        {
+          if (ball.x > obs[i].x - ball.r && ball.x < obs[i].x + obs[i].width + ball.r)
+          {
+            ball.dx *= -1;
+            ball.x += ball.dx * ball.v;
+            ball.temp = i;
+          }
+        }
+        else
+        {
+          if (Math.sqrt((ball.x - obs[i].x) * (ball.x - obs[i].x) + (ball.y - obs[i].y) * (ball.y - obs[i].y)) < ball.r)
+          {
+            ball.dx *= -1;
+            ball.x += ball.dx * ball.v;
+            ball.temp = i;
+          }
+          else if (Math.sqrt((ball.x - obs[i].x - obs[i].width) * (ball.x - obs[i].x - obs[i].width) + (ball.y - obs[i].y) * (ball.y - obs[i].y)) < ball.r)
+          {
+            ball.dx *= -1;
+            ball.x += ball.dx * ball.v;
+            ball.temp = i;
+          }
+          else if (Math.sqrt((ball.x - obs[i].x) * (ball.x - obs[i].x) + (ball.y - obs[i].y - obs[i].height) * (ball.y - obs[i].y - obs[i].height)) < ball.r)
+          {
+            ball.dx *= -1;
+            ball.x += ball.dx * ball.v;
+            ball.temp = i;
+          }
+          else if (Math.sqrt((ball.x - obs[i].x - obs[i].width) * (ball.x - obs[i].x - obs[i].width) + (ball.y - obs[i].y - obs[i].height) * (ball.y - obs[i].y) - obs[i].height) < ball.r)
+          {
+            ball.dx *= -1;
+            ball.x += ball.dx * ball.v;
+            ball.temp = i;
+          }
         }
       }
-      else if (y > obs[i].y && y < obs[i].y + obs[i].height)
-      {
-        if (x > obs[i].x - r && x < obs[i].x + obs[i].width + r)
-        {
-          dx *= -1;
-          x += dx * v;
-        }
-      }
-      else
-      {
-        if (Math.sqrt((x - obs[i].x) * (x - obs[i].x) + (y - obs[i].y) * (y - obs[i].y)) < r)
-        {
-          dx *= -1;
-          x += dx * v;
-        }
-        else if (Math.sqrt((x - obs[i].x - obs[i].width) * (x - obs[i].x - obs[i].width) + (y - obs[i].y) * (y - obs[i].y)) < r)
-        {
-          dx *= -1;
-          x += dx * v;
-
-        }
-        else if (Math.sqrt((x - obs[i].x) * (x - obs[i].x) + (y - obs[i].y - obs[i].height) * (y - obs[i].y - obs[i].height)) < r)
-        {
-          dx *= -1;
-          x += dx * v;
-
-        }
-        else if (Math.sqrt((x - obs[i].x - obs[i].width) * (x - obs[i].x - obs[i].width) + (y - obs[i].y - obs[i].height) * (y - obs[i].y) - obs[i].height) < r)
-        {
-          dx *= -1;
-          x += dx * v;
-        }
-      }
-
-
   }
 }
   // function bounce_obstacle(obs) {
@@ -206,15 +223,23 @@ export default function GamePage() {
       if (e.key == "ArrowUp") {
         e.preventDefault();
         a += 1;
-        pad[1].y -= move_px + Math.log(a) / Math.log(1.05);
-        if (pad[1].y < 0) pad[1].y = 0;
+        pad[client].y -= move_px + Math.log(a) / Math.log(1.05);
+        if (pad[client].y < 0) pad[client].y = 0;
+        if (client === 0)
+          socket.emit('pad1', pad[client]);
+        else if (client === 1)
+          socket.emit('pad2', pad[client]);
       }
       if (e.key == "ArrowDown") {
         e.preventDefault();
         a += 1;
-        pad[1].y += move_px + Math.log(a) / Math.log(1.05);
-        if (pad[1].y > board_y - pad[1].height)
-          pad[1].y = board_y - pad[1].height;
+        pad[client].y += move_px + Math.log(a) / Math.log(1.05);
+        if (pad[client].y > board_y - pad[client].height)
+          pad[client].y = board_y - pad[client].height;
+        if (client === 0)
+          socket.emit('pad1', pad[client]);
+        else if (client === 1)
+          socket.emit('pad2', pad[client]);
       }
     };
     const handlKeyup = (e) => {
@@ -227,13 +252,13 @@ export default function GamePage() {
     };
     // Canvas에 그릴 내용을 작성하세요.
     const canvas = canvasRef.current;
+
     ctx = canvas.getContext("2d");
 
     board_x = gameRef.current.clientWidth;
     board_y = gameRef.current.clientHeight;
+    ball.init(board_x / 2, board_y / 2, 0, 0, v, r, -1);
 
-    x = board_x / 2;
-    y = board_y / 2;
     pad.push(
       new padItem(
         padRef1.current.offsetLeft,
@@ -255,8 +280,6 @@ export default function GamePage() {
         window.getComputedStyle(padRef2.current).borderBottomLeftRadius
       )
     );
-    console.log(padRef2.current.offsetWidth);
-    console.log(pad[1]);
     canvas.width = board_x;
     canvas.height = board_y;
 
@@ -273,18 +296,44 @@ export default function GamePage() {
       );
       obj = obj.nextElementSibling;
     }
+    socket.on('start', (data) => {
+      start = data;
+      requestAnimationFrame(() => {console.log("b")});
+      pong();
+    });
+    socket.on('client', (data) => {
+      console.log(data);
+      requestAnimationFrame(() => {console.log("a")});
+      client = data;
+    });
+    socket.on('pad1', (data) => {
+      pad[0] = data;
+    });
+    ball.x = board_x / 2;
+    ball.y = board_y / 2;
+    socket.on('ball', (data) => {
+      ball.dx = data.dx;
+      ball.dy = data.dy;
+    });
+    socket.on('pad2', (data) => {
+      pad[1] = data;
+    });
+    if (client === 0)
+      socket.emit('pad1', pad[client]);
+    else if (client === 1)
+      socket.emit('pad2', pad[client]);
     if (gameRef.current) {
       gameRef.current.addEventListener("keydown", handlKeyDown);
       gameRef.current.addEventListener("keyup", handlKeyup);
     }
-    draw();
 
     return () => {
       if (gameRef.current) {
         gameRef.current.removeEventListener("keydown", handlKeyDown);
         gameRef.current.removeEventListener("keyup", handlKeyup);
+        console.log("asd");
       }
-      cancelAnimationFrame(draw);
+      cancelAnimationFrame(pong);
     };
   }, []);
   return (

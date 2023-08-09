@@ -71,8 +71,8 @@ export default function MyProfile() {
       <div className="nickname-history-div">
         <div className="history">
           <ul>
-            <li>daechoi vs king 4:3 win</li>
-            <li>eunji vs hello 4:5 lose</li>
+            <li style={{ userSelect: 'auto' }}>daechoi vs king 4:3 win</li>
+            <li style={{ userSelect: 'auto' }}>eunji vs hello 4:5 lose</li>
           </ul>
         </div>
       </div>
