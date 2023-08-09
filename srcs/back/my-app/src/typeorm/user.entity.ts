@@ -59,8 +59,8 @@ export class User {
   @Column({default : -1})
   rank: number;
 
-  @Column({ nullable: true, default : null })
-  currentAvatarData: string;
+  @Column({ nullable: true, default : false })
+  currentAvatarData: boolean;
 
   @Column({ default: false })
   twoFactAuth: boolean;

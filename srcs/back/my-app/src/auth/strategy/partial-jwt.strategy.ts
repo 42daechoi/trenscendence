@@ -31,7 +31,7 @@ export class PartialJwtStrategy extends PassportStrategy(
       this.logger.log("Unauthorized access caught by PartialJwtStrategy");
       throw new UnauthorizedException({
         message: "PartialJWT: no user found in database with id ",
-        id: payload.sub,
+        id: payload.id,
       });
     }
     return user;

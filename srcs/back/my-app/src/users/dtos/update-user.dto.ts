@@ -27,8 +27,8 @@ export class UpdateUserDto {
   rank: number;
 
   @IsOptional()
-  @IsString()
-  currentAvatarData: string;
+  @IsBoolean()
+  currentAvatarData: boolean;
   
   @IsOptional()
   @IsBoolean()

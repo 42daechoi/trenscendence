@@ -28,6 +28,7 @@ import { User } from 'src/typeorm';
 import {LocalAuthGuard} from './guards/auth-local.guard';
 import {AuthGuard} from '@nestjs/passport';
 import {JwtAuthGuard} from './guards/auth-jwt.guard';
+import {create} from 'domain';
 
 @Controller('auth')
 export class AuthController {
@@ -36,7 +37,6 @@ export class AuthController {
 	//42login
 	@UseGuards(FortyTwoAuthGuard)
 	@Get('loginfortytwo/callback')
-	@Redirect('http://localhost:3000/create-account', 302)
 	async login42(@Request() req : any, @currentAuthUser() user: User, @Response({passthrough: true}) res : any){
 		//we will get auth CODE for accessing public intra data.
 		//let get data(intra id, profile pic) with code and
@@ -46,35 +46,42 @@ export class AuthController {
 //		console.log(req.user.id);
 //		console.log(req.user.login);
 //		console.log(req.user.usual_full_name);
-		const [intraId, intraIdNum, full_name, photo] = [res.req.user.login, res.req.user.id, res.req.user.usual_full_name, res.req.user.image];
-		const find_user = await this.usersService.findUserByIntraId(intraId);
-		const user_info = {intraId, intraIdNum, full_name, photo};
+//		const [intraId, intraIdNum, full_name, photo] = [res.req.user.login, res.req.user.id, res.req.user.usual_full_name, res.req.user.image];
+		const intraId :string = res.req.user.login;
+		const nickname :string = res.req.user.login;
+		let find_user : User = await this.usersService.findUserByIntraId(intraId);
+//		console.log(user_info.intraId);
 
-		//new user
-		//wait for sign up requst
+		//can i redirect twice? (loading page)
+//		res.redirect('http://localhost:3000/loading');
 		if (!find_user)
 		{
 			console.log("new user logged in!");
-			return { url: 'http://localhost:3000/create-account', statusCode: 302, user_info };
+			//this gonna be create user dto soon.
+			find_user = await this.createUser({intraId, nickname});
+//			return { url: 'http://localhost:3000/create-account', statusCode: 302, user_info };
 		}
-		else
-		{
-			//jwt response attachment
-			const user_find  = await this.authService.validateUser(intraId);
-			res.setHeader('Authorization', 'Bearer '+user_find.accessToken);
-			console.log(res);
-			console.log("found user intraId in our database");
-			return { url: 'http://localhost:3000/main', statusCode: 302, user_info };
+		//jwt token
+		const user_token = await this.authService.validateUser(find_user.intraId);
+		//set Header users token -> gonna change to cookie way soon
+		res.setHeader('Authorization', 'Bearer ' + user_token.accessToken);
+		//redirect to avatar setting
+		if (find_user.currentAvatarData == false){
+			return res.redirect('http://localhost:3000/create-account');
 		}
+		else{
+			return res.redirect('http://localhost:3000/main');
+		}
+		//else redirect to main page
 	}
 
 	@Post('/signup')
 	@Serialize(CreateUserDto)
 	async createUser(@Body() body: CreateUserDto) {
 		const user_intraId = body.intraId;
-		console.log("In controller finding userid: " + user_intraId);
+		console.log("In auth controller finding userid: " + user_intraId);
 		//create new user
-		const new_user = await this.authService.signup(user_intraId);
+		const new_user = await this.authService.signup(body);
 			//jwt response attachment
 		return (new_user)
 	}
