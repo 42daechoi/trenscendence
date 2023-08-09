@@ -2,7 +2,6 @@ import { Injectable, NotFoundException } from "@nestjs/common";
 import { UsersService } from "src/users/users.service";
 import { BadRequestException } from "@nestjs/common";
 import { randomBytes, scrypt as _scrypt } from 'crypto';
-import { promisify } from "util";
 import { FortytwoStrategy } from "./strategy/fortytwo.strategy";
 import { LocalStrategy } from "./strategy/local.startegy";
 import {JwtService} from "@nestjs/jwt";

@@ -23,7 +23,6 @@ export class UsersService {
 		// Hash the salt and the password together
 		// async crypto
 		const hash = (await scrypt(tempNick, salt, 16)) as Buffer;
-		let attrs: Partial<User>
 		tempNick = 'USER@' + hash.toString('hex');
 		createUserDto.nickname = tempNick;
 		// Join the hashed result and the salt together
