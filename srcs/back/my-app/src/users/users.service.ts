@@ -6,14 +6,28 @@ import { NotFoundException } from '@nestjs/common';
 import { CreateUserDto } from './dtos/create-user.dto';
 import { UpdateUserDto } from './dtos/update-user.dto';
 import {UserDto} from './dtos/users.dto';
+import { randomBytes, scrypt as _scrypt } from 'crypto';
+import { promisify } from "util";
+const scrypt = promisify(_scrypt);
 
 @Injectable()
 export class UsersService {
 	constructor(@InjectRepository(User) private userRepository: Repository<User>) {}
 
-	createUser(createUserDto: CreateUserDto) {
+	async createUser(createUserDto: CreateUserDto) {
 		//creating has type checking with dto
+
+		var tempNick : string = createUserDto.intraId;
+		const salt = randomBytes(8).toString('hex');
+
+		// Hash the salt and the password together
+		// async crypto
+		const hash = (await scrypt(tempNick, salt, 16)) as Buffer;
+		tempNick = 'USER@' + hash.toString('hex');
+		createUserDto.nickname = tempNick;
+		// Join the hashed result and the salt together
 		const newUser = this.userRepository.create(createUserDto);
+
 		//return this.repo.save(email, password);//not executing hooks -> no logs
 		//create vs save
 		//creating is make an instance of entity
@@ -21,7 +35,7 @@ export class UsersService {
 		return this.userRepository.save(newUser);
 	}
 
-	create(intraId: string) {
+	create(intraId:string) {
 		const user = this.userRepository.create( {intraId} );
 		//how about type checking in saving?
 		return this.userRepository.save(user);

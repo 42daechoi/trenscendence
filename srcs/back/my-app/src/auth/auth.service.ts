@@ -2,12 +2,12 @@ import { Injectable, NotFoundException } from "@nestjs/common";
 import { UsersService } from "src/users/users.service";
 import { BadRequestException } from "@nestjs/common";
 import { randomBytes, scrypt as _scrypt } from 'crypto';
-import { promisify } from "util";
 import { FortytwoStrategy } from "./strategy/fortytwo.strategy";
 import { LocalStrategy } from "./strategy/local.startegy";
 import {JwtService} from "@nestjs/jwt";
 import { TokenPayload, TokenType } from "./interfaces/token-payload.interface";
 import { User } from "src/typeorm";
+import {CreateUserDto} from "src/users/dtos/create-user.dto";
 
 @Injectable()
 export class AuthService{
@@ -19,17 +19,17 @@ export class AuthService{
 //		return kakao_user;
 //	}
 
-	async signup(intraId: string) {
+	async signup(body : CreateUserDto) : Promise<User>{
 		// See if email is in use
-		const users = await this.usersService.findUserByIntraId(intraId);
+		const users = await this.usersService.findUserByIntraId(body.intraId);
 		if (users) {
 			throw new BadRequestException('Intra Id is in use');
 		}
-		// Hash the users password
+		// Hash the users nickname
 		// Generate a salt
 
 		// Create a new user and save it. user servive makes entity and saves it
-		const user = await this.usersService.create(intraId);
+		const user = await this.usersService.createUser(body);
 		//after updating signup process, change create user with create user DTO
 		//const user = await this.usersService.create(intraId);
 
@@ -58,10 +58,11 @@ export class AuthService{
 			console.log("checking existing : " + user.intraId);
 			const { intraId, ...rest} = user;
 			const payload: TokenPayload = { 
-				sub: user.id, 
+				id: user.id, 
 				intraId: user.intraId, 
 				type : TokenType.FULL
 			};
+			console.log("attaching Token\n"+ JSON.stringify(payload));
 			return {accessToken: this.jwtService.sign(payload)};
 		}
 		else
