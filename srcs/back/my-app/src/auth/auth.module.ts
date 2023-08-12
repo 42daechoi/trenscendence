@@ -13,14 +13,15 @@ import { FortytwoStrategy } from './strategy/fortytwo.strategy';
 import {LocalStrategy} from './strategy/local.startegy';
 import {HttpModule, HttpService} from '@nestjs/axios';
 import {JwtModule} from '@nestjs/jwt';
+import { JwtStrategy } from './strategy/jwt.strategy';
 
 @Module({
   imports: [
-	  TypeOrmModule.forFeature([User]),
-	  forwardRef(() => UsersModule),
-	  PassportModule, 
-	  HttpModule,
-		JwtModule.register({
+		TypeOrmModule.forFeature([User]),
+		forwardRef(() => UsersModule),
+		PassportModule, 
+		HttpModule,
+	  	JwtModule.register({
 			secret: 'SECRET_KEY',
 			signOptions: {expiresIn: '300s'},
 		})
@@ -28,12 +29,8 @@ import {JwtModule} from '@nestjs/jwt';
   controllers: [AuthController, UsersController],
   providers: [
 		AuthService,
-		//globally scoped interceptor
-		{
-			provide: APP_INTERCEPTOR,
-			useClass: CurrentUserInterceptor
-		}
-		,
+		UsersService, 
+		JwtStrategy,
 	  ],
 	exports:[AuthService],
 

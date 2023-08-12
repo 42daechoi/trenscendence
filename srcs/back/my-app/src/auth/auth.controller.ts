@@ -7,15 +7,14 @@ import { Body,
 	Query, 
 	Delete, 
 	UseInterceptors,
-	Session,
 	UseGuards,
-	Request,
-	Response,
 	BadRequestException,
 	UnauthorizedException,
-	Redirect
-
+	Redirect,
+	Req,
+	Res,
 } from '@nestjs/common';
+import { Request, Response } from 'express';
 import {AuthService} from './auth.service';
 import { CreateUserDto } from 'src/users/dtos/create-user.dto';
 import {UsersService} from 'src/users/users.service';
@@ -28,7 +27,6 @@ import { User } from 'src/typeorm';
 import {LocalAuthGuard} from './guards/auth-local.guard';
 import {AuthGuard} from '@nestjs/passport';
 import {JwtAuthGuard} from './guards/auth-jwt.guard';
-import {create} from 'domain';
 
 @Controller('auth')
 export class AuthController {
@@ -37,21 +35,15 @@ export class AuthController {
 	//42login
 	@UseGuards(FortyTwoAuthGuard)
 	@Get('loginfortytwo/callback')
-	async login42(@Request() req : any, @currentAuthUser() user: User, @Response({passthrough: true}) res : any){
+	async login42(@Req() req : Request, @Res({passthrough: true}) res : any){
 		//we will get auth CODE for accessing public intra data.
 		//let get data(intra id, profile pic) with code and
-		//how to inform front? updating response!
 		console.log("auth/loginfortytwo/callback")
-//		console.log(req.user);
-//		console.log(req.user.id);
-//		console.log(req.user.login);
-//		console.log(req.user.usual_full_name);
 //		const [intraId, intraIdNum, full_name, photo] = [res.req.user.login, res.req.user.id, res.req.user.usual_full_name, res.req.user.image];
 		const intraId :string = res.req.user.login;
 		const nickname :string = res.req.user.login;
-		let find_user : User = await this.usersService.findUserByIntraId(intraId);
+		let find_user : User = await this.authService.signin(intraId);
 //		console.log(user_info.intraId);
-
 		//can i redirect twice? (loading page)
 //		res.redirect('http://localhost:3000/loading');
 		if (!find_user)
@@ -59,12 +51,20 @@ export class AuthController {
 			console.log("new user logged in!");
 			//this gonna be create user dto soon.
 			find_user = await this.createUser({intraId, nickname});
-//			return { url: 'http://localhost:3000/create-account', statusCode: 302, user_info };
 		}
-		//jwt token
+		//#############################################
+		//##########       JWT TOKEN        ###########
+		//#############################################
+		//ticket a token to user
 		const user_token = await this.authService.validateUser(find_user.intraId);
-		//set Header users token -> gonna change to cookie way soon
-		res.setHeader('Authorization', 'Bearer ' + user_token.accessToken);
+		//give the token to user Response Header
+		this.authService.setJwtHeader(res, user_token.accessToken);
+//		res.json(user_token);
+		//#############################################
+		//##########       COOKIES        #############
+		//#############################################
+		//give the token to user Cookie in Response
+		this.authService.setJwtCookie(res, user_token.accessToken);
 		//redirect to avatar setting
 		if (find_user.currentAvatarData == false){
 			return res.redirect('http://localhost:3000/create-account');
@@ -87,23 +87,48 @@ export class AuthController {
 	}
 
 	@Post('/signin')
-	async signin(@Body() body : CreateUserDto, @Session() session : any){
+	async signin(@Body() body : any, @Res() res : Response){
 		console.log("singin in Controller");
 		const user = await this.authService.signin(body.intraId);
-		session.userId = user.id;
-		return user;
+		//#############################################
+		//##########       JWT TOKEN        ###########
+		//#############################################
+		//ticket a token to user
+		const user_token = await this.authService.validateUser(user.intraId);
+		//give the token to user Response Header
+		this.authService.setJwtHeader(res, user_token.accessToken);
+//		res.json(user_token);
+		//#############################################
+		//##########       COOKIES        #############
+		//#############################################
+		//give the token to user Cookie in Response
+		this.authService.setJwtCookie(res, user_token.accessToken);
+		return res.json(user_token);
 	}
 
 	@Get('/authentication')
 	@UseGuards(JwtAuthGuard)
-	async isAuth(@Request() req) : Promise<any>{
+	async isAuth(@Req() req) : Promise<any>{
+		console.log("checking Authentication user in request")
 		const user: any = req.user;
 		return (user);
 	}
 
+	@Get('/cookies')
+	@UseGuards(JwtAuthGuard)
+	getCookies(@Req() req: Request, @Res() res: Response): any {
+        const jwt = req.cookies['jwt'];
+//		res.status(200).send('Custom response');
+        return res.status(200).send(jwt);
+    }
+
+
 	@Post('/signout')
 	@UseGuards(JwtAuthGuard)
-	async signOut(@Request() req, @Response() res) : Promise<any> {
-		return (null);
+	async signOut(@Req() req : Request, @Res() res : Response) : Promise<any> {
+		this.authService.destoryJwtCookie(res);
+		return res.send({
+			message: 'sign out success'
+		})
 	}
 }

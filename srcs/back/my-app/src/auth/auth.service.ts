@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { UsersService } from "src/users/users.service";
-import { BadRequestException } from "@nestjs/common";
+import { BadRequestException, Res, Req } from "@nestjs/common";
 import { randomBytes, scrypt as _scrypt } from 'crypto';
 import { FortytwoStrategy } from "./strategy/fortytwo.strategy";
 import { LocalStrategy } from "./strategy/local.startegy";
@@ -8,6 +8,7 @@ import {JwtService} from "@nestjs/jwt";
 import { TokenPayload, TokenType } from "./interfaces/token-payload.interface";
 import { User } from "src/typeorm";
 import {CreateUserDto} from "src/users/dtos/create-user.dto";
+import { Response, Request } from "express";
 
 @Injectable()
 export class AuthService{
@@ -72,6 +73,24 @@ export class AuthService{
 	async tokenValidateUser(payload: TokenPayload): Promise<User| undefined> {
         return await this.usersService.findUserByIntraId(payload.intraId);
     }
+
+	async setJwtCookie(res: Response, token: string): Promise<void> {
+		res.cookie('jwt', token, {
+		  httpOnly: true,
+		  maxAge: 24 * 60 * 60 * 1000,
+		});
+	}
+
+	async destoryJwtCookie(res: Response): Promise<void> {
+		res.cookie('jwt', '', {
+			maxAge: 0
+		})
+	}
+	
+
+	async setJwtHeader(res: Response, token: string): Promise<void> {
+		res.setHeader('Authorization', 'Bearer ' + token);
+  }
 	
 	async existUser(intraId : string) : Promise<any | null>{
 		const user = await this.usersService.findUserByIntraId(intraId);
