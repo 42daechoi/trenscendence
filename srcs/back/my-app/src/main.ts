@@ -1,15 +1,12 @@
 import {ValidationPipe} from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-const cookieSession = require('cookie-session');
+import * as cookieParser from 'cookie-parser';
+//const cookieSession = require('cookie-session');
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  app.use(
-    cookieSession({
-      keys: ['asdfasfd'],
-    }),
-  );
+  app.use(cookieParser());
   //  before listening, pipe first!
   app.useGlobalPipes(
     new ValidationPipe({

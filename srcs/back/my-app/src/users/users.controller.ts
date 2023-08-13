@@ -9,6 +9,7 @@ import { Body,
 	UseInterceptors,
 	Session,
 	UseGuards,
+	NotFoundException
 
 } from '@nestjs/common';
 import { User } from '../typeorm/user.entity';
@@ -16,17 +17,15 @@ import { UsersService } from './users.service';
 import { CreateUserDto } from './dtos/create-user.dto';
 import { UserDto } from './dtos/users.dto';
 import { UpdateUserDto } from './dtos/update-user.dto';
-import { NotFoundException } from '@nestjs/common';
-import {AuthService} from 'src/auth/auth.service';
 import { CurrentUser } from './decorators/current-user.decorator';
-import { AuthGuard } from './guards/auth.guard';
+import { JwtAuthGuard } from 'src/auth/guards/auth-jwt.guard';
 
 @Controller('users')
 export class UsersController {
 	constructor(private usersService: UsersService ){}
 
+	@UseGuards(JwtAuthGuard)
 	@Get('/whoami')
-	@UseGuards(AuthGuard)
 	whoAmI(@CurrentUser() user: User) {
 		return user;
 	}
