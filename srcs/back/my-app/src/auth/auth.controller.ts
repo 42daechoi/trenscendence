@@ -42,7 +42,7 @@ export class AuthController {
 //		const [intraId, intraIdNum, full_name, photo] = [res.req.user.login, res.req.user.id, res.req.user.usual_full_name, res.req.user.image];
 		const intraId :string = res.req.user.login;
 		const nickname :string = res.req.user.login;
-		let find_user : User = await this.authService.signin(intraId);
+		let find_user : User = await this.usersService.findUserByIntraId(intraId);
 //		console.log(user_info.intraId);
 		//can i redirect twice? (loading page)
 //		res.redirect('http://localhost:3000/loading');
@@ -50,7 +50,7 @@ export class AuthController {
 		{
 			console.log("new user logged in!");
 			//this gonna be create user dto soon.
-			find_user = await this.createUser({intraId, nickname});
+			find_user = await this.usersService.createUser({intraId, nickname});
 		}
 		//#############################################
 		//##########       JWT TOKEN        ###########
@@ -108,9 +108,10 @@ export class AuthController {
 
 	@Get('/authentication')
 	@UseGuards(JwtAuthGuard)
-	async isAuth(@Req() req) : Promise<any>{
+	async isAuth(@Req() req, @Res() res) : Promise<any>{
 		console.log("checking Authentication user in request")
 		const user: any = req.user;
+		res.json(user);
 		return (user);
 	}
 
