@@ -12,7 +12,6 @@ import { Body,
 	NotFoundException,
 	Req,
 	Res
-
 } from '@nestjs/common';
 import { User } from '../typeorm/user.entity';
 import { UsersService } from './users.service';
@@ -21,14 +20,14 @@ import { UserDto } from './dtos/users.dto';
 import { UpdateUserDto } from './dtos/update-user.dto';
 import { CurrentUser } from './decorators/current-user.decorator';
 import { JwtAuthGuard } from 'src/auth/guards/auth-jwt.guard';
-import Request  from 'axios';
+import {Request, Response}  from 'express';
 @Controller('users')
 export class UsersController {
 	constructor(private usersService: UsersService ){}
 
 	@UseGuards(JwtAuthGuard)
 	@Get('/whoami')
-	async whoAmI(@CurrentUser() user: User, @Res() res) {
+	whoAmI(@CurrentUser() user: User, @Res() res: Response) {//user CurrentUser Decorator -> extract user from request
 		res.json(user);
 		return user;
 	}
