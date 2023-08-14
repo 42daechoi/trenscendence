@@ -26,7 +26,7 @@ export class UsersController {
 
 	@UseGuards(JwtAuthGuard)
 	@Get('/whoami')
-	whoAmI(@CurrentUser() user: User) {
+	whoAmI(@CurrentUser() user: User) {//user CurrentUser Decorator -> extract user from request
 		return user;
 	}
 

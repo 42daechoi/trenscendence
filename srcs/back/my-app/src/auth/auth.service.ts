@@ -51,9 +51,9 @@ export class AuthService{
 	}
 
 	//find user and make his token
-	async validateUser(intraId: string) : Promise<any | null>{
+	async validateUser(intraId: string, type: TokenType) : Promise<any | null>{
 		const user = await this.usersService.findUserByIntraId(intraId);
-			console.log("checking user : " + user);
+		console.log("checking user : " + user);
 		if (user)
 		{
 			console.log("checking existing : " + user.intraId);
@@ -61,7 +61,7 @@ export class AuthService{
 			const payload: TokenPayload = { 
 				id: user.id, 
 				intraId: user.intraId, 
-				type : TokenType.FULL
+				type : type
 			};
 			console.log("attaching Token\n"+ JSON.stringify(payload));
 			return {accessToken: this.jwtService.sign(payload)};
@@ -81,16 +81,19 @@ export class AuthService{
 		});
 	}
 
-	async destoryJwtCookie(res: Response): Promise<void> {
+	async destoryJwtCookie(res: Response): Promise<Response> {
 		res.cookie('jwt', '', {
 			maxAge: 0
 		})
+		res.clearCookie('jwt');	
+		return res.send({
+			message: 'sign out success'
+		})
 	}
-	
 
 	async setJwtHeader(res: Response, token: string): Promise<void> {
 		res.setHeader('Authorization', 'Bearer ' + token);
-  }
+	}
 	
 	async existUser(intraId : string) : Promise<any | null>{
 		const user = await this.usersService.findUserByIntraId(intraId);

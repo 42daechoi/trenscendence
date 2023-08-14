@@ -27,6 +27,7 @@ import { User } from 'src/typeorm';
 import {LocalAuthGuard} from './guards/auth-local.guard';
 import {AuthGuard} from '@nestjs/passport';
 import {JwtAuthGuard} from './guards/auth-jwt.guard';
+import { TokenType } from './interfaces/token-payload.interface';
 
 @Controller('auth')
 export class AuthController {
@@ -56,10 +57,11 @@ export class AuthController {
 		//##########       JWT TOKEN        ###########
 		//#############################################
 		//ticket a token to user
-		const user_token = await this.authService.validateUser(find_user.intraId);
 		//give the token to user Response Header
+		const user_token = await this.authService.validateUser(find_user.intraId, TokenType.FULL);
 		this.authService.setJwtHeader(res, user_token.accessToken);
 //		res.json(user_token);
+		console.log(JSON.stringify(user_token));
 		//#############################################
 		//##########       COOKIES        #############
 		//#############################################
@@ -90,19 +92,36 @@ export class AuthController {
 	async signin(@Body() body : any, @Res() res : Response){
 		console.log("singin in Controller");
 		const user = await this.authService.signin(body.intraId);
-		//#############################################
-		//##########       JWT TOKEN        ###########
-		//#############################################
-		//ticket a token to user
-		const user_token = await this.authService.validateUser(user.intraId);
-		//give the token to user Response Header
-		this.authService.setJwtHeader(res, user_token.accessToken);
+
 //		res.json(user_token);
-		//#############################################
-		//##########       COOKIES        #############
-		//#############################################
-		//give the token to user Cookie in Response
-		this.authService.setJwtCookie(res, user_token.accessToken);
+		//if jwtToken is partial(user.twoFA === true), go to 2fa 2fa will base cookies.
+		let user_token : any;
+		if (user.twoFA === true){
+			//#############################################
+			//##########       JWT TOKEN        ###########
+			//#############################################
+			//ticket a token to user
+			//get PARTIAL TOKEN
+			user_token = await this.authService.validateUser(user.intraId, TokenType.PARTIAL);
+			//go to 2FA. after completing 2FA, it will bake cookie with full token
+		}
+		else{
+			//#############################################
+			//##########       JWT TOKEN        ###########
+			//#############################################
+			//get FULL TOKEN
+			user_token = await this.authService.validateUser(user.intraId, TokenType.FULL);
+			//bake cookie with FULL TOKEN. login complete!
+			//#############################################
+			//##########       COOKIES        #############
+			//#############################################
+			//give the token to user Cookie in Response
+			this.authService.setJwtCookie(res, user_token.accessToken);
+			//give the token to user Response Header
+			//is this necc?? because i give token in cookie too.
+			this.authService.setJwtHeader(res, user_token.accessToken);
+		}
+		//else bake cookies;
 		return res.json(user_token);
 	}
 
@@ -111,7 +130,9 @@ export class AuthController {
 	async isAuth(@Req() req) : Promise<any>{
 		console.log("checking Authentication user in request")
 		const user: any = req.user;
-		return (user);
+		const data: any = req.user;
+
+		return (data);
 	}
 
 	@Get('/cookies')
@@ -122,13 +143,9 @@ export class AuthController {
         return res.status(200).send(jwt);
     }
 
-
 	@Post('/signout')
 	@UseGuards(JwtAuthGuard)
 	async signOut(@Req() req : Request, @Res() res : Response) : Promise<any> {
-		this.authService.destoryJwtCookie(res);
-		return res.send({
-			message: 'sign out success'
-		})
+		return (await this.authService.destoryJwtCookie(res));
 	}
 }

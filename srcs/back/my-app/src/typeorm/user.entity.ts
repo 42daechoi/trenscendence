@@ -54,19 +54,22 @@ export class User {
   loses: number;
 
   @Column({default : 0})
-  rate: number;
+  xp: number;
 
   @Column({default : -1})
   rank: number;
 
-  @Column({ nullable: true, default : false })
+  @Column({ nullable: false, default : false })
   currentAvatarData: boolean;
 
   @Column({ default: false })
-  twoFactAuth: boolean;
+  twoFA: boolean;
   
   @Column({ default: false })
   avatarinit: boolean;
+
+  @Column({ nullable: true })
+  twoFASecret: string;
 
   @AfterInsert()
   logInsert() {
