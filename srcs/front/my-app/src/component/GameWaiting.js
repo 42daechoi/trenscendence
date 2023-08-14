@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-
+import { useSocket } from '../component/SocketContext';
 import "../css/GameWaiting.css";
 import { useNavigate } from "react-router-dom";
 
@@ -22,9 +22,9 @@ export default function GameWaiting() {
         <div>daechoi</div>
         <div>vs</div>
         <div>
-          <button className="btn-loading btn-square">
+          <div className="btn-loading btn-square">
             <span className="loading loading-spinner"></span>
-          </button>
+          </div>
         </div>
       </div>
       <div className="game-setting">

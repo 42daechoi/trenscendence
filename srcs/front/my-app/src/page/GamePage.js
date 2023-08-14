@@ -1,5 +1,6 @@
 import React, { useRef, useEffect } from "react";
 import "../css/GamePage.css";
+import { useSocket } from '../component/SocketContext';
 
 export default function GamePage() {
   function player1_win() {
@@ -8,7 +9,7 @@ export default function GamePage() {
     score = parseInt(score) + 1;
     score_1.innerText = score;
   }
-
+  const socket = useSocket();
   function player2_win() {
     let score_2 = document.getElementById("score_2");
     console.log(score_2);
@@ -17,8 +18,6 @@ export default function GamePage() {
     score_2.innerText = score;
   }
   let client = -1;
-  const io = require('socket.io-client');
-  const socket = io('http://localhost:3001');
   class padItem {
     constructor(x, y, width, height, color, radi) {
       this.x = x;
@@ -219,7 +218,6 @@ export default function GamePage() {
       if (e.key == "Enter") {
         player1_win();
       }
-      console.log(e.key);
       if (e.key == "ArrowUp") {
         e.preventDefault();
         a += 1;

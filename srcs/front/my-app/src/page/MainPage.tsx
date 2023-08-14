@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import "../css/MainPage.css";
 import MyProfile from "../component/MyProfile";
 import GameWaiting from "../component/GameWaiting";

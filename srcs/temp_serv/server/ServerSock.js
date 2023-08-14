@@ -59,7 +59,7 @@ const user = [];
 io.on('connection', (socket) => {
   console.log('Client connected: ', socket.id);
   io.to(socket.id).emit('client', i);
-  user.push(new client(socket.io))
+  user.push(new client(socket.io, 0))
   i++;
   console.log(i);
   if (i == 2)
@@ -78,8 +78,10 @@ io.on('connection', (socket) => {
     io.emit('pad2', data);
   });
   socket.on('disconnect', () => {
-    console.log('Client disconnected: ', socket.id);
     i--;
+    console.log('Client disconnected: ', socket.id, i);
+
+    
   });
 });
 

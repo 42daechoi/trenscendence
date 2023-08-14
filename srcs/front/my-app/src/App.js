@@ -1,6 +1,6 @@
 import './App.css';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
-
+import { SocketProvider } from './component/SocketContext';
 import LoginPage from './page/LoginPage';
 import MainPage from './page/MainPage';
 import CreateAccPage from './page/CreateAccPage';
@@ -9,6 +9,7 @@ import GamePage from "./page/GamePage";
 
 function App() {
   return (
+    <SocketProvider>
     <Router>
       <Routes>
         <Route path='/' Component={LoginPage}></Route>
@@ -18,6 +19,7 @@ function App() {
         <Route path="/game" Component={GamePage}></Route>
       </Routes>
     </Router>
+    </SocketProvider>
   );
 }
 
