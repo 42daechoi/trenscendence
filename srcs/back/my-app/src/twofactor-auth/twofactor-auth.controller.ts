@@ -77,8 +77,9 @@ export class TwoFactorAuthController {
 	//give TokenPayload and getJwtToken
 	const full_token = await this.authService.validateUser(user.intraId, TokenType.FULL)
 	//bake cookie with FULL Token
-	this.authService.setJwtCookie(res, full_token);
-//    response.setHeader("Set-Cookie", authCookie);
+	this.authService.setJwtCookie(res, full_token.accessToken);
+//    res.setHeader("Set-Cookie", authCookie);
+	return res.redirect('http://localhost:3000/main');
   }
 
   private validateCode(user: User, twoFactorAuthCode: string) {

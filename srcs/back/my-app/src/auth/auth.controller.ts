@@ -38,37 +38,39 @@ export class AuthController {
 	@Get('loginfortytwo/callback')
 	async login42(@Req() req : Request, @Res({passthrough: true}) res : any){
 		//we will get auth CODE for accessing public intra data.
-		//let get data(intra id, profile pic) with code and
 		console.log("auth/loginfortytwo/callback")
-//		const [intraId, intraIdNum, full_name, photo] = [res.req.user.login, res.req.user.id, res.req.user.usual_full_name, res.req.user.image];
 		const intraId :string = res.req.user.login;
 		const nickname :string = res.req.user.login;
-		let find_user : User = await this.authService.signin(intraId);
-//		console.log(user_info.intraId);
-		//can i redirect twice? (loading page)
-//		res.redirect('http://localhost:3000/loading');
+		let find_user : User = await this.usersService.findUserByIntraId(intraId);
 		if (!find_user)
 		{
 			console.log("new user logged in!");
 			//this gonna be create user dto soon.
-			find_user = await this.createUser({intraId, nickname});
+			find_user = await this.usersService.createUser({intraId, nickname});
 		}
-		//#############################################
-		//##########       JWT TOKEN        ###########
-		//#############################################
 		//ticket a token to user
 		//give the token to user Response Header
-		const user_token = await this.authService.validateUser(find_user.intraId, TokenType.FULL);
-		this.authService.setJwtHeader(res, user_token.accessToken);
-//		res.json(user_token);
-		console.log(JSON.stringify(user_token));
-		//#############################################
-		//##########       COOKIES        #############
-		//#############################################
-		//give the token to user Cookie in Response
+		const user = find_user;
+		let user_token : any;
+		//ticket a token to user
+		if (user.twoFA === true){
+			//get PARTIAL TOKEN
+			user_token = await this.authService.validateUser(user.intraId, TokenType.PARTIAL);
+		}
+		else{
+			//get FULL TOKEN
+			user_token = await this.authService.validateUser(user.intraId, TokenType.FULL);
+		}
+		//bake cookie
 		this.authService.setJwtCookie(res, user_token.accessToken);
-		//redirect to avatar setting
-		if (find_user.currentAvatarData == false){
+		//redirect to 2FA
+		//#################################
+		//#########     2FA     ###########
+		//#################################
+		if (user.twoFA == true){
+			return res.redirect('http://localhost:3000/main');
+		}
+		if (user.currentAvatarData == false){
 			return res.redirect('http://localhost:3000/create-account');
 		}
 		else{
@@ -91,48 +93,39 @@ export class AuthController {
 	@Post('/signin')
 	async signin(@Body() body : any, @Res() res : Response){
 		console.log("singin in Controller");
-		const user = await this.authService.signin(body.intraId);
-
-//		res.json(user_token);
-		//if jwtToken is partial(user.twoFA === true), go to 2fa 2fa will base cookies.
+		let find_user : User = await this.usersService.findUserByIntraId(body.intraId);
+		const intraId : string = body.intraId;
+		const nickname : string = body.intraId;
+		if (!find_user)
+		{
+			console.log("new user logged in!");
+			//this gonna be create user dto soon.
+			find_user = await this.usersService.createUser({intraId, nickname});
+		}
+		const user = find_user;
 		let user_token : any;
+		//ticket a token to user
 		if (user.twoFA === true){
-			//#############################################
-			//##########       JWT TOKEN        ###########
-			//#############################################
-			//ticket a token to user
 			//get PARTIAL TOKEN
 			user_token = await this.authService.validateUser(user.intraId, TokenType.PARTIAL);
-			//go to 2FA. after completing 2FA, it will bake cookie with full token
+			this.authService.setJwtCookie(res, user_token.accessToken);
 		}
 		else{
-			//#############################################
-			//##########       JWT TOKEN        ###########
-			//#############################################
 			//get FULL TOKEN
 			user_token = await this.authService.validateUser(user.intraId, TokenType.FULL);
-			//bake cookie with FULL TOKEN. login complete!
-			//#############################################
-			//##########       COOKIES        #############
-			//#############################################
-			//give the token to user Cookie in Response
-			this.authService.setJwtCookie(res, user_token.accessToken);
-			//give the token to user Response Header
-			//is this necc?? because i give token in cookie too.
-			this.authService.setJwtHeader(res, user_token.accessToken);
 		}
-		//else bake cookies;
+		//give the token to user Cookie in Response
+		this.authService.setJwtCookie(res, user_token.accessToken);
 		return res.json(user_token);
 	}
 
 	@Get('/authentication')
 	@UseGuards(JwtAuthGuard)
-	async isAuth(@Req() req) : Promise<any>{
+	async isAuth(@Req() req: Request, @Res() res: Response) : Promise<any>{
 		console.log("checking Authentication user in request")
 		const user: any = req.user;
-		const data: any = req.user;
-
-		return (data);
+		res.json(user);
+		return (user);
 	}
 
 	@Get('/cookies')

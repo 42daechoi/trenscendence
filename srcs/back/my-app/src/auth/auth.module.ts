@@ -14,6 +14,7 @@ import {LocalStrategy} from './strategy/local.startegy';
 import {HttpModule, HttpService} from '@nestjs/axios';
 import {JwtModule} from '@nestjs/jwt';
 import { JwtStrategy } from './strategy/jwt.strategy';
+import { PartialJwtStrategy } from './strategy/partial-jwt.strategy';
 
 @Module({
   imports: [
@@ -23,7 +24,7 @@ import { JwtStrategy } from './strategy/jwt.strategy';
 		HttpModule,
 	  	JwtModule.register({
 			secret: 'SECRET_KEY',
-			signOptions: {expiresIn: '300s'},
+			signOptions: {expiresIn: '3000s'},
 		})
   ],
   controllers: [AuthController, UsersController],
@@ -31,6 +32,7 @@ import { JwtStrategy } from './strategy/jwt.strategy';
 		AuthService,
 		UsersService, 
 		JwtStrategy,
+		PartialJwtStrategy
 	  ],
 	exports:[AuthService],
 
