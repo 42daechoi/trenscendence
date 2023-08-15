@@ -1,9 +1,14 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import "../css/Profile.css";
+import axios from "axios";
 
 interface ProfileNode {
   currUser: string;
 }
+
+// const username: string = "username";
+// let rank: string = "rank";
+let avatar: string = "avatar";
 
 const mAM: string = "modifyAvatarModal";
 const mNM: string = "modifyNicknameModal";
@@ -145,6 +150,34 @@ function ModifyNicknameSetting() {
 }
 
 export default function Profile(pn: ProfileNode) {
+  const [username, setUsername] = useState("username");
+  const [rank, setRank] = useState("rank");
+  function LoadUserInfo() {
+    useEffect(() => {
+      axios
+        .get("http://localhost:3001/users/whoami", {
+          withCredentials: true,
+        })
+        .then((response) => {
+          setUsername(response.data.intraId);
+          setRank(response.data.rank);
+        })
+        .catch((error) => {
+          if (error.response) {
+            // 서버가 요청을 받았으나 응답 상태 코드가 실패인 경우
+            console.error(error.response.data);
+            console.error(error.response.status);
+          } else if (error.request) {
+            // 요청이 브라우저에 도달하지 않은 경우 (CORS 등의 이유)
+            console.error(error.request);
+          } else {
+            // 기타 다른 오류
+            console.error("Error", error.message);
+          }
+        });
+    });
+  }
+  LoadUserInfo();
   return (
     <div className="my-profile-container">
       <div className="avatar-button-div">
@@ -152,8 +185,10 @@ export default function Profile(pn: ProfileNode) {
           <img src="/img/img.jpg" alt="" className="avatar-img"></img>
         </div>
         <div className="my-nickname">
-          daechoi
-          <h1 style={{ fontSize: "20px", paddingTop: "10px" }}>Rank : 1</h1>
+          {username}
+          <h1 style={{ fontSize: "20px", paddingTop: "10px" }}>
+            Rank : {rank}
+          </h1>
         </div>
         <div className="fix-profile">
           <div className="modal-avatar">
