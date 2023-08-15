@@ -7,7 +7,7 @@ import { response } from 'express';
 export default function CreateAccPage() {
 	const navigate = useNavigate();
 	const createAccount = () => {
-		navigate('/main');
+		navigate('/two-factory-auth');
 	}
   	return (
 		<div className='background'>
