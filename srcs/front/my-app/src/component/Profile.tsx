@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import "../css/Profile.css";
 import axios from "axios";
+import { apiRequest } from "../utils/ApiRequest";
 
 interface ProfileNode {
   currUser: string;
@@ -152,31 +153,20 @@ function ModifyNicknameSetting() {
 export default function Profile(pn: ProfileNode) {
   const [username, setUsername] = useState("username");
   const [rank, setRank] = useState("rank");
+  const [avatar, setAvatar] = useState("avatar");
+
   function LoadUserInfo() {
     useEffect(() => {
-      axios
-        .get("http://localhost:3001/users/whoami", {
-          withCredentials: true,
-        })
-        .then((response) => {
+      // any 대신 타입을 지정하려면 서버에서 보내오는 객체를 알아야될거같다.
+      apiRequest<any>("get", "http://localhost:3001/users/whoami").then(
+        (response) => {
           setUsername(response.data.intraId);
           setRank(response.data.rank);
-        })
-        .catch((error) => {
-          if (error.response) {
-            // 서버가 요청을 받았으나 응답 상태 코드가 실패인 경우
-            console.error(error.response.data);
-            console.error(error.response.status);
-          } else if (error.request) {
-            // 요청이 브라우저에 도달하지 않은 경우 (CORS 등의 이유)
-            console.error(error.request);
-          } else {
-            // 기타 다른 오류
-            console.error("Error", error.message);
-          }
-        });
-    });
+        }
+      );
+    }, []);
   }
+
   LoadUserInfo();
   return (
     <div className="my-profile-container">
