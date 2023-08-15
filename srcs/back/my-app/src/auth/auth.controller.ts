@@ -50,17 +50,12 @@ export class AuthController {
 		}
 		//ticket a token to user
 		//give the token to user Response Header
-		const user = find_user;
-		let user_token : any;
+		const user : User = find_user;
+		const twoFA: boolean = user.twoFA;
+		let tokenType : TokenType;
+		tokenType = (twoFA == true) ? TokenType.PARTIAL: TokenType.FULL;
 		//ticket a token to user
-		if (user.twoFA === true){
-			//get PARTIAL TOKEN
-			user_token = await this.authService.validateUser(user.intraId, TokenType.PARTIAL);
-		}
-		else{
-			//get FULL TOKEN
-			user_token = await this.authService.validateUser(user.intraId, TokenType.FULL);
-		}
+		const user_token = await this.authService.validateUser(user.intraId, tokenType);
 		//bake cookie
 		this.authService.setJwtCookie(res, user_token.accessToken);
 		//redirect to 2FA
@@ -102,20 +97,28 @@ export class AuthController {
 			//this gonna be create user dto soon.
 			find_user = await this.usersService.createUser({intraId, nickname});
 		}
-		const user = find_user;
-		let user_token : any;
+		const user : User = find_user;
+		const twoFA: boolean = user.twoFA;
+		let tokenType : TokenType;
+		tokenType = (twoFA == true) ? TokenType.PARTIAL: TokenType.FULL;
 		//ticket a token to user
-		if (user.twoFA === true){
-			//get PARTIAL TOKEN
-			user_token = await this.authService.validateUser(user.intraId, TokenType.PARTIAL);
-			this.authService.setJwtCookie(res, user_token.accessToken);
-		}
-		else{
-			//get FULL TOKEN
-			user_token = await this.authService.validateUser(user.intraId, TokenType.FULL);
-		}
-		//give the token to user Cookie in Response
+		const user_token = await this.authService.validateUser(user.intraId, tokenType);
+		//bake cookie
 		this.authService.setJwtCookie(res, user_token.accessToken);
+		//redirect to 2FA
+		//#################################
+		//#########     2FA     ###########
+		//#################################
+//		if (user.twoFA == true){
+//			return res.redirect('http://localhost:3000/main');
+//		}
+//		if (user.currentAvatarData == false){
+//			return res.redirect('http://localhost:3000/create-account');
+//		}
+//		else{
+//			return res.redirect('http://localhost:3000/main');
+//		}
+		//else redirect to main page
 		return res.json(user_token);
 	}
 

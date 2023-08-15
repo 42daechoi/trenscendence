@@ -15,11 +15,6 @@ export class AuthService{
 
 	constructor(private usersService: UsersService, private jwtService: JwtService){}
 
-//	async kakaoLoginAuth(code: string, domain : string){
-//		const kakao_user = await this.kakaostrategy.kakaoLogin({code, domain});
-//		return kakao_user;
-//	}
-
 	async signup(body : CreateUserDto) : Promise<User>{
 		// See if email is in use
 		const users = await this.usersService.findUserByIntraId(body.intraId);
