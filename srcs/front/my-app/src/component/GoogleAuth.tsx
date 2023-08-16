@@ -25,7 +25,8 @@ export default function GoogleAuth() {
 				console.log(response.data);
 			})
 			.catch(error => {
-				console.log(error.message);
+				setOtp('');
+				setOtp2('');	
 				toast.error('인증번호가 일치하지 않습니다.', {
 					position: toast.POSITION.TOP_LEFT,
 					style: {
@@ -40,15 +41,26 @@ export default function GoogleAuth() {
 
 	const firstOtpRef = useRef(null);
 	const secondOtpRef = useRef(null);
+	const buttonRef = useRef(null);
   
 	const handleInput = (event) => {
-	  const maxLength = firstOtpRef.current.maxLength;
-	  const currentLength = event.target.value.length;
-  
-	  if (currentLength >= maxLength) {
-		secondOtpRef.current.focus();
-	  }
+		const maxLength = firstOtpRef.current.maxLength;
+		const currentLength = event.target.value.length;
+
+
+		if (currentLength >= maxLength) {
+			secondOtpRef.current.focus();
+		}
 	};
+
+	const handleInput2 = (event) => {
+		const maxLength = secondOtpRef.current.maxLength;
+		const currentLength = event.target.value.length;
+
+		if (currentLength >= maxLength) {
+			buttonRef.current.focus();
+		}
+	}
   return (
 	<div>
 		<div style={{fontSize:'20px', marginTop:'50px'}}>Google OTP (Google Authenticator) 인증번호</div>
@@ -67,10 +79,11 @@ export default function GoogleAuth() {
 			maxLength={3}
 			value={otp2}
 			onChange={handleOtpChange2}
+			onInput={handleInput2}
 			style={{ textAlign:'center', marginLeft:'30px', marginTop:'30px', marginBottom:'30px', padding: '10px', fontSize: '50px', width: '120px', border: '1px solid #ccc' }}
 		/>
 		<br></br>
-		<button className='login' onClick={handleOtpClick} style={{width:'100px', height:'50px', fontSize:'20px'}}>인증하기</button>
+		<button className='login' ref={buttonRef} onClick={handleOtpClick} style={{width:'100px', height:'50px', fontSize:'20px'}}>인증하기</button>
 		<ToastContainer/>
 	</div>
   )
