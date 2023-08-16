@@ -212,8 +212,9 @@ export default function GamePage() {
   //   }
   // }
 // }
-
-  useEffect(() => {
+useEffect(() => {
+  if (socket)
+  {
     const handlKeyDown = (e) => {
       if (e.key == "Enter") {
         player1_win();
@@ -240,6 +241,44 @@ export default function GamePage() {
           socket.emit('pad2', pad[client]);
       }
     };
+      socket.on('start', (data) => {
+        start = data;
+        requestAnimationFrame(() => {console.log("b")});
+        pong();
+      });
+      socket.on('client', (data) => {
+        console.log(data);
+        requestAnimationFrame(() => {console.log("a")});
+        client = data;
+      });
+      socket.on('pad1', (data) => {
+        pad[0] = data;
+      });
+      ball.x = board_x / 2;
+      ball.y = board_y / 2;
+      socket.on('ball', (data) => {
+        ball.dx = data.dx;
+        ball.dy = data.dy;
+      });
+      socket.on('pad2', (data) => {
+        pad[1] = data;
+      });
+      if (client === 0)
+        socket.emit('pad1', pad[client]);
+      else if (client === 1)
+        socket.emit('pad2', pad[client]);
+      if (gameRef.current) {
+        gameRef.current.addEventListener("keydown", handlKeyDown);
+      }
+      return () => {
+        if (gameRef.current) {
+          gameRef.current.removeEventListener("keydown", handlKeyDown);
+          console.log("asd");
+        }
+      };
+    }
+  },[socket])
+  useEffect(() => {
     const handlKeyup = (e) => {
       if (e.key == "ArrowUp") {
         a = 3;
@@ -294,40 +333,12 @@ export default function GamePage() {
       );
       obj = obj.nextElementSibling;
     }
-    socket.on('start', (data) => {
-      start = data;
-      requestAnimationFrame(() => {console.log("b")});
-      pong();
-    });
-    socket.on('client', (data) => {
-      console.log(data);
-      requestAnimationFrame(() => {console.log("a")});
-      client = data;
-    });
-    socket.on('pad1', (data) => {
-      pad[0] = data;
-    });
-    ball.x = board_x / 2;
-    ball.y = board_y / 2;
-    socket.on('ball', (data) => {
-      ball.dx = data.dx;
-      ball.dy = data.dy;
-    });
-    socket.on('pad2', (data) => {
-      pad[1] = data;
-    });
-    if (client === 0)
-      socket.emit('pad1', pad[client]);
-    else if (client === 1)
-      socket.emit('pad2', pad[client]);
     if (gameRef.current) {
-      gameRef.current.addEventListener("keydown", handlKeyDown);
       gameRef.current.addEventListener("keyup", handlKeyup);
     }
 
     return () => {
       if (gameRef.current) {
-        gameRef.current.removeEventListener("keydown", handlKeyDown);
         gameRef.current.removeEventListener("keyup", handlKeyup);
         console.log("asd");
       }

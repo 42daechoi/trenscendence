@@ -21,7 +21,7 @@ function useSocketConnection() {
   useEffect(() => {
     const newSocket = io('localhost:3001');
     setSocket(newSocket);
-
+    
     return () => {
       newSocket.disconnect();
     };
