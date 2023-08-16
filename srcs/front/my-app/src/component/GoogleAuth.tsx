@@ -3,12 +3,13 @@ import { response } from 'express';
 import React, { useState, useRef } from 'react'
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { useNavigate } from 'react-router-dom';
 
 
-export default function GoogleAuth() {
+export default function GoogleAuth(props) {
 	const [otp, setOtp] = useState('');
 	const [otp2, setOtp2] = useState('');
-
+	const navigate = useNavigate();
   	const handleOtpChange = (event) => {
     	const inputOtp = event.target.value;
     	setOtp(inputOtp);
@@ -20,23 +21,50 @@ export default function GoogleAuth() {
 
 	const handleOtpClick = () => {
 		const fullotp = otp + otp2;
-		axios.post('http://localhost:3001/2fa/enable', { twoFactorAuthCode: fullotp }, { withCredentials: true })
-			.then(response => {
-				console.log(response.data);
-			})
-			.catch(error => {
-				setOtp('');
-				setOtp2('');	
-				toast.error('인증번호가 일치하지 않습니다.', {
-					position: toast.POSITION.TOP_LEFT,
-					style: {
-						width: '500px',
-						height: '100px',
-						fontSize: '30px',
-					},
-					autoClose: 1500,
-				});
-			})
+		if (props.state === false)
+		{
+			console.log("a");
+			axios.post('http://localhost:3001/2fa/enable', { twoFactorAuthCode: fullotp }, { withCredentials: true })
+				.then(response => {
+					console.log(response.data);
+					navigate('/main');
+				})
+				.catch(error => {
+					setOtp('');
+					setOtp2('');	
+					toast.error('인증번호가 일치하지 않습니다.', {
+						position: toast.POSITION.TOP_LEFT,
+						style: {
+							width: '500px',
+							height: '100px',
+							fontSize: '30px',
+						},
+						autoClose: 1500,
+					});
+				})
+		}
+		else
+		{
+			console.log("b");
+			axios.post('http://localhost:3001/2fa/disable', { twoFactorAuthCode: fullotp }, { withCredentials: true })
+				.then(response => {
+					console.log(response.data);
+					navigate('/main');
+				})
+				.catch(error => {
+					setOtp('');
+					setOtp2('');	
+					toast.error('인증번호가 일치하지 않습니다.', {
+						position: toast.POSITION.TOP_LEFT,
+						style: {
+							width: '500px',
+							height: '100px',
+							fontSize: '30px',
+						},
+						autoClose: 1500,
+					});
+				})
+		}
 	}
 
 	const firstOtpRef = useRef(null);

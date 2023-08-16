@@ -8,6 +8,7 @@ import { AuthModule } from './auth/auth.module';
 import { UsersController } from './users/users.controller';
 import { ChannelModule } from './channel/channel.module';
 import {HttpModule} from '@nestjs/axios';
+import { TwoFactorModule } from './twofactor-auth/twofactor-auth.module';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import {HttpModule} from '@nestjs/axios';
 		  "entities": ["dist/**/*.entity.{ts,js}"]
 		}),
 		ChannelModule,
+		TwoFactorModule
 //	  TypeOrmModule.forRoot({
 //      type: 'postgres',//orm type notification
 //      database: 'tr42',//db.sqlite is file base database
