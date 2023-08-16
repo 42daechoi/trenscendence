@@ -13,7 +13,6 @@ async function bootstrap() {
       whitelist: true, //allow extra but do not take it. only take whitelist body
     }),
   );
-
   app.enableCors({
 	  origin : 'http://localhost:3000',
 	  methods: 'GET, HEAD, PUT, PARTCH, POST, DELETE',

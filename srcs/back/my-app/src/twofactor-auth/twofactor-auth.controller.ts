@@ -72,14 +72,14 @@ export class TwoFactorAuthController {
     @Body() twoFactorAuthCode: TwoFactorAuthCodeDto,
     @Res({ passthrough: true }) res: Response,
   ) {
-    this.validateCode(user, twoFactorAuthCode.twoFactorAuthCode);
 
+    this.validateCode(user, twoFactorAuthCode.twoFactorAuthCode);
 	//give TokenPayload and getJwtToken
 	const full_token = await this.authService.validateUser(user.intraId, TokenType.FULL)
 	//bake cookie with FULL Token
 	this.authService.setJwtCookie(res, full_token.accessToken);
 //    res.setHeader("Set-Cookie", authCookie);
-	return res.redirect('http://localhost:3000/main');
+	return res.json(user);
   }
 
   private validateCode(user: User, twoFactorAuthCode: string) {

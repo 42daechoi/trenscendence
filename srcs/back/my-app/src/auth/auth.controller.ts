@@ -53,7 +53,7 @@ export class AuthController {
 		const user : User = find_user;
 		const twoFA: boolean = user.twoFA;
 		let tokenType : TokenType;
-		tokenType = (twoFA == true) ? TokenType.PARTIAL: TokenType.FULL;
+		tokenType = (twoFA === true) ? TokenType.PARTIAL: TokenType.FULL;
 		//ticket a token to user
 		const user_token = await this.authService.validateUser(user.intraId, tokenType);
 		//bake cookie
@@ -63,7 +63,7 @@ export class AuthController {
 		//#########     2FA     ###########
 		//#################################
 		if (user.twoFA == true){
-			return res.redirect('http://localhost:3000/main');
+			return res.redirect('http://localhost:3000/two-factory-auth');
 		}
 		if (user.currentAvatarData == false){
 			return res.redirect('http://localhost:3000/create-account');
@@ -130,12 +130,10 @@ export class AuthController {
 		res.json(user);
 		return (user);
 	}
-
 	@Get('/cookies')
 	@UseGuards(JwtAuthGuard)
 	getCookies(@Req() req: Request, @Res() res: Response): any {
         const jwt = req.cookies['jwt'];
-//		res.status(200).send('Custom response');
         return res.status(200).send(jwt);
     }
 

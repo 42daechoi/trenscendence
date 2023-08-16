@@ -5,6 +5,7 @@ import LoginPage from './page/LoginPage';
 import MainPage from './page/MainPage';
 import CreateAccPage from './page/CreateAccPage';
 import Callback from './page/CallbackPage';
+import TwoFactoryAuth from './page/TwoFactoryAuth';
 
 function App() {
   return (
@@ -14,6 +15,7 @@ function App() {
         <Route path='/main' Component={MainPage}></Route>
         <Route path='/create-account' Component={CreateAccPage}></Route>
         <Route path='/callback' Component={Callback}></Route>
+        <Route path='/two-factory-auth' Component={TwoFactoryAuth}></Route>
       </Routes>
     </Router>
   );

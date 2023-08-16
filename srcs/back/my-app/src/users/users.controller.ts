@@ -21,6 +21,7 @@ import { UpdateUserDto } from './dtos/update-user.dto';
 import { CurrentUser } from './decorators/current-user.decorator';
 import { JwtAuthGuard } from 'src/auth/guards/auth-jwt.guard';
 import {Request, Response}  from 'express';
+import PartialJwtGuard from 'src/auth/guards/auth-partial-jwt.guard';
 @Controller('users')
 export class UsersController {
 	constructor(private usersService: UsersService ){}

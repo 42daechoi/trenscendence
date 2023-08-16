@@ -62,7 +62,7 @@ export class User {
   @Column({ nullable: false, default : false })
   currentAvatarData: boolean;
 
-  @Column({ default: false })
+  @Column({ nullable: false, default: false })
   twoFA: boolean;
   
   @Column({ default: false })
