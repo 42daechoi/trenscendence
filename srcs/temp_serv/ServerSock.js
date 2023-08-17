@@ -30,7 +30,7 @@ io.on('connection', (socket) => {
   });
 });
 
-const port = 3001;
+const port = 3002;
 server.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
 });
