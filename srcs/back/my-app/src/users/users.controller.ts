@@ -70,7 +70,7 @@ export class UsersController {
 	}
 
 	@Get('/nickname/:nickname')
-	@UseGuards(JwtAuthGuard)
+//	@UseGuards(JwtAuthGuard)
 	async findUserByNick(@Param('nickname') nickname: string){
 //		console.log("GET PARAM called");
 		console.log("Handler is running");
@@ -88,7 +88,7 @@ export class UsersController {
 	}
 
 	@Patch('/:id')
-	@UseGuards(JwtAuthGuard)
+//	@UseGuards(JwtAuthGuard)
 	updateUser(@Param('id') id: string, @Body() body: UpdateUserDto){
 		return this.usersService.update(parseInt(id), body);
 	}
