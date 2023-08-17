@@ -20,7 +20,7 @@ export default function GoogleAuth() {
 
 	const handleOtpClick = () => {
 		const fullotp = otp + otp2;
-		axios.post('http://localhost:3001/2fa/enable', { twoFactorAuthCode: fullotp }, { withCredentials: true })
+		axios.post('http://localhost:3001/2fa/authenticate', { twoFactorAuthCode: fullotp }, { withCredentials: true })
 			.then(response => {
 				console.log(response.data);
 			})

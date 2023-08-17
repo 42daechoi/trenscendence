@@ -9,25 +9,27 @@ import { Body,
 	UseInterceptors,
 	Session,
 	UseGuards,
-
+	NotFoundException,
+	Req,
+	Res
 } from '@nestjs/common';
 import { User } from '../typeorm/user.entity';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dtos/create-user.dto';
 import { UserDto } from './dtos/users.dto';
 import { UpdateUserDto } from './dtos/update-user.dto';
-import { NotFoundException } from '@nestjs/common';
-import {AuthService} from 'src/auth/auth.service';
 import { CurrentUser } from './decorators/current-user.decorator';
-import { AuthGuard } from './guards/auth.guard';
-
+import { JwtAuthGuard } from 'src/auth/guards/auth-jwt.guard';
+import {Request, Response}  from 'express';
+import PartialJwtGuard from 'src/auth/guards/auth-partial-jwt.guard';
 @Controller('users')
 export class UsersController {
 	constructor(private usersService: UsersService ){}
 
+	@UseGuards(JwtAuthGuard)
 	@Get('/whoami')
-	@UseGuards(AuthGuard)
-	whoAmI(@CurrentUser() user: User) {
+	whoAmI(@CurrentUser() user: User, @Res() res: Response) {//user CurrentUser Decorator -> extract user from request
+		res.json(user);
 		return user;
 	}
 
@@ -37,7 +39,8 @@ export class UsersController {
 	}
 
 	@Get('/:id')
-	async findUserById(@Param('id') id: string){
+	async findUserById(@Param('id') id: string, @Req() req: Request){
+		console.log(req);
 //		console.log("GET PARAM called");
 		console.log("Handler is running");
 		const user : User = await this.usersService.findUserById(parseInt(id));

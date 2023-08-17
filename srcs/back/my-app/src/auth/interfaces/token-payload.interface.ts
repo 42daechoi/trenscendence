@@ -4,7 +4,7 @@ export enum TokenType {
 }
 
 export interface TokenPayload {
-  sub: number; // user id
+  id: number; // user id
   intraId: string;
   type: TokenType;
 }
