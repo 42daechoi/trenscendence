@@ -75,7 +75,7 @@ export class TwoFactorAuthController {
     await this.twoFactorAuthService.disableTwoFactor(user);
     this.logger.log(`2FA destroyed for user ${user.id}`);
   }
-
+  
   @Post("authenticate")
   @HttpCode(200)
   @UseGuards(PartialJwtGuard)

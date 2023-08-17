@@ -24,5 +24,8 @@ export class UserDto{
 
 	@Expose()
 	friends : User[];
+
+	@Expose()
+	blocked : User[];
 	
 }
