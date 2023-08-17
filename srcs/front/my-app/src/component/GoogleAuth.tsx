@@ -23,7 +23,8 @@ export default function GoogleAuth(props) {
 		const fullotp = otp + otp2;
 		axios.post('http://localhost:3001/2fa/authenticate', { twoFactorAuthCode: fullotp }, { withCredentials: true })
 			.then(response => {
-				console.log(response.data);
+				if (response.data)
+					navigate('/main');
 			})
 			.catch(error => {
 				setOtp('');
@@ -39,7 +40,7 @@ export default function GoogleAuth(props) {
 				});
 			});
 	}
-	
+
 	const firstOtpRef = useRef(null);
 	const secondOtpRef = useRef(null);
 	const buttonRef = useRef(null);

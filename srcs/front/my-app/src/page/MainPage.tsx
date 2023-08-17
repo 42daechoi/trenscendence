@@ -9,16 +9,16 @@ import Chat from "../component/Chat";
 import io from "socket.io-client";
 import axios from "axios";
 
-const socket = io('http://localhost:3002');
+// const socket = io('http://localhost:3002');
 
 export default function MainPage() {
-  const [curPage, setCurPage] = useState("leaderboard");
-  socket.emit('message', "hello");
-  useEffect(() => {
-    return () => {
-      socket.disconnect();
-    }
-  },[socket]);
+  const [curPage, setCurPage] = useState("my_profile");
+  // useEffect(() => {
+  //   return () => {
+  //     socket.disconnect();
+  //   }
+  // },[socket]);
+
 
   const renderPage = () => {
     switch (curPage) {
@@ -82,7 +82,7 @@ export default function MainPage() {
             </button>
           </section>
           <section className="chat-container">
-            <Chat socket={socket} />
+            <Chat /*socket={socket}*/ />
           </section>
           <section className="swap-container">{renderPage()}</section>
           <label

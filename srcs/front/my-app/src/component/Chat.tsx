@@ -89,13 +89,13 @@ export default function Chat(props) {
     };
   }, [messages]);
 
-  useEffect(() => {
-    props.socket.on('message', receiveMessage);
+  // useEffect(() => {
+  //   props.socket.on('message', receiveMessage);
 
-    return () => {
-      props.socket.off('message', receiveMessage);
-    };
-  }, []);
+  //   return () => {
+  //     props.socket.off('message', receiveMessage);
+  //   };
+  // }, []);
 
   const receiveMessage = (msg) => {
     addMessage({ name: "daechoi", profile: null, id: 1, isMute:false, isChecked:false }, msg, "chat chat-start");

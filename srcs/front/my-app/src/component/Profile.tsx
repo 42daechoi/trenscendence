@@ -2,6 +2,7 @@ import React, { useState,useEffect } from "react";
 import "../css/Profile.css";
 import axios from 'axios'
 import { useNavigate } from 'react-router-dom';
+import { response } from "express";
 interface ProfileNode {
   currUser: string;
 }
@@ -12,8 +13,8 @@ const aFM: string = "addFriendModal";
 const iGM: string = "inviteGameModal";
 
 function ModifyModalButton(props: { modalType: string }) {
-
   const navigate = useNavigate();
+
   return (
     <button
       onClick={() => {
@@ -21,7 +22,10 @@ function ModifyModalButton(props: { modalType: string }) {
         else if (props.modalType === mNM) window[mNM].showModal();
         else if (props.modalType === aFM) window[aFM].showModal();
         else if (props.modalType === iGM) window[iGM].showModal();
-        else if (props.modalType === "1") navigate('/two-factory-auth')
+        else if (props.modalType === 'false') navigate('/two-factory-auth');
+        else if (props.modalType === 'true') {
+          axios.post('http://localhost:3001/2fa/disable', null, { withCredentials: true});
+        }
       }}
       className="btn-fix glass"
     >
@@ -33,7 +37,7 @@ function ModifyModalButton(props: { modalType: string }) {
         ? "친구 추가"
         : props.modalType === iGM
         ? "게임 초대"
-        : props.modalType === "1" ? "OTP 생성" : "OTP 해제"}
+        : props.modalType === 'true' ? "OTP 해제" : "OTP 설정"}
     </button>
   );
 }
@@ -149,6 +153,18 @@ function ModifyNicknameSetting() {
 }
 
 export default function Profile(pn: ProfileNode) {
+  const [twoFA, setTwoFA] = useState('false');
+
+  useEffect(() => {
+    axios.get('http://localhost:3001/users/whoami', { withCredentials: true })
+      .then(response => {
+        if (!response.data.twoFA)
+          setTwoFA('false');
+        else
+          setTwoFA('true');
+      })
+  }, []);
+
   return (
     <div className="my-profile-container">
       <div className="avatar-button-div">
@@ -169,7 +185,7 @@ export default function Profile(pn: ProfileNode) {
             <ModalWindow modalType={pn.currUser === "me" ? mNM : iGM} />
           </div>
           {pn.currUser === "me" && (<div className="2fa">
-            <ModifyModalButton modalType="1"/>
+            <ModifyModalButton modalType={twoFA}/>
           </div>)}
         </div>
       </div>

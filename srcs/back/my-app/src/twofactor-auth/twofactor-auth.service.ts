@@ -63,7 +63,7 @@ export class TwoFactorAuthService {
     await this.userService.update(user.id, {
       ...user,
       twoFA: false,
-      twoFASecret: "",
+      twoFASecret: null
     });
   }
 }

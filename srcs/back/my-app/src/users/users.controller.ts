@@ -23,15 +23,11 @@ import { JwtAuthGuard } from 'src/auth/guards/auth-jwt.guard';
 import {Request, Response}  from 'express';
 import PartialJwtGuard from 'src/auth/guards/auth-partial-jwt.guard';
 @Controller('users')
-export class UsersController {
+export class UsersController { 
 	constructor(private usersService: UsersService ){}
 
-<<<<<<< HEAD
-	@UseGuards(JwtAuthGuard)
-=======
-	//@UseGuards(JwtAuthGuard)
+	// @UseGuards(JwtAuthGuard)
 	@UseGuards(PartialJwtGuard)
->>>>>>> youhan-2fa
 	@Get('/whoami')
 	whoAmI(@CurrentUser() user: User, @Res() res: Response) {//user CurrentUser Decorator -> extract user from request
 		res.json(user);
