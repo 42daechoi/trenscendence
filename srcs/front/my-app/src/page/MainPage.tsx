@@ -7,14 +7,13 @@ import FriendsList from "../component/FriendsList";
 import ChannelsList from "../component/ChannelsList";
 import Chat from "../component/Chat";
 import io from "socket.io-client";
+import axios from "axios";
 
 const socket = io('http://localhost:3002');
 
 export default function MainPage() {
   const [curPage, setCurPage] = useState("leaderboard");
-
   socket.emit('message', "hello");
-
   useEffect(() => {
     return () => {
       socket.disconnect();

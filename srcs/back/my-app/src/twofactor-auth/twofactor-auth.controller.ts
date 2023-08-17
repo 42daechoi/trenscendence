@@ -52,6 +52,7 @@ export class TwoFactorAuthController {
 //    @Body() twoFactorAuthCode: TwoFactorAuthCodeDto,
   ) {
 //    this.validateCode(user, twoFactorAuthCode.twoFactorAuthCode);
+
     await this.twoFactorAuthService.enableTwoFactor(user);
     this.logger.log(`2FA has been enabled for user ${user.id}`);
   }
@@ -64,6 +65,7 @@ export class TwoFactorAuthController {
 //	@Body() twoFactorAuthCode: TwoFactorAuthCodeDto,
 	) {
 //    this.validateCode(user, twoFactorAuthCode.twoFactorAuthCode);
+
     await this.twoFactorAuthService.disableTwoFactor(user);
     this.logger.log(`2FA has been disabled for user ${user.id}`);
   }

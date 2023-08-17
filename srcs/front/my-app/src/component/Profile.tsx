@@ -1,6 +1,7 @@
-import React, { useState } from "react";
+import React, { useState,useEffect } from "react";
 import "../css/Profile.css";
-
+import axios from 'axios'
+import { useNavigate } from 'react-router-dom';
 interface ProfileNode {
   currUser: string;
 }
@@ -11,6 +12,8 @@ const aFM: string = "addFriendModal";
 const iGM: string = "inviteGameModal";
 
 function ModifyModalButton(props: { modalType: string }) {
+
+  const navigate = useNavigate();
   return (
     <button
       onClick={() => {
@@ -18,6 +21,7 @@ function ModifyModalButton(props: { modalType: string }) {
         else if (props.modalType === mNM) window[mNM].showModal();
         else if (props.modalType === aFM) window[aFM].showModal();
         else if (props.modalType === iGM) window[iGM].showModal();
+        else if (props.modalType === "1") navigate('/two-factory-auth')
       }}
       className="btn-fix glass"
     >
@@ -29,7 +33,7 @@ function ModifyModalButton(props: { modalType: string }) {
         ? "친구 추가"
         : props.modalType === iGM
         ? "게임 초대"
-        : "기본 텍스트"}
+        : props.modalType === "1" ? "OTP 생성" : "OTP 해제"}
     </button>
   );
 }
@@ -164,6 +168,9 @@ export default function Profile(pn: ProfileNode) {
             <ModifyModalButton modalType={pn.currUser === "me" ? mNM : iGM} />
             <ModalWindow modalType={pn.currUser === "me" ? mNM : iGM} />
           </div>
+          {pn.currUser === "me" && (<div className="2fa">
+            <ModifyModalButton modalType="1"/>
+          </div>)}
         </div>
       </div>
       <div className="nickname-history-div">

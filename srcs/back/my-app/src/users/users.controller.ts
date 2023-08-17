@@ -26,7 +26,12 @@ import PartialJwtGuard from 'src/auth/guards/auth-partial-jwt.guard';
 export class UsersController {
 	constructor(private usersService: UsersService ){}
 
+<<<<<<< HEAD
 	@UseGuards(JwtAuthGuard)
+=======
+	//@UseGuards(JwtAuthGuard)
+	@UseGuards(PartialJwtGuard)
+>>>>>>> youhan-2fa
 	@Get('/whoami')
 	whoAmI(@CurrentUser() user: User, @Res() res: Response) {//user CurrentUser Decorator -> extract user from request
 		res.json(user);

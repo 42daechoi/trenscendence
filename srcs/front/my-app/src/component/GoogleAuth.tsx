@@ -3,12 +3,13 @@ import { response } from 'express';
 import React, { useState, useRef } from 'react'
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { useNavigate } from 'react-router-dom';
 
 
-export default function GoogleAuth() {
+export default function GoogleAuth(props) {
 	const [otp, setOtp] = useState('');
 	const [otp2, setOtp2] = useState('');
-
+	const navigate = useNavigate();
   	const handleOtpChange = (event) => {
     	const inputOtp = event.target.value;
     	setOtp(inputOtp);
@@ -36,9 +37,9 @@ export default function GoogleAuth() {
 					},
 					autoClose: 1500,
 				});
-			})
+			});
 	}
-
+	
 	const firstOtpRef = useRef(null);
 	const secondOtpRef = useRef(null);
 	const buttonRef = useRef(null);
