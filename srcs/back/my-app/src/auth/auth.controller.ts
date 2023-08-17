@@ -7,15 +7,14 @@ import { Body,
 	Query, 
 	Delete, 
 	UseInterceptors,
-	Session,
 	UseGuards,
-	Request,
-	Response,
 	BadRequestException,
 	UnauthorizedException,
-	Redirect
-
+	Redirect,
+	Req,
+	Res,
 } from '@nestjs/common';
+import { Request, Response } from 'express';
 import {AuthService} from './auth.service';
 import { CreateUserDto } from 'src/users/dtos/create-user.dto';
 import {UsersService} from 'src/users/users.service';
@@ -28,6 +27,7 @@ import { User } from 'src/typeorm';
 import {LocalAuthGuard} from './guards/auth-local.guard';
 import {AuthGuard} from '@nestjs/passport';
 import {JwtAuthGuard} from './guards/auth-jwt.guard';
+import { TokenType } from './interfaces/token-payload.interface';
 
 @Controller('auth')
 export class AuthController {
@@ -36,67 +36,110 @@ export class AuthController {
 	//42login
 	@UseGuards(FortyTwoAuthGuard)
 	@Get('loginfortytwo/callback')
-	@Redirect('http://localhost:3000/create-account', 302)
-	async login42(@Request() req : any, @currentAuthUser() user: User, @Response({passthrough: true}) res : any){
+	async login42(@Req() req : Request, @Res({passthrough: true}) res : any){
 		//we will get auth CODE for accessing public intra data.
-		//let get data(intra id, profile pic) with code and
-		//how to inform front? updating response!
 		console.log("auth/loginfortytwo/callback")
-//		console.log(req.user);
-//		console.log(req.user.id);
-//		console.log(req.user.login);
-//		console.log(req.user.usual_full_name);
-		const [intraId, intraIdNum, full_name, photo] = [res.req.user.login, res.req.user.id, res.req.user.usual_full_name, res.req.user.image];
-		const find_user = await this.usersService.findUserByIntraId(intraId);
-		const user_info = {intraId, intraIdNum, full_name, photo};
-
-		//new user
-		//wait for sign up requst
+		const intraId :string = res.req.user.login;
+		const nickname :string = res.req.user.login;
+		let find_user : User = await this.usersService.findUserByIntraId(intraId);
 		if (!find_user)
 		{
 			console.log("new user logged in!");
-			return { url: 'http://localhost:3000/create-account', statusCode: 302, user_info };
+			//this gonna be create user dto soon.
+			find_user = await this.usersService.createUser({intraId, nickname});
 		}
-		else
-		{
-			//jwt response attachment
-			const user_find  = await this.authService.validateUser(intraId);
-			res.setHeader('Authorization', 'Bearer '+user_find.accessToken);
-			console.log(res);
-			console.log("found user intraId in our database");
-			return { url: 'http://localhost:3000/main', statusCode: 302, user_info };
+		//ticket a token to user
+		//give the token to user Response Header
+		const user : User = find_user;
+		const twoFA: boolean = user.twoFA;
+		let tokenType : TokenType;
+		tokenType = (twoFA === true) ? TokenType.PARTIAL: TokenType.FULL;
+		//ticket a token to user
+		const user_token = await this.authService.validateUser(user.intraId, tokenType);
+		//bake cookie
+		this.authService.setJwtCookie(res, user_token.accessToken);
+		//redirect to 2FA
+		//#################################
+		//#########     2FA     ###########
+		//#################################
+		if (user.twoFA == true){
+			return res.redirect('http://localhost:3000/two-factory-auth');
 		}
+		if (user.currentAvatarData == false){
+			return res.redirect('http://localhost:3000/create-account');
+		}
+		else{
+			return res.redirect('http://localhost:3000/main');
+		}
+		//else redirect to main page
 	}
 
 	@Post('/signup')
 	@Serialize(CreateUserDto)
 	async createUser(@Body() body: CreateUserDto) {
 		const user_intraId = body.intraId;
-		console.log("In controller finding userid: " + user_intraId);
+		console.log("In auth controller finding userid: " + user_intraId);
 		//create new user
-		const new_user = await this.authService.signup(user_intraId);
+		const new_user = await this.authService.signup(body);
 			//jwt response attachment
 		return (new_user)
 	}
 
 	@Post('/signin')
-	async signin(@Body() body : CreateUserDto, @Session() session : any){
+	async signin(@Body() body : any, @Res() res : Response){
 		console.log("singin in Controller");
-		const user = await this.authService.signin(body.intraId);
-		session.userId = user.id;
-		return user;
+		let find_user : User = await this.usersService.findUserByIntraId(body.intraId);
+		const intraId : string = body.intraId;
+		const nickname : string = body.intraId;
+		if (!find_user)
+		{
+			console.log("new user logged in!");
+			//this gonna be create user dto soon.
+			find_user = await this.usersService.createUser({intraId, nickname});
+		}
+		const user : User = find_user;
+		const twoFA: boolean = user.twoFA;
+		let tokenType : TokenType;
+		tokenType = (twoFA === true) ? TokenType.PARTIAL: TokenType.FULL;
+		//ticket a token to user
+		const user_token = await this.authService.validateUser(user.intraId, tokenType);
+		//bake cookie
+		this.authService.setJwtCookie(res, user_token.accessToken);
+		//redirect to 2FA
+		//#################################
+		//#########     2FA     ###########
+		//#################################
+//		if (user.twoFA == true){
+//			return res.redirect('http://localhost:3000/main');
+//		}
+//		if (user.currentAvatarData == false){
+//			return res.redirect('http://localhost:3000/create-account');
+//		}
+//		else{
+//			return res.redirect('http://localhost:3000/main');
+//		}
+		//else redirect to main page
+		return res.json(user_token);
 	}
 
 	@Get('/authentication')
 	@UseGuards(JwtAuthGuard)
-	async isAuth(@Request() req) : Promise<any>{
+	async isAuth(@Req() req: Request, @Res() res: Response) : Promise<any>{
+		console.log("checking Authentication user in request")
 		const user: any = req.user;
+		res.json(user);
 		return (user);
 	}
+	@Get('/cookies')
+	@UseGuards(JwtAuthGuard)
+	getCookies(@Req() req: Request, @Res() res: Response): any {
+        const jwt = req.cookies['jwt'];
+        return res.status(200).send(jwt);
+    }
 
 	@Post('/signout')
 	@UseGuards(JwtAuthGuard)
-	async signOut(@Request() req, @Response() res) : Promise<any> {
-		return (null);
+	async signOut(@Req() req : Request, @Res() res : Response) : Promise<any> {
+		return (await this.authService.destoryJwtCookie(res));
 	}
 }

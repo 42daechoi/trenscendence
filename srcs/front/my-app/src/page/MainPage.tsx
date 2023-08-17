@@ -8,7 +8,7 @@ import ChannelsList from "../component/ChannelsList";
 import Chat from "../component/Chat";
 import io from "socket.io-client";
 
-const socket = io('http://localhost:3001');
+const socket = io('http://localhost:3002');
 
 export default function MainPage() {
   const [curPage, setCurPage] = useState("leaderboard");
