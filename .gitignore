@@ -131,4 +131,4 @@ dist
 
 # postgres
 srcs/database/postgres
-srcs/database/pgadmin
+srcs/database/pg_admin
