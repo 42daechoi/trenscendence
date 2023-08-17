@@ -61,9 +61,7 @@ export class TwoFactorAuthController {
   @UseGuards(JwtAuthGuard)
   async disableTwoFactorAuth(
 	@CurrentUser() user: User,
-//	@Body() twoFactorAuthCode: TwoFactorAuthCodeDto,
 	) {
-//    this.validateCode(user, twoFactorAuthCode.twoFactorAuthCode);
     await this.twoFactorAuthService.disableTwoFactor(user);
     this.logger.log(`2FA has been disabled for user ${user.id}`);
   }

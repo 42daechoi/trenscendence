@@ -100,7 +100,7 @@ export class AuthController {
 		const user : User = find_user;
 		const twoFA: boolean = user.twoFA;
 		let tokenType : TokenType;
-		tokenType = (twoFA == true) ? TokenType.PARTIAL: TokenType.FULL;
+		tokenType = (twoFA === true) ? TokenType.PARTIAL: TokenType.FULL;
 		//ticket a token to user
 		const user_token = await this.authService.validateUser(user.intraId, tokenType);
 		//bake cookie

@@ -35,6 +35,7 @@ export class PartialJwtStrategy extends PassportStrategy(
         id: payload.id,
       });
     }
+	console.log("token type: partial")
     return user;
   }
 }

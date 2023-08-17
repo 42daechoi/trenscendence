@@ -38,6 +38,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     // only validates if JWT token payload indicates full access
 	// return user to request
     if (payload.type === TokenType.FULL) {
+		console.log("token type: full")
       return user;
     }
   }
