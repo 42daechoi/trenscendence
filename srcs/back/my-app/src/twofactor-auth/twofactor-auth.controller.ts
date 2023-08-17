@@ -49,9 +49,9 @@ export class TwoFactorAuthController {
   @UseGuards(JwtAuthGuard)
   async enableTwoFactorAuth(
     @CurrentUser() user: User,
-    @Body() twoFactorAuthCode: TwoFactorAuthCodeDto,
+//    @Body() twoFactorAuthCode: TwoFactorAuthCodeDto,
   ) {
-    this.validateCode(user, twoFactorAuthCode.twoFactorAuthCode);
+//    this.validateCode(user, twoFactorAuthCode.twoFactorAuthCode);
     await this.twoFactorAuthService.enableTwoFactor(user);
     this.logger.log(`2FA has been enabled for user ${user.id}`);
   }
@@ -59,9 +59,21 @@ export class TwoFactorAuthController {
   @Post("disable")
   @HttpCode(200)
   @UseGuards(JwtAuthGuard)
-  async disableTwoFactorAuth(@CurrentUser() user: User) {
+  async disableTwoFactorAuth(
+	@CurrentUser() user: User,
+//	@Body() twoFactorAuthCode: TwoFactorAuthCodeDto,
+	) {
+//    this.validateCode(user, twoFactorAuthCode.twoFactorAuthCode);
     await this.twoFactorAuthService.disableTwoFactor(user);
     this.logger.log(`2FA has been disabled for user ${user.id}`);
+  }
+
+  @Post("rest")
+  @HttpCode(200)
+  @UseGuards(JwtAuthGuard)
+  async reSetTwoFactorAuth(@CurrentUser() user: User) {
+    await this.twoFactorAuthService.disableTwoFactor(user);
+    this.logger.log(`2FA destroyed for user ${user.id}`);
   }
 
   @Post("authenticate")
