@@ -7,10 +7,6 @@ interface ProfileNode {
   currUser: string;
 }
 
-// const username: string = "username";
-// let rank: string = "rank";
-let avatar: string = "avatar";
-
 const mAM: string = "modifyAvatarModal";
 const mNM: string = "modifyNicknameModal";
 const aFM: string = "addFriendModal";
@@ -150,20 +146,25 @@ function ModifyNicknameSetting() {
   );
 }
 
-export default function Profile(pn: ProfileNode) {
-  const [username, setUsername] = useState("username");
-  const [rank, setRank] = useState("rank");
-  const [avatar, setAvatar] = useState("avatar");
+let userName = "username";
+let rank = "rank";
+let avatar: string = "avatar";
 
+export default function Profile(pn: ProfileNode) {
+  const [res, setRes] = useState(null);
   function LoadUserInfo() {
     useEffect(() => {
       // any 대신 타입을 지정하려면 서버에서 보내오는 객체를 알아야될거같다.
-      apiRequest<any>("get", "http://localhost:3001/users/whoami").then(
-        (response) => {
-          setUsername(response.data.intraId);
-          setRank(response.data.rank);
-        }
-      );
+      // apiRequest<any>("get", "http://localhost:3001/users/whoami").then(
+      apiRequest<any>(
+        "get",
+        "http://localhost:3001/users/intraId/" + pn.currUser
+      ).then((response) => {
+        if (userName !== response.data.intraId)
+          userName = response.data.intraId;
+        if (rank !== response.data.rank) rank = response.data.rank;
+        setRes(response);
+      });
     }, []);
   }
 
@@ -175,19 +176,23 @@ export default function Profile(pn: ProfileNode) {
           <img src="/img/img.jpg" alt="" className="avatar-img"></img>
         </div>
         <div className="my-nickname">
-          {username}
+          {userName}
           <h1 style={{ fontSize: "20px", paddingTop: "10px" }}>
             Rank : {rank}
           </h1>
         </div>
         <div className="fix-profile">
           <div className="modal-avatar">
-            <ModifyModalButton modalType={pn.currUser === "me" ? mAM : aFM} />
-            <ModalWindow modalType={pn.currUser === "me" ? mAM : aFM} />
+            <ModifyModalButton
+              modalType={pn.currUser === userName ? mAM : aFM}
+            />
+            <ModalWindow modalType={pn.currUser === userName ? mAM : aFM} />
           </div>
           <div className="modal-nickname">
-            <ModifyModalButton modalType={pn.currUser === "me" ? mNM : iGM} />
-            <ModalWindow modalType={pn.currUser === "me" ? mNM : iGM} />
+            <ModifyModalButton
+              modalType={pn.currUser === userName ? mNM : iGM}
+            />
+            <ModalWindow modalType={pn.currUser === userName ? mNM : iGM} />
           </div>
         </div>
       </div>
