@@ -18,14 +18,26 @@ interface IMessage {
 }
 
 const initTmpUsers: IUsers[] = [
-  { name: "Obi-Wan Kenobi", profile: null, id: 0, isMute:false, isChecked:false },
-  { name: "daechoi", profile: null, id: 0, isMute:false, isChecked:false },
-  { name: "youhan", profile: null, id: 0, isMute:false, isChecked:false },
-  { name: "gyyu", profile: null, id: 0, isMute:false, isChecked:false },
+  {
+    name: "Obi-Wan Kenobi",
+    profile: null,
+    id: 0,
+    isMute: false,
+    isChecked: false,
+  },
+  { name: "daechoi", profile: null, id: 0, isMute: false, isChecked: false },
+  { name: "youhan", profile: null, id: 0, isMute: false, isChecked: false },
+  { name: "gyyu", profile: null, id: 0, isMute: false, isChecked: false },
 ];
 const initTmpMessages: IMessage[] = [
   {
-    user: { name: "Obi-Wan Kenobi", profile: null, id: 1, isMute:false, isChecked:false },
+    user: {
+      name: "Obi-Wan Kenobi",
+      profile: null,
+      id: 1,
+      isMute: false,
+      isChecked: false,
+    },
     sender: "chat chat-start",
     text: "You were the Chosen One!",
     time: new Date().toLocaleTimeString(),
@@ -41,17 +53,18 @@ export default function Chat(props) {
   const lastMessageRef = useRef<HTMLDivElement>(null);
 
   const setMute = () => {
-    for (let i:number = 0;i < users.length; i++) {
-      if (users[i].isChecked && !users[i].isMute)
-        users[i].isMute = true;
-      if (!users[i].isChecked && users[i].isMute)
-        users[i].isMute = false;
-        console.log(users[i].isMute);//삭제해야함
+    for (let i: number = 0; i < users.length; i++) {
+      if (users[i].isChecked && !users[i].isMute) users[i].isMute = true;
+      if (!users[i].isChecked && users[i].isMute) users[i].isMute = false;
+      console.log(users[i].isMute); //삭제해야함
     }
-  }
+  };
 
   function addUsers(name: string) {
-    setUsers([...users, { name: name, profile: null, id: 1, isMute:false, isChecked: false}]);
+    setUsers([
+      ...users,
+      { name: name, profile: null, id: 1, isMute: false, isChecked: false },
+    ]);
   }
 
   const addMessage = (user: IUsers, text: string, className: string) => {
@@ -78,7 +91,17 @@ export default function Chat(props) {
       console.log(target.value);
       event.preventDefault();
       if (target && target.value.length) {
-        addMessage({ name: "gyyu", profile: null, id: 0, isMute:false, isChecked:false }, target.value, "chat chat-end");
+        addMessage(
+          {
+            name: "gyyu",
+            profile: null,
+            id: 0,
+            isMute: false,
+            isChecked: false,
+          },
+          target.value,
+          "chat chat-end"
+        );
         target.value = "";
       }
     }
@@ -90,16 +113,26 @@ export default function Chat(props) {
   }, [messages]);
 
   useEffect(() => {
-    props.socket.on('message', receiveMessage);
+    props.socket.on("message", receiveMessage);
 
     return () => {
-      props.socket.off('message', receiveMessage);
+      props.socket.off("message", receiveMessage);
     };
   }, []);
 
   const receiveMessage = (msg) => {
-    addMessage({ name: "daechoi", profile: null, id: 1, isMute:false, isChecked:false }, msg, "chat chat-start");
-  }
+    addMessage(
+      {
+        name: "daechoi",
+        profile: null,
+        id: 1,
+        isMute: false,
+        isChecked: false,
+      },
+      msg,
+      "chat chat-start"
+    );
+  };
 
   return (
     <>
@@ -141,8 +174,15 @@ export default function Chat(props) {
           {users.map((user, index) => (
             // {/* 추후 key 값을 index 대신 id로 대체 */}
             <li key={"chat" + index}>
-              <input type="checkbox"  onChange={() => users[index].isChecked = users[index].isChecked ? false:true}/>
-              <ProfileModal name={user.name + index} currUser="ohter" />
+              <input
+                type="checkbox"
+                onChange={() =>
+                  (users[index].isChecked = users[index].isChecked
+                    ? false
+                    : true)
+                }
+              />
+              <ProfileModal name={user.name} currUser={user.name} />
             </li>
           ))}
         </ul>
