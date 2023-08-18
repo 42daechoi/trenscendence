@@ -4,8 +4,8 @@ export class CreateUserDto {
 	@IsString()
 	intraId: string;
 
-//	@IsNumber()
-//	intraIdNum: number;
+	@IsString()
+	nickname: string;
 //
 //	@IsString()
 //	full_name: string;

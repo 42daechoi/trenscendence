@@ -11,12 +11,18 @@ import { FortytwoStrategy } from 'src/auth/strategy/fortytwo.strategy';
 import {LocalStrategy} from 'src/auth/strategy/local.startegy';
 import { AuthModule } from 'src/auth/auth.module';
 import {HttpModule} from '@nestjs/axios';
+import { JwtModule } from '@nestjs/jwt';
 
 @Module({
   imports: [
 	  TypeOrmModule.forFeature([User]),
 		forwardRef(() => AuthModule),
-		HttpModule
+		HttpModule,
+		JwtModule.register({
+			secret: 'SECRET_KEY',
+			signOptions: {expiresIn: '300s'},
+		})
+
   ],
   controllers: [UsersController, AuthController],
   //providers -> include
