@@ -57,8 +57,17 @@ export default function GamePage() {
       this.temp = temp;
     }
   }
+  class game {
+    constructor(pad, board_x, board_y, ball, obs){
+      this.pad = pad;
+      this.board_x = board_x;
+      this.board_y = board_y;
+      this.ball = ball;
+      this.obs = obs;
+    }
+  }
+  let gameset = new game();
   let ball = new ballItem();
-  let start = 0;
   const canvasRef = useRef(null);
   const gameRef = useRef(null);
   const obsRef = useRef(null);
@@ -242,15 +251,15 @@ useEffect(() => {
       }
     };
       socket.on('start', (data) => {
-        start = data;
         requestAnimationFrame(() => {console.log("b")});
         pong();
       });
-      socket.on('client', (data) => {
-        console.log(data);
-        requestAnimationFrame(() => {console.log("a")});
+      socket.on('client', data => {
+        console.log("client", data);
         client = data;
-      });
+        if (client === 0)
+          socket.emit('gameset', gameset);
+      })
       socket.on('pad1', (data) => {
         pad[0] = data;
       });
@@ -319,7 +328,6 @@ useEffect(() => {
     );
     canvas.width = board_x;
     canvas.height = board_y;
-
     let obstacles = obsRef.current;
     let obj = obstacles.firstElementChild;
     while (obj != null) {
@@ -333,6 +341,11 @@ useEffect(() => {
       );
       obj = obj.nextElementSibling;
     }
+    gameset.pad = pad;
+    gameset.ball = ball;
+    gameset.board_x = board_x;
+    gameset.board_y = board_y;
+    gameset.obs = obstacle;
     if (gameRef.current) {
       gameRef.current.addEventListener("keyup", handlKeyup);
     }

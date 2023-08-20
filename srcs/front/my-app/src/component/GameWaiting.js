@@ -4,17 +4,27 @@ import "../css/GameWaiting.css";
 import { useNavigate } from "react-router-dom";
 
 export default function GameWaiting() {
+  let player = 0;
+  const socket = useSocket();
   const navigate = useNavigate();
   const [Ready, setReady] = useState(false);
-  const handleButtonClick = (event) => {
-    setReady(true);
-    console.log(Ready);
+  const handleButtonClick = () => {
+    setReady(!Ready);
   };
   useEffect(() => {
-    if (Ready) {
-      console.log("wait");
-      navigate("/game");
-    }
+    socket.emit("wait", "");
+    socket.on("player", (data) =>{
+      console.log("data", data);
+      player = data;
+    });
+    socket.on("Start", () => {
+      console.log("a");
+      navigate('/game');
+    });
+  }, [socket]);
+  useEffect(() => {
+      console.log("ready");
+       socket.emit("Ready", Ready);
   }, [Ready]);
   return (
     <div className="game-waiting-container">

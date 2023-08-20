@@ -11,6 +11,15 @@ const io = new Server(server, {
     allowedHeaders: ['Content-Type', 'Authorization'],
   },
 });
+class game {
+  constructor(pad, board_x, board_y, ball, obs){
+    this.pad = pad;
+    this.board_x = board_x;
+    this.board_y = board_y;
+    this.ball = ball;
+    this.obs = obs;
+  }
+}
 
 class ballItem {
   constructor(dx, dy){
@@ -40,8 +49,11 @@ class padItem {
     this.radi = other.radi;
   }
 }
+const gameset = new game();
 const ball = new ballItem;
 let i = 0;
+let j = 0;
+let k = 2;
 // 클라이언트와 연결이 수립되었을 때 처리
 function updatedirection(ball) {
   ball.dy = 0.5 * Math.random() + 0.5;
@@ -52,22 +64,46 @@ function updatedirection(ball) {
 class client{
   constructor(id, pad){
     this.id = id;
-    this.pad = 0;
+    this.pad = pad;
+    this.ready = false;
   }
 }
+
 const user = [];
 io.on('connection', (socket) => {
   console.log('Client connected: ', socket.id);
-  io.to(socket.id).emit('client', i);
-  user.push(new client(socket.io, 0))
   i++;
   console.log(i);
-  if (i == 2)
+  socket.on('wait', () => {
+    user.push(new client(socket.id, j));
+    io.to(socket.id).emit("player", j);
+    j++;
+  });
+  socket.on('Ready', data => { 
+  const find = user.find(user => user.id === socket.id);
+  find.ready = data;
+  console.log("wait", user);
+  for(let i = 0; i < 2; i++)
   {
+    if (user[i].ready === false)
+      break;
+    if (i === 1)
+      io.emit("Start", "");
+      io.to(user[0].id).emit("client", 0);
+      io.to(user[1].id).emit("client", 1);
+
+  }
+  });
+  socket.on('gameset', (data) =>{
+    gameset.ball = data.ball;
+    gameset.board_x = data.board_x;
+    gameset.board_y = data.board_y;
+    gameset.obs = data.obs;
+    gameset.pad = data.pad;
     io.emit('start', 1);
     updatedirection(ball);
     io.emit('ball', ball);
-  }
+  });
   socket.on('pad1', (data) => {
     
     // console.log("pad1" ,data);
@@ -79,9 +115,11 @@ io.on('connection', (socket) => {
   });
   socket.on('disconnect', () => {
     i--;
-    console.log('Client disconnected: ', socket.id, i);
-
-    
+    console.log('Client disconnected: ', socket.id);
+    console.log(i);
+    const find = user.findIndex(user => user.id === socket.id);
+    user.splice(find, 1);
+    j = 0;
   });
 });
 
