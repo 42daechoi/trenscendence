@@ -1,7 +1,5 @@
 import React, { useEffect, useRef } from 'react'
 import axios from 'axios'
-import { response } from 'express'
-import { request } from 'http';
 
 export default function OtpSet(props) {
 	const img_src = useRef(null);
@@ -10,7 +8,6 @@ export default function OtpSet(props) {
 		axios.post('http://localhost:3001/2fa/register', null, { withCredentials: true })
 			.then(response => {
 				img_src.current.src = response.data;
-				
 			})
 			.catch(error => {
 				console.log(error);
@@ -18,6 +15,10 @@ export default function OtpSet(props) {
 	},[]);
 
 	const btnOnClick = () => {
+		axios.post('http://localhost:3001/2fa/enable', null, { withCredentials: true })
+			.catch(error => {
+				console.log(error);
+			})
 		props.onChangePage('google_auth');
 	}
 	return (

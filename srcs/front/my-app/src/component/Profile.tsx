@@ -1,5 +1,10 @@
-import React, { useState } from "react";
+import React, { useState,useEffect } from "react";
 import "../css/Profile.css";
+import axios from 'axios'
+import { useNavigate } from 'react-router-dom';
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import { response } from "express";
 
 interface ProfileNode {
   currUser: string;
@@ -10,7 +15,9 @@ const mNM: string = "modifyNicknameModal";
 const aFM: string = "addFriendModal";
 const iGM: string = "inviteGameModal";
 
-function ModifyModalButton(props: { modalType: string }) {
+function ModifyModalButton(props: { modalType: string , callback}) {
+  const navigate = useNavigate();
+
   return (
     <button
       onClick={() => {
@@ -18,6 +25,20 @@ function ModifyModalButton(props: { modalType: string }) {
         else if (props.modalType === mNM) window[mNM].showModal();
         else if (props.modalType === aFM) window[aFM].showModal();
         else if (props.modalType === iGM) window[iGM].showModal();
+        else if (props.modalType === 'false') navigate('/two-factory-auth');
+        else if (props.modalType === 'true') {
+          axios.post('http://localhost:3001/2fa/disable', null, { withCredentials: true});
+          toast.error('OTP가 비활성화 되었습니다.', {
+            position: toast.POSITION.TOP_LEFT,
+            style: {
+              width: '500px',
+              height: '100px',
+              fontSize: '30px',
+            },
+            autoClose: 1500,
+          });
+          props.callback(false);
+        }
       }}
       className="btn-fix glass"
     >
@@ -29,7 +50,7 @@ function ModifyModalButton(props: { modalType: string }) {
         ? "친구 추가"
         : props.modalType === iGM
         ? "게임 초대"
-        : "기본 텍스트"}
+        : props.modalType === 'true' ? "OTP 해제" : "OTP 설정"}
     </button>
   );
 }
@@ -145,6 +166,24 @@ function ModifyNicknameSetting() {
 }
 
 export default function Profile(pn: ProfileNode) {
+  const [twoFA, setTwoFA] = useState('false');
+  const changeTwoFA = (s) => {
+    setTwoFA(s);
+  }
+
+  useEffect(() => {
+    axios.get('http://localhost:3001/users/whoami', { withCredentials: true })
+      .then(response => {
+        if (!response.data.twoFA)
+          setTwoFA('false');
+        else
+          setTwoFA('true');
+      })
+      .catch(error => {
+        console.log(error);
+      })
+  }, []);
+
   return (
     <div className="my-profile-container">
       <div className="avatar-button-div">
@@ -157,13 +196,16 @@ export default function Profile(pn: ProfileNode) {
         </div>
         <div className="fix-profile">
           <div className="modal-avatar">
-            <ModifyModalButton modalType={pn.currUser === "me" ? mAM : aFM} />
+            <ModifyModalButton modalType={pn.currUser === "me" ? mAM : aFM} callback={changeTwoFA}/>
             <ModalWindow modalType={pn.currUser === "me" ? mAM : aFM} />
           </div>
           <div className="modal-nickname">
-            <ModifyModalButton modalType={pn.currUser === "me" ? mNM : iGM} />
-            <ModalWindow modalType={pn.currUser === "me" ? mNM : iGM} />
+            <ModifyModalButton modalType={pn.currUser === "me" ? mNM : iGM} callback={changeTwoFA} />
+            <ModalWindow modalType={pn.currUser === "me" ? mNM : iGM}/>
           </div>
+          {pn.currUser === "me" && (<div className="2fa">
+            <ModifyModalButton modalType={twoFA} callback={changeTwoFA}/>
+          </div>)}
         </div>
       </div>
       <div className="nickname-history-div">
@@ -174,6 +216,7 @@ export default function Profile(pn: ProfileNode) {
           </ul>
         </div>
       </div>
+      <ToastContainer/>
     </div>
   );
 }
