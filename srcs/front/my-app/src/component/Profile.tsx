@@ -176,22 +176,22 @@ let rank = "rank";
 let avatar: string = "avatar";
 
 export default function Profile(pn: ProfileNode) {
-  //   const [res, setRes] = useState(null);
-  //   function LoadUserInfo() {
-  //     useEffect(() => {
-  //       // any 대신 타입을 지정하려면 서버에서 보내오는 객체를 알아야될거같다.
-  //       // apiRequest<any>("get", "http://localhost:3001/users/whoami").then(
-  //       apiRequest<any>(
-  //         "get",
-  //         "http://localhost:3001/users/intraId/" + pn.currUser
-  //       ).then((response) => {
-  //         if (userName !== response.data.intraId)
-  //           userName = response.data.intraId;
-  //         if (rank !== response.data.rank) rank = response.data.rank;
-  //         setRes(response);
-  //       });
-  //     }, []);
-  //   }
+  const [res, setRes] = useState(null);
+  function LoadUserInfo() {
+    useEffect(() => {
+      // any 대신 타입을 지정하려면 서버에서 보내오는 객체를 알아야될거같다.
+      // apiRequest<any>("get", "http://localhost:3001/users/whoami").then(
+      apiRequest<any>(
+        "get",
+        "http://localhost:3001/users/intraId/" + pn.currUser
+      ).then((response) => {
+        if (userName !== response.data.intraId)
+          userName = response.data.intraId;
+        if (rank !== response.data.rank) rank = response.data.rank;
+        setRes(response);
+      });
+    }, []);
+  }
 
   //   LoadUserInfo();
   const [twoFA, setTwoFA] = useState("false");
@@ -211,6 +211,7 @@ export default function Profile(pn: ProfileNode) {
       });
   }, []);
 
+  LoadUserInfo();
   return (
     <div className="my-profile-container">
       <div className="avatar-button-div">
@@ -226,19 +227,19 @@ export default function Profile(pn: ProfileNode) {
         <div className="fix-profile">
           <div className="modal-avatar">
             <ModifyModalButton
-              modalType={pn.currUser === "me" ? mAM : aFM}
+              modalType={pn.currUser === userName ? mAM : aFM}
               callback={changeTwoFA}
             />
-            <ModalWindow modalType={pn.currUser === "me" ? mAM : aFM} />
+            <ModalWindow modalType={pn.currUser === userName ? mAM : aFM} />
           </div>
           <div className="modal-nickname">
             <ModifyModalButton
-              modalType={pn.currUser === "me" ? mNM : iGM}
+              modalType={pn.currUser === userName ? mNM : iGM}
               callback={changeTwoFA}
             />
-            <ModalWindow modalType={pn.currUser === "me" ? mNM : iGM} />
+            <ModalWindow modalType={pn.currUser === userName ? mNM : iGM} />
           </div>
-          {pn.currUser === "me" && (
+          {pn.currUser === userName && (
             <div className="2fa">
               <ModifyModalButton modalType={twoFA} callback={changeTwoFA} />
             </div>
