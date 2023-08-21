@@ -18,22 +18,18 @@ export default function GamePage() {
     score_2.innerText = score;
   }
   let client = -1;
-  class padItem {
-    constructor(x, y, width, height, color, radi) {
-      this.x = x;
-      this.y = y;
-      this.width = width;
-      this.height = height;
-      this.color = color;
-      this.radi = parseInt(radi);
-    }
-  }
   class htmlItem {
     constructor(x, y, width, height) {
       this.x = x;
       this.y = y;
       this.width = width;
       this.height = height;
+    }
+    isEqual(other) {
+      this.x = other.x;
+      this.y = other.y;
+      this.width = other.width;
+      this.height = other.height;
     }
   }
 
@@ -47,7 +43,16 @@ export default function GamePage() {
       this.r = 0;
       this.temp = -1;
     }
-    init(x, y, dx, dy, v, r, temp){
+    isEqual(other){
+      this.x = other.x;
+      this.y = other.y;
+      this.dx = other.dx;
+      this.dy = other.dy;
+      this.v = other.v;
+      this.r = other.r;
+      this.temp = other.temp;
+    }
+    init(x, y, dx ,dy, v,r,temp){
       this.x = x;
       this.y = y;
       this.dx = dx;
@@ -55,6 +60,24 @@ export default function GamePage() {
       this.v = v;
       this.r = r;
       this.temp = temp;
+    }
+  }
+  class padItem {
+    constructor(x, y, width, height, color, radi) {
+      this.x = x;
+      this.y = y;
+      this.width = width;
+      this.height = height;
+      this.color = color;
+      this.radi = parseInt(radi);
+    }
+    isEqual(other) {
+      this.x = other.x;
+      this.y = other.y;
+      this.width = other.width;
+      this.height = other.height;
+      this.color = other.color;
+      this.radi = other.radi;
     }
   }
   class game {
@@ -82,29 +105,7 @@ export default function GamePage() {
   let r = 20;
   let a = 20;
   let move_px = 2;
-  function bounce() {
-    if (ball.x + ball.r > board_x) {
-      // ball.x = board_x / 2;
-      // ball.y = board_y / 2;
-      // updatedirection(ball);
-      ball.dx *= -1;
-      ball.x += ball.dx * ball.v;
-
-      // player1_win();
-    } else if (ball.x - ball.r < 0) {
-      // ball.x = board_x / 2;
-      // ball.y = board_y / 2;
-      // updatedirection(ball);
-      ball.temp = -1;
-      ball.dx *= -1;
-      ball.x += ball.dx * ball.v;
-      // player2_win();
-    } else if (ball.y + ball.r > board_y || ball.y - ball.r < 0) {
-      ball.dy *= -1;
-      ball.y += ball.dy * ball.v;
-      ball.temp = -1;
-    }
-  }
+  
   function draw() {
     ctx.clearRect(0, 0, board_x, board_y);
     ctx.beginPath();
@@ -130,97 +131,7 @@ export default function GamePage() {
     }
     ctx.closePath();
   }
-  function pong() {
-    ball.x += ball.dx * ball.v;
-    ball.y += ball.dy * ball.v;
-    bounce();
-    bounce_obstacle(obstacle);
-    bounce_obstacle(pad);
-    draw();
-    requestAnimationFrame(pong);
-  }
-  function bounce_obstacle(obs) {
-    // console.log(obs.length);
-    for (let i = 0; i < obs.length; i++) {
-      if (ball.temp != i)
-      {
-        if (ball.x > obs[i].x && ball.x < obs[i].x + obs[i].width)
-        {
-          if (ball.y > obs[i].y - ball.r && ball.y < obs[i].y + obs[i].height + ball.r)
-          {
-            ball.dy *= -1;
-            ball.y += ball.dy * ball.v;
-            ball.temp = i;
-          }
-        }
-        else if (ball.y > obs[i].y && ball.y < obs[i].y + obs[i].height)
-        {
-          if (ball.x > obs[i].x - ball.r && ball.x < obs[i].x + obs[i].width + ball.r)
-          {
-            ball.dx *= -1;
-            ball.x += ball.dx * ball.v;
-            ball.temp = i;
-          }
-        }
-        else
-        {
-          if (Math.sqrt((ball.x - obs[i].x) * (ball.x - obs[i].x) + (ball.y - obs[i].y) * (ball.y - obs[i].y)) < ball.r)
-          {
-            ball.dx *= -1;
-            ball.x += ball.dx * ball.v;
-            ball.temp = i;
-          }
-          else if (Math.sqrt((ball.x - obs[i].x - obs[i].width) * (ball.x - obs[i].x - obs[i].width) + (ball.y - obs[i].y) * (ball.y - obs[i].y)) < ball.r)
-          {
-            ball.dx *= -1;
-            ball.x += ball.dx * ball.v;
-            ball.temp = i;
-          }
-          else if (Math.sqrt((ball.x - obs[i].x) * (ball.x - obs[i].x) + (ball.y - obs[i].y - obs[i].height) * (ball.y - obs[i].y - obs[i].height)) < ball.r)
-          {
-            ball.dx *= -1;
-            ball.x += ball.dx * ball.v;
-            ball.temp = i;
-          }
-          else if (Math.sqrt((ball.x - obs[i].x - obs[i].width) * (ball.x - obs[i].x - obs[i].width) + (ball.y - obs[i].y - obs[i].height) * (ball.y - obs[i].y) - obs[i].height) < ball.r)
-          {
-            ball.dx *= -1;
-            ball.x += ball.dx * ball.v;
-            ball.temp = i;
-          }
-        }
-      }
-  }
-}
-  // function bounce_obstacle(obs) {
-  //   // console.log(obs.length);
-  //   for (let i = 0; i < obs.length; i++) {
-  //     let prevPos_x = x - dx * v;
-  //     let prevPos_y = y - dy * v;
-  //     let grad_x = (prevPos_y - y) / (prevPos_x - x);
-  //     let grad_y = 1 / grad_x;
-  //     let obs_x = obs[i].x - r;
-  //     let obs_y = obs[i].y - r;
-  //     if (dx < 0) obs_x += obs[i].width + 2 * r;
-  //     if (dy < 0) obs_y += obs[i].height + 2 * r;
-  //     let crash_y;
-  //     let crash_x;
-  //     if ((x - obs_x) * (prevPos_x - obs_x) < 0) {
-  //         crash_y = grad_x * (obs_x - x) + y;
-  //       if (crash_y > obs[i].y && crash_y < obs[i].y + obs[i].height) {
-  //         dx *= -1;
-  //         x += dx * v;
-  //       }
-  //     }
-  //     if ((y - obs_y) * (prevPos_y - obs_y) < 0) {
-  //       crash_x = grad_y * (obs_y - y) + x;
-  //     if (crash_x > obs[i].x && crash_x < obs[i].x + obs[i].width) {
-  //       dy *= -1;
-  //       y += dy * v;
-  //     }
-  //   }
-  // }
-// }
+  
 useEffect(() => {
   if (socket)
   {
@@ -250,10 +161,6 @@ useEffect(() => {
           socket.emit('pad2', pad[client]);
       }
     };
-      socket.on('start', (data) => {
-        requestAnimationFrame(() => {console.log("b")});
-        pong();
-      });
       socket.on('client', data => {
         console.log("client", data);
         client = data;
@@ -269,6 +176,11 @@ useEffect(() => {
         ball.dx = data.dx;
         ball.dy = data.dy;
       });
+      socket.on('draw', data => {
+        ball.isEqual(data.ball);
+        console.log(ball);
+        draw();
+      })
       socket.on('pad2', (data) => {
         pad[1] = data;
       });
@@ -355,7 +267,6 @@ useEffect(() => {
         gameRef.current.removeEventListener("keyup", handlKeyup);
         console.log("asd");
       }
-      cancelAnimationFrame(pong);
     };
   }, []);
   return (
