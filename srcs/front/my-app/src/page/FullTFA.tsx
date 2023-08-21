@@ -4,7 +4,7 @@ import OtpSet from '../component/OtpSet';
 import GoogleAuth from '../component/GoogleAuth';
 import axios from 'axios';
 
-export default function TwoFactoryAuth() {
+export default function FullTFA() {
 	const [curPage, setCurPage] = useState("google_auth");
 	const [curState, setState] = useState(true);
 	useEffect(() => {
