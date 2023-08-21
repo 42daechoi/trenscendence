@@ -1,5 +1,6 @@
 import React, { useState, KeyboardEvent, useEffect, useRef } from "react";
 import ProfileModal from "../component/ProfileModal";
+import Modal from "../component/Modal";
 import "../css/Chat.css";
 
 interface IUsers {
@@ -138,6 +139,19 @@ export default function Chat(props) {
     );
   };
 
+  const [isModalOpen, setModalOpen] = useState(false);
+  const openModal = (): void => {
+    setModalOpen(true);
+  };
+
+  const closeModal = (): void => {
+    setModalOpen(false);
+  };
+  function ChatSetting() {
+    return <div />;
+  }
+  function CreateChat() {}
+
   return (
     <>
       <div className="chat-box">
@@ -193,13 +207,19 @@ export default function Chat(props) {
         <div className="chat-member-button">
           <button>home</button>
           <button>kick</button>
-          <button
-            style={{ width: "70%", marginTop: "5%" }}
-            onClick={() => addUsers("ma")}
-          >
-            addUser
+          <button style={{ width: "70%", marginTop: "5%" }} onClick={openModal}>
+            chat setting
+          </button>
+          <button style={{ width: "70%", marginTop: "5%" }} onClick={openModal}>
+            create chat
           </button>
         </div>
+        {isModalOpen && (
+          <Modal
+            closeModal={closeModal}
+            ConfigureModal={() => <ChatSetting />}
+          />
+        )}
       </div>
     </>
   );
