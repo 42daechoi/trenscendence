@@ -8,7 +8,7 @@ export default function TwoFactoryAuth() {
 	const [curPage, setCurPage] = useState("google_auth");
 	const [curState, setState] = useState(true);
 	useEffect(() => {
-		axios.get('http://localhost:3001/users/whoami', { withCredentials: true })
+		axios.get('http://localhost:3001/users/OTPwhoami', { withCredentials: true })
 			.then(response => {
 				response.data.twoFASecret === null ? setCurPage('otp_set') : setCurPage('google_auth');
 				if (response.data.twoFASecret && !response.data.twoFA) setCurPage('otp_set');

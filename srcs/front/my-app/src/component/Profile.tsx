@@ -4,6 +4,7 @@ import axios from 'axios'
 import { useNavigate } from 'react-router-dom';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { response } from "express";
 
 interface ProfileNode {
   currUser: string;
@@ -177,6 +178,9 @@ export default function Profile(pn: ProfileNode) {
           setTwoFA('false');
         else
           setTwoFA('true');
+      })
+      .catch(error => {
+        console.log(error);
       })
   }, []);
 
