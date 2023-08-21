@@ -12,9 +12,6 @@ export class UpdateUserDto {
 	friends: User[];
 
 	@IsOptional()
-	blocked: User[];
-
-	@IsOptional()
 	@IsNumber()
 	wins: number;
 

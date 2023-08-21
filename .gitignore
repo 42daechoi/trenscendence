@@ -130,3 +130,7 @@ postgres/
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
+
+# postgres
+srcs/database/postgres
+srcs/database/pg_admin

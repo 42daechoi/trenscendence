@@ -23,12 +23,18 @@ import { JwtAuthGuard } from 'src/auth/guards/auth-jwt.guard';
 import {Request, Response}  from 'express';
 import PartialJwtGuard from 'src/auth/guards/auth-partial-jwt.guard';
 @Controller('users')
-export class UsersController {
+export class UsersController { 
 	constructor(private usersService: UsersService ){}
 
 	@UseGuards(JwtAuthGuard)
 	@Get('/whoami')
 	whoAmI(@CurrentUser() user: User, @Res() res: Response) {//user CurrentUser Decorator -> extract user from request
+		res.json(user);
+		return user;
+	}
+	@UseGuards(PartialJwtGuard)
+	@Get('/OTPwhoami')
+	OTPwhoAmI(@CurrentUser() user: User, @Res() res: Response) {//user CurrentUser Decorator -> extract user from request
 		res.json(user);
 		return user;
 	}
@@ -45,9 +51,9 @@ export class UsersController {
 		console.log("test post users/test/")
 	}
 
-	@Get('/id/:id')
+	@Get('/:id')
 	async findUserById(@Param('id') id: string, @Req() req: Request){
-//		console.log(req);
+		console.log(req);
 //		console.log("GET PARAM called");
 		console.log("Handler is running");
 		const user : User = await this.usersService.findUserById(parseInt(id));
