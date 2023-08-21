@@ -19,7 +19,7 @@ function useSocketConnection() {
   const [socket, setSocket] = useState(null);
 
   useEffect(() => {
-    const newSocket = io('localhost:3001');
+    const newSocket = io('localhost:3004');
     setSocket(newSocket);
     
     return () => {

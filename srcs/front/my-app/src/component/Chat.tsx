@@ -6,6 +6,8 @@ interface IUsers {
   name: string;
   profile: any;
   id: number;
+  isMute: boolean;
+  isChecked: boolean;
 }
 
 interface IMessage {
@@ -16,21 +18,33 @@ interface IMessage {
 }
 
 const initTmpUsers: IUsers[] = [
-  { name: "Obi-Wan Kenobi", profile: null, id: 0 },
-  { name: "daechoi", profile: null, id: 0 },
-  { name: "youhan", profile: null, id: 0 },
-  { name: "gyyu", profile: null, id: 0 },
+  {
+    name: "Obi-Wan Kenobi",
+    profile: null,
+    id: 0,
+    isMute: false,
+    isChecked: false,
+  },
+  { name: "daechoi", profile: null, id: 0, isMute: false, isChecked: false },
+  { name: "youhan", profile: null, id: 0, isMute: false, isChecked: false },
+  { name: "gyyu", profile: null, id: 0, isMute: false, isChecked: false },
 ];
 const initTmpMessages: IMessage[] = [
   {
-    user: { name: "Obi-Wan Kenobi", profile: null, id: 1 },
+    user: {
+      name: "Obi-Wan Kenobi",
+      profile: null,
+      id: 1,
+      isMute: false,
+      isChecked: false,
+    },
     sender: "chat chat-start",
     text: "You were the Chosen One!",
     time: new Date().toLocaleTimeString(),
   },
 ];
 
-export default function Chat() {
+export default function Chat(props) {
   // 임시 초기값 지정
   const [users, setUsers] = useState<IUsers[]>(initTmpUsers);
   const [messages, setMessages] = useState<IMessage[]>(initTmpMessages);
@@ -38,15 +52,25 @@ export default function Chat() {
   // const [messages, setMessages] = useState<IMessage[]>([]);
   const lastMessageRef = useRef<HTMLDivElement>(null);
 
+  const setMute = () => {
+    for (let i: number = 0; i < users.length; i++) {
+      if (users[i].isChecked && !users[i].isMute) users[i].isMute = true;
+      if (!users[i].isChecked && users[i].isMute) users[i].isMute = false;
+      console.log(users[i].isMute); //삭제해야함
+    }
+  };
+
   function addUsers(name: string) {
-    setUsers([...users, { name: name, profile: null, id: 1 }]);
+    setUsers([
+      ...users,
+      { name: name, profile: null, id: 1, isMute: false, isChecked: false },
+    ]);
   }
 
-  const addMessage = (user: IUsers, text: string) => {
+  const addMessage = (user: IUsers, text: string, className: string) => {
     const time = new Date().toLocaleTimeString();
     // start = 상대방 end = 자신
     // if (user.id == myid)
-    const className = "chat chat-end";
     // else
     // const className = "chat chat-start";
 
@@ -66,8 +90,22 @@ export default function Chat() {
       const target = event.target as HTMLInputElement;
       console.log(target.value);
       event.preventDefault();
+      if (target && target.value.substring(0, 6) === "/mute ") {
+        const nickname = target.value.substring(7, target.value.length - 1);
+        return;
+      }
       if (target && target.value.length) {
-        addMessage({ name: "gyyu", profile: null, id: 0 }, target.value);
+        addMessage(
+          {
+            name: "gyyu",
+            profile: null,
+            id: 0,
+            isMute: false,
+            isChecked: false,
+          },
+          target.value,
+          "chat chat-end"
+        );
         target.value = "";
       }
     }
@@ -78,11 +116,32 @@ export default function Chat() {
     };
   }, [messages]);
 
+  // useEffect(() => {
+  //   props.socket.on('message', receiveMessage);
+
+  //   return () => {
+  //     props.socket.off('message', receiveMessage);
+  //   };
+  // }, []);
+
+  const receiveMessage = (msg) => {
+    addMessage(
+      {
+        name: "daechoi",
+        profile: null,
+        id: 1,
+        isMute: false,
+        isChecked: false,
+      },
+      msg,
+      "chat chat-start"
+    );
+  };
+
   return (
     <>
       <div className="chat-box">
         <h1>채팅방 제목</h1>
-        {/* 상대방 채팅 임시 */}
         <div ref={lastMessageRef}>
           {messages.map((message, index) => (
             <div
@@ -118,17 +177,28 @@ export default function Chat() {
         <ul>
           {users.map((user, index) => (
             // {/* 추후 key 값을 index 대신 id로 대체 */}
-            <li key={index}>
-              <input type="checkbox" />
-              <ProfileModal name={user.name + index}></ProfileModal>
+            <li key={"chat" + index}>
+              <input
+                type="checkbox"
+                onChange={() =>
+                  (users[index].isChecked = users[index].isChecked
+                    ? false
+                    : true)
+                }
+              />
+              <ProfileModal name={user.name} currUser={user.name} />
             </li>
           ))}
         </ul>
         <div className="chat-member-button">
           <button>home</button>
-          <button>mute</button>
           <button>kick</button>
-          <button onClick={() => addUsers("ma")}>addUser</button>
+          <button
+            style={{ width: "70%", marginTop: "5%" }}
+            onClick={() => addUsers("ma")}
+          >
+            addUser
+          </button>
         </div>
       </div>
     </>

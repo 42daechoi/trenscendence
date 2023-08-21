@@ -29,11 +29,10 @@ export default function CallbackPage() {
 		const dataToSend = {
       code: code,
 		};
-		axios.post('http://10.19.218.63/ft-strategy/login/', dataToSend)
+		axios.get('http://localhost:3001/auth/loginfortytwo/callback')
 			.then(response => {
 				if (response.data)
-				  navigate('/create-account');
-		  })
+				  navigate('/create-account'); })
 		  .catch(error => {
 			  if (error.response) {
 			  	// 서버가 요청을 받았으나 응답 상태 코드가 실패인 경우
