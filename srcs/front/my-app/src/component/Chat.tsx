@@ -90,6 +90,10 @@ export default function Chat(props) {
       const target = event.target as HTMLInputElement;
       console.log(target.value);
       event.preventDefault();
+      if (target && target.value.substring(0, 6) === "/mute ") {
+        const nickname = target.value.substring(7, target.value.length - 1);
+        return;
+      }
       if (target && target.value.length) {
         addMessage(
           {
@@ -112,13 +116,13 @@ export default function Chat(props) {
     };
   }, [messages]);
 
-  useEffect(() => {
-    props.socket.on("message", receiveMessage);
+  // useEffect(() => {
+  //   props.socket.on('message', receiveMessage);
 
-    return () => {
-      props.socket.off("message", receiveMessage);
-    };
-  }, []);
+  //   return () => {
+  //     props.socket.off('message', receiveMessage);
+  //   };
+  // }, []);
 
   const receiveMessage = (msg) => {
     addMessage(
@@ -188,9 +192,13 @@ export default function Chat(props) {
         </ul>
         <div className="chat-member-button">
           <button>home</button>
-          <button onClick={setMute}>mute</button>
           <button>kick</button>
-          <button onClick={() => addUsers("ma")}>addUser</button>
+          <button
+            style={{ width: "70%", marginTop: "5%" }}
+            onClick={() => addUsers("ma")}
+          >
+            addUser
+          </button>
         </div>
       </div>
     </>
