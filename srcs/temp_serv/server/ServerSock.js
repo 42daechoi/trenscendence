@@ -91,7 +91,6 @@ function pong() {
   bounce();
   bounce_obstacle(obstacle);
   bounce_obstacle(pad);
-  io.emit('draw', ball);
 }
 
 class game {
@@ -234,13 +233,16 @@ io.on('connection', (socket) => {
     
     const interval = setInterval(() => {
       pong();
-    }, 1000);
+      io.emit('draw', ball);
+    }, 20);
     
   });
   socket.on('pad1', (data) => {
+    pad[0].isEqual(data);
     io.emit('pad1', data);
   });
   socket.on('pad2', (data) => {
+    pad[1].isEqual(data);
     io.emit('pad2', data);
   });
   socket.on('disconnect', () => {

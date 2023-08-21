@@ -177,8 +177,7 @@ useEffect(() => {
         ball.dy = data.dy;
       });
       socket.on('draw', data => {
-        ball.isEqual(data.ball);
-        console.log(ball);
+        ball.isEqual(data);
         draw();
       })
       socket.on('pad2', (data) => {
