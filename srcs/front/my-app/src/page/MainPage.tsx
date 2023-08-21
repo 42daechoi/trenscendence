@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 
 import "../css/MainPage.css";
@@ -21,11 +20,10 @@ export default function MainPage() {
   //   }
   // },[socket]);
 
-
   const renderPage = () => {
     switch (curPage) {
       case "my_profile":
-        return <Profile currUser="me" />;
+        return <Profile currUser="gyyu" />;
       case "game_waiting":
         return <GameWaiting />;
       case "leaderboard":
