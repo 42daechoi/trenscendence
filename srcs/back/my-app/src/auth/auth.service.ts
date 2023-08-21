@@ -15,7 +15,7 @@ export class AuthService{
 
 	constructor(private usersService: UsersService, private jwtService: JwtService){}
 
-	async signup(body : CreateUserDto) : Promise<User>{
+	async signup(body : any) : Promise<User>{
 		// See if email is in use
 		const users = await this.usersService.findUserByIntraId(body.intraId);
 		if (users) {

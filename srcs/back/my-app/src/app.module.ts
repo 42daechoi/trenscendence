@@ -9,6 +9,7 @@ import { UsersController } from './users/users.controller';
 import { ChannelModule } from './channel/channel.module';
 import {HttpModule} from '@nestjs/axios';
 import { TwoFactorModule } from './twofactor-auth/twofactor-auth.module';
+import { GameModule } from './game/game.module';
 
 @Module({
   imports: [
@@ -27,7 +28,8 @@ import { TwoFactorModule } from './twofactor-auth/twofactor-auth.module';
 		  "entities": ["dist/**/*.entity.{ts,js}"]
 		}),
 		ChannelModule,
-		TwoFactorModule
+		TwoFactorModule,
+		GameModule
 //	  TypeOrmModule.forRoot({
 //      type: 'postgres',//orm type notification
 //      database: 'tr42',//db.sqlite is file base database

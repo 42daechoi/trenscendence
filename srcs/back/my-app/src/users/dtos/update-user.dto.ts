@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsNumber, IsBoolean } from 'class-validator';
+import { IsString, IsOptional, IsNumber, IsBoolean, IsEnum } from 'class-validator';
 import { User } from 'src/typeorm';
 import {UserStatus} from 'src/typeorm/user.entity';
 
@@ -43,7 +43,7 @@ export class UpdateUserDto {
 	twoFASecret: string;
 
 	@IsOptional()
-	@IsNumber()
+	@IsEnum(UserStatus)
 	status: UserStatus;
 
 }

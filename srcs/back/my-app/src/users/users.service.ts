@@ -125,6 +125,7 @@ export class UsersService {
 		if (cur_id === fri_id)
 			return;
 
+		//find cur user
 		const user: User = await this.userRepository.findOne({ 
 		  where: {id: cur_id},
 		  relations:{blocks: true, friends: true}
@@ -143,11 +144,13 @@ export class UsersService {
 		await this.userRepository.save(user);
 	}
 
-	async getUserFriends(id: number): Promise<User[] | null> {
+	async getUserFriends(cur_id: number): Promise<User[] | null> {
+		//find cur user
 		const user: User = await this.userRepository.findOne({ 
-		  where: {id: id},
+		  where: {id: cur_id},
 		  relations:{blocks: true, friends: true}
 		})
+
 		if (!user) {
 			throw new NotFoundException('User not found');
 		}
@@ -218,4 +221,18 @@ export class UsersService {
 		console.log(blocks);
 		return (blocks);
 	}
+
+	//##################
+	//##    SOCKET    ##
+	//##################
+	async findUserBySocketId(socket_id: string): Promise<User | null>{
+		const user: User | null = await this.userRepository.findOne({
+			where : {socketId: socket_id}
+		});
+//		if (!user) {
+//			throw new NotFoundException('User not found');
+//		}
+		return (user);
+	}
+	
 }

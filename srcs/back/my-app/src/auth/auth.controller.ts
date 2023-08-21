@@ -76,11 +76,12 @@ export class AuthController {
 
 	@Post('/signup')
 	@Serialize(CreateUserDto)
-	async createUser(@Body() body: CreateUserDto) {
+	async createUser(@Body() body: any) {
 		const user_intraId = body.intraId;
+		const user_nickname = body.intraId;
 		console.log("In auth controller finding userid: " + user_intraId);
 		//create new user
-		const new_user = await this.authService.signup(body);
+		const new_user = await this.authService.signup({intraId: user_intraId, nickname: user_nickname});
 			//jwt response attachment
 		return (new_user)
 	}

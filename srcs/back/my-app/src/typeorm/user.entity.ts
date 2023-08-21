@@ -9,7 +9,9 @@ import {
   AfterInsert,
   AfterRemove,
   AfterUpdate,
-  AfterLoad
+  AfterLoad,
+  ManyToOne,
+  OneToMany,
 } from 'typeorm';
 
 export enum UserStatus {
@@ -17,6 +19,9 @@ export enum UserStatus {
   Offline = 1,
   InGame = 2,
 }
+
+import { GamePlayer } from './gamePlayer.entity';
+//import { GameHistory } from './gameHistory.entity';
 
 //  User table
 @Entity()
@@ -71,6 +76,16 @@ export class User {
 
   @Column({ nullable: true })
   twoFASecret: string;
+
+  @Column({unique: true, nullable : true})
+  socketId: string;
+
+  @OneToMany(() => GamePlayer, (gamePlayer) => gamePlayer.user)
+  gamePlayer: GamePlayer;
+
+//  @ManyToMany(() => GameHistory, histories => histories.players)
+//  @JoinTable()
+//  histories: GameHistory[];
 
   @AfterInsert()
   logInsert() {
