@@ -147,10 +147,54 @@ export default function Chat(props) {
   const closeModal = (): void => {
     setModalOpen(false);
   };
+  const [chatConfigure, setChatConfigure] = useState("");
+
   function ChatSetting() {
-    return <div />;
+    function ClickChange(flag: string) {
+      if (flag !== "protected") protectedMode.current.checked = false;
+      if (flag !== "private") privateMode.current.checked = false;
+      if (flag !== "public") publicMode.current.checked = false;
+    }
+    const protectedMode = useRef(null);
+    const privateMode = useRef(null);
+    const publicMode = useRef(null);
+
+    return (
+      <div>
+        ChatSetting
+        <div id="room-mode">채널모드</div>
+        <input
+          type="checkbox"
+          ref={protectedMode}
+          onClick={() => {
+            ClickChange("protected");
+          }}
+        />
+        protectedMode
+        <br />
+        <input
+          type="checkbox"
+          ref={privateMode}
+          onClick={() => {
+            ClickChange("private");
+          }}
+        />
+        privateMode
+        <br />
+        <input
+          type="checkbox"
+          ref={publicMode}
+          onClick={() => {
+            ClickChange("public");
+          }}
+        />
+        publicMode
+      </div>
+    );
   }
-  function CreateChat() {}
+  function CreateChat() {
+    return <div>CreateChat</div>;
+  }
 
   return (
     <>
@@ -207,17 +251,31 @@ export default function Chat(props) {
         <div className="chat-member-button">
           <button>home</button>
           <button>kick</button>
-          <button style={{ width: "70%", marginTop: "5%" }} onClick={openModal}>
+          <button
+            style={{ width: "70%", marginTop: "5%" }}
+            onClick={() => {
+              setChatConfigure("setting");
+              openModal();
+            }}
+          >
             chat setting
           </button>
-          <button style={{ width: "70%", marginTop: "5%" }} onClick={openModal}>
+          <button
+            style={{ width: "70%", marginTop: "5%" }}
+            onClick={() => {
+              setChatConfigure("create");
+              openModal();
+            }}
+          >
             create chat
           </button>
         </div>
         {isModalOpen && (
           <Modal
             closeModal={closeModal}
-            ConfigureModal={() => <ChatSetting />}
+            ConfigureModal={() =>
+              chatConfigure === "setting" ? <ChatSetting /> : <CreateChat />
+            }
           />
         )}
       </div>
