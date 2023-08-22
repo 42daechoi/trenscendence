@@ -150,50 +150,166 @@ export default function Chat(props) {
   const [chatConfigure, setChatConfigure] = useState("");
 
   function ChatSetting() {
-    function ClickChange(flag: string) {
-      if (flag !== "protected") protectedMode.current.checked = false;
-      if (flag !== "private") privateMode.current.checked = false;
-      if (flag !== "public") publicMode.current.checked = false;
-    }
-    const protectedMode = useRef(null);
-    const privateMode = useRef(null);
-    const publicMode = useRef(null);
-
+    const [isChecked, setChecked] = useState("public");
     return (
-      <div>
-        ChatSetting
-        <div id="room-mode">채널모드</div>
-        <input
-          type="checkbox"
-          ref={protectedMode}
-          onClick={() => {
-            ClickChange("protected");
+      <div id="ChatSetting">
+        <h1
+          style={{
+            fontSize: "30px",
+            textAlign: "center",
+            padding: "10px",
           }}
-        />
-        protectedMode
-        <br />
-        <input
-          type="checkbox"
-          ref={privateMode}
-          onClick={() => {
-            ClickChange("private");
-          }}
-        />
-        privateMode
-        <br />
-        <input
-          type="checkbox"
-          ref={publicMode}
-          onClick={() => {
-            ClickChange("public");
-          }}
-        />
-        publicMode
+        >
+          채팅방 설정
+        </h1>
+        <div className="container">
+          <div className="form-container">
+            <form>
+              <label>
+                <input
+                  type="radio"
+                  name="public"
+                  checked={isChecked === "public"}
+                  onChange={(e) => {
+                    setChecked(e.target.name);
+                  }}
+                ></input>
+                <span>PUBLIC</span>
+              </label>
+              <label>
+                <input
+                  type="radio"
+                  name="protected"
+                  checked={isChecked === "protected"}
+                  onChange={(e) => {
+                    setChecked(e.target.name);
+                  }}
+                ></input>
+                <span>PROTECTED</span>
+              </label>
+              <label>
+                <input
+                  type="radio"
+                  name="private"
+                  checked={isChecked === "private"}
+                  onChange={(e) => {
+                    setChecked(e.target.name);
+                  }}
+                ></input>
+                <span>PRIVATE</span>
+              </label>
+            </form>
+            <div className="chat-set-right">
+              <div className="max-People" style={{ padding: "10px" }}>
+                최대 수용 인원
+                <select
+                  style={{ marginLeft: "10px" }}
+                  name="max-people"
+                  className="select"
+                >
+                  {Array(24)
+                    .fill(0)
+                    .map((_, i) => (
+                      <option key={i} value={i + 2}>
+                        {i + 2}
+                      </option>
+                    ))}
+                </select>
+              </div>
+              {isChecked === "protected" && (
+                <div style={{ padding: "10px" }}>
+                  password
+                  <input type="text" style={{ marginLeft: "10px" }} />
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+        <button className="setting-button">수정</button>
       </div>
     );
   }
+
   function CreateChat() {
-    return <div>CreateChat</div>;
+    const [isChecked, setChecked] = useState("public");
+
+    return (
+      <div id="ChatSetting">
+        <h1
+          style={{
+            fontSize: "30px",
+            textAlign: "center",
+            padding: "10px",
+          }}
+        >
+          채팅방 생성
+        </h1>
+        <div className="container">
+          <div className="form-container">
+            <form>
+              <label>
+                <input
+                  type="radio"
+                  name="public"
+                  checked={isChecked === "public"}
+                  onChange={(e) => {
+                    setChecked(e.target.name);
+                  }}
+                ></input>
+                <span>PUBLIC</span>
+              </label>
+              <label>
+                <input
+                  type="radio"
+                  name="protected"
+                  checked={isChecked === "protected"}
+                  onChange={(e) => {
+                    setChecked(e.target.name);
+                  }}
+                ></input>
+                <span>PROTECTED</span>
+              </label>
+              <label>
+                <input
+                  type="radio"
+                  name="private"
+                  checked={isChecked === "private"}
+                  onChange={(e) => {
+                    setChecked(e.target.name);
+                  }}
+                ></input>
+                <span>PRIVATE</span>
+              </label>
+            </form>
+            <div className="chat-set-right">
+              <div className="max-People" style={{ padding: "10px" }}>
+                최대 수용 인원
+                <select
+                  style={{ marginLeft: "10px" }}
+                  name="max-people"
+                  className="select"
+                >
+                  {Array(24)
+                    .fill(0)
+                    .map((_, i) => (
+                      <option key={i} value={i + 2}>
+                        {i + 2}
+                      </option>
+                    ))}
+                </select>
+              </div>
+              {isChecked === "protected" && (
+                <div style={{ padding: "10px" }}>
+                  password
+                  <input type="text" style={{ marginLeft: "10px" }} />
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+        <button className="setting-button">생성</button>
+      </div>
+    );
   }
 
   return (
@@ -271,12 +387,14 @@ export default function Chat(props) {
           </button>
         </div>
         {isModalOpen && (
-          <Modal
-            closeModal={closeModal}
-            ConfigureModal={() =>
-              chatConfigure === "setting" ? <ChatSetting /> : <CreateChat />
-            }
-          />
+          <div className="chat-set-modal">
+            <Modal
+              closeModal={closeModal}
+              ConfigureModal={() =>
+                chatConfigure === "setting" ? <ChatSetting /> : <CreateChat />
+              }
+            />
+          </div>
         )}
       </div>
     </>
