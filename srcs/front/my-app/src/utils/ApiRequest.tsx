@@ -1,6 +1,6 @@
 import axios, { AxiosResponse } from "axios";
 
-export const apiRequest = <T,>(
+export const apiRequest = <T = any,>(
   method: "get" | "post",
   url: string,
   data?: any
@@ -27,3 +27,18 @@ export const apiRequest = <T,>(
       return error;
     });
 };
+
+export function getWhoami<T = any>(): Promise<AxiosResponse<T>> {
+  return apiRequest("get", "http://localhost:3001/users/whoami").then(
+    (response) => response
+  );
+}
+
+export function getIntraId<T = any>(
+  intraId: string
+): Promise<AxiosResponse<T>> {
+  return apiRequest(
+    "get",
+    "http://localhost:3001/users/intraId/" + intraId
+  ).then((response) => response);
+}
