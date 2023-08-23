@@ -1,6 +1,7 @@
 import React, { useState, KeyboardEvent, useEffect, useRef } from "react";
-import { useSocket } from "../component/SocketContext"
+import { useSocket } from "../component/SocketContext";
 import ProfileModal from "../component/ProfileModal";
+import Modal from "../component/Modal";
 import { whoami } from "../utils/whoami";
 import "../css/Chat.css";
 import { where } from "../utils/where";
@@ -21,14 +22,14 @@ interface IMessage {
 }
 
 const initTmpUsers: IUsers[] = [
-  { name: "Obi-Wan Kenobi", profile: null, id: 0, isChecked:false },
-  { name: "daechoi", profile: null, id: 0, isChecked:false },
-  { name: "youhan", profile: null, id: 0, isChecked:false },
-  { name: "gyyu", profile: null, id: 0, isChecked:false },
+  { name: "Obi-Wan Kenobi", profile: null, id: 0, isChecked: false },
+  { name: "daechoi", profile: null, id: 0, isChecked: false },
+  { name: "youhan", profile: null, id: 0, isChecked: false },
+  { name: "gyyu", profile: null, id: 0, isChecked: false },
 ];
 const initTmpMessages: IMessage[] = [
   {
-    user: { name: "Obi-Wan Kenobi", profile: null, id: 1, isChecked:false },
+    user: { name: "Obi-Wan Kenobi", profile: null, id: 1, isChecked: false },
     sender: "chat chat-start",
     text: "You were the Chosen One!",
     time: new Date().toLocaleTimeString(),
@@ -44,9 +45,11 @@ export default function Chat(props) {
   // const [messages, setMessages] = useState<IMessage[]>([]);
   const lastMessageRef = useRef<HTMLDivElement>(null);
 
-
   function addUsers(name: string) {
-    setUsers([...users, { name: name, profile: null, id: 1, isChecked: false}]);
+    setUsers([
+      ...users,
+      { name: name, profile: null, id: 1, isChecked: false },
+    ]);
   }
 
   const addMessage = (user: IUsers, text: string, className: string) => {
@@ -75,30 +78,66 @@ export default function Chat(props) {
       try {
         const data = await whoami();
         //닉네임이 뮤트인 경우를 대비해 닉네임 수정 시 5자 이상 강제
-        if (target && target.value.substring(0, 6) === '/mute ') {
-          const target_name:string = target.value.substring(7, target.value.length - 1);
-          return ;
+        if (target && target.value.substring(0, 6) === "/mute ") {
+          const target_name: string = target.value.substring(
+            7,
+            target.value.length - 1
+          );
+          return;
         }
-        if (target && target.value[0] === '/') {
-          const firstSpaceIdx = target.value.indexOf(' ');
-          const target_name:string = target.value.substring(1, firstSpaceIdx);
-          const msg:string = target.value.substring(firstSpaceIdx, target.value.length - 1);
+        if (target && target.value[0] === "/") {
+          const firstSpaceIdx = target.value.indexOf(" ");
+          const target_name: string = target.value.substring(1, firstSpaceIdx);
+          const msg: string = target.value.substring(
+            firstSpaceIdx,
+            target.value.length - 1
+          );
 
-          socket.emit('chat', { nickname: data.nickname, target:target_name , flag: 'dm', msg:msg});
-          addMessage({ name: data.nickname, profile: null, id: data.id, isChecked:false }, target.value, "chat chat-end");
+          socket.emit("chat", {
+            nickname: data.nickname,
+            target: target_name,
+            flag: "dm",
+            msg: msg,
+          });
+          addMessage(
+            {
+              name: data.nickname,
+              profile: null,
+              id: data.id,
+              isChecked: false,
+            },
+            target.value,
+            "chat chat-end"
+          );
           target.value = "";
-          return ;
+          return;
         }
         if (target && target.value.length) {
-            const channel = where(socket, data.nickname);
+          const channel = where(socket, data.nickname);
 
-            channel.then(channel => {
+          channel
+            .then((channel) => {
               console.log(channel);
-              socket.emit('chat', { nickname: data.nickname, target:'channel' , flag: 'broad', msg:target.value});
-            }).catch(error => {
+              socket.emit("chat", {
+                nickname: data.nickname,
+                target: "channel",
+                flag: "broad",
+                msg: target.value,
+              });
+            })
+            .catch((error) => {
               console.log(error);
-            }) 
-          addMessage({ name: data.nickname, profile: null, id: data.id, isChecked:false }, target.value, "chat chat-end");
+            });
+          addMessage(
+            {
+              name: data.nickname,
+              profile: null,
+              id: data.id,
+              isChecked: false,
+            },
+            target.value,
+            "chat chat-end"
+          );
           target.value = "";
         }
       } catch (error) {
@@ -113,17 +152,20 @@ export default function Chat(props) {
     };
   }, [messages]);
 
-  const kick = async() => {
+  const kick = async () => {
     try {
       const data = await whoami();
-      for (let i:number = 0;i < users.length; i++) {
+      for (let i: number = 0; i < users.length; i++) {
         if (users[i].isChecked)
-          socket.emit('kick', { nickname:data.nickname, target:users[i].name});
+          socket.emit("kick", {
+            nickname: data.nickname,
+            target: users[i].name,
+          });
       }
     } catch (error) {
       console.log(error);
     }
-  }
+  };
   // useEffect(() => {
   //   props.socket.on('message', receiveMessage);
 
@@ -132,28 +174,205 @@ export default function Chat(props) {
   //   };
   // }, []);
 
-  const givePermission = async() => {
-    try { 
+  const givePermission = async () => {
+    try {
       const data = await whoami();
-      for (let i:number = 0;i < users.length; i++) {
+      for (let i: number = 0; i < users.length; i++) {
         if (users[i].isChecked)
-          socket.emit('op', { nickname: data.nickname, target: users[i].name})
+          socket.emit("op", { nickname: data.nickname, target: users[i].name });
       }
     } catch (error) {
       console.log(error);
     }
-  }
+  };
 
-  const setChannel = async() => {
+  const setChannel = async () => {
     try {
       const data = await whoami();
-    } catch(error) {
+    } catch (error) {
       console.log(error);
     }
-  }
+  };
 
   const receiveMessage = (msg) => {
-    addMessage({ name: "daechoi", profile: null, id: 1, isChecked:false }, msg, "chat chat-start");
+    addMessage(
+      { name: "daechoi", profile: null, id: 1, isChecked: false },
+      msg,
+      "chat chat-start"
+    );
+  };
+
+  const [isModalOpen, setModalOpen] = useState(false);
+  const openModal = (): void => {
+    setModalOpen(true);
+  };
+
+  const closeModal = (): void => {
+    setModalOpen(false);
+  };
+  const [chatConfigure, setChatConfigure] = useState("");
+
+  function ChatSetting() {
+    const [isChecked, setChecked] = useState("public");
+    return (
+      <div id="ChatSetting">
+        <h1
+          style={{
+            fontSize: "30px",
+            textAlign: "center",
+            padding: "10px",
+          }}
+        >
+          채팅방 설정
+        </h1>
+        <div className="container">
+          <div className="form-container">
+            <form>
+              <label>
+                <input
+                  type="radio"
+                  name="public"
+                  checked={isChecked === "public"}
+                  onChange={(e) => {
+                    setChecked(e.target.name);
+                  }}
+                ></input>
+                <span>PUBLIC</span>
+              </label>
+              <label>
+                <input
+                  type="radio"
+                  name="protected"
+                  checked={isChecked === "protected"}
+                  onChange={(e) => {
+                    setChecked(e.target.name);
+                  }}
+                ></input>
+                <span>PROTECTED</span>
+              </label>
+              <label>
+                <input
+                  type="radio"
+                  name="private"
+                  checked={isChecked === "private"}
+                  onChange={(e) => {
+                    setChecked(e.target.name);
+                  }}
+                ></input>
+                <span>PRIVATE</span>
+              </label>
+            </form>
+            <div className="chat-set-right">
+              <div className="max-People" style={{ padding: "10px" }}>
+                최대 수용 인원
+                <select
+                  style={{ marginLeft: "10px" }}
+                  name="max-people"
+                  className="select"
+                >
+                  {Array(24)
+                    .fill(0)
+                    .map((_, i) => (
+                      <option key={i} value={i + 2}>
+                        {i + 2}
+                      </option>
+                    ))}
+                </select>
+              </div>
+              {isChecked === "protected" && (
+                <div style={{ padding: "10px" }}>
+                  password
+                  <input type="text" style={{ marginLeft: "10px" }} />
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+        <button className="setting-button">수정</button>
+      </div>
+    );
+  }
+
+  function CreateChat() {
+    const [isChecked, setChecked] = useState("public");
+
+    return (
+      <div id="ChatSetting">
+        <h1
+          style={{
+            fontSize: "30px",
+            textAlign: "center",
+            padding: "10px",
+          }}
+        >
+          채팅방 생성
+        </h1>
+        <div className="container">
+          <div className="form-container">
+            <form>
+              <label>
+                <input
+                  type="radio"
+                  name="public"
+                  checked={isChecked === "public"}
+                  onChange={(e) => {
+                    setChecked(e.target.name);
+                  }}
+                ></input>
+                <span>PUBLIC</span>
+              </label>
+              <label>
+                <input
+                  type="radio"
+                  name="protected"
+                  checked={isChecked === "protected"}
+                  onChange={(e) => {
+                    setChecked(e.target.name);
+                  }}
+                ></input>
+                <span>PROTECTED</span>
+              </label>
+              <label>
+                <input
+                  type="radio"
+                  name="private"
+                  checked={isChecked === "private"}
+                  onChange={(e) => {
+                    setChecked(e.target.name);
+                  }}
+                ></input>
+                <span>PRIVATE</span>
+              </label>
+            </form>
+            <div className="chat-set-right">
+              <div className="max-People" style={{ padding: "10px" }}>
+                최대 수용 인원
+                <select
+                  style={{ marginLeft: "10px" }}
+                  name="max-people"
+                  className="select"
+                >
+                  {Array(24)
+                    .fill(0)
+                    .map((_, i) => (
+                      <option key={i} value={i + 2}>
+                        {i + 2}
+                      </option>
+                    ))}
+                </select>
+              </div>
+              {isChecked === "protected" && (
+                <div style={{ padding: "10px" }}>
+                  password
+                  <input type="text" style={{ marginLeft: "10px" }} />
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+        <button className="setting-button">생성</button>
+      </div>
+    );
   }
 
   return (
@@ -196,7 +415,14 @@ export default function Chat(props) {
           {users.map((user, index) => (
             // {/* 추후 key 값을 index 대신 id로 대체 */}
             <li key={"chat" + index}>
-              <input type="checkbox"  onChange={() => users[index].isChecked = users[index].isChecked ? false:true}/>
+              <input
+                type="checkbox"
+                onChange={() =>
+                  (users[index].isChecked = users[index].isChecked
+                    ? false
+                    : true)
+                }
+              />
               <ProfileModal name={user.name + index} currUser="ohter" />
             </li>
           ))}
@@ -204,8 +430,36 @@ export default function Chat(props) {
         <div className="chat-member-button">
           <button>home</button>
           <button onClick={kick}>kick</button>
-          <button style={{width:'70%', marginTop:'5%'}} onClick={() => addUsers("ma")}>addUser</button>
+          <button>oper</button>
+          <button
+            style={{ width: "70%", marginTop: "5%" }}
+            onClick={() => {
+              setChatConfigure("setting");
+              openModal();
+            }}
+          >
+            chat setting
+          </button>
+          <button
+            style={{ width: "70%", marginTop: "5%" }}
+            onClick={() => {
+              setChatConfigure("create");
+              openModal();
+            }}
+          >
+            create chat
+          </button>
         </div>
+        {isModalOpen && (
+          <div className="chat-set-modal">
+            <Modal
+              closeModal={closeModal}
+              ConfigureModal={() =>
+                chatConfigure === "setting" ? <ChatSetting /> : <CreateChat />
+              }
+            />
+          </div>
+        )}
       </div>
     </>
   );
