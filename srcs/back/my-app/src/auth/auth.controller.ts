@@ -63,7 +63,7 @@ export class AuthController {
 		//#########     2FA     ###########
 		//#################################
 		if (user.twoFA == true){
-			return res.redirect('http://localhost:3000/two-factory-auth');
+			return res.redirect('http://localhost:3000/partial-tfa');
 		}
 		if (user.currentAvatarData == false){
 			return res.redirect('http://localhost:3000/create-account');
