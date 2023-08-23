@@ -5,8 +5,10 @@ import LoginPage from './page/LoginPage';
 import MainPage from './page/MainPage';
 import CreateAccPage from './page/CreateAccPage';
 import Callback from './page/CallbackPage';
-import TwoFactoryAuth from './page/TwoFactoryAuth';
+import FullTFA from './page/FullTFA';
 import GamePage from "./page/GamePage";
+import PartialTFA from "./page/PartialTFA";
+
 
 
 function App() {
@@ -19,7 +21,8 @@ function App() {
           <Route path='/create-account' Component={CreateAccPage}></Route>
           <Route path='/callback' Component={Callback}></Route>
           <Route path="/game" Component={GamePage}></Route>
-          <Route path='/two-factory-auth' Component={TwoFactoryAuth}></Route>
+          <Route path='/full-tfa' Component={FullTFA}></Route>
+          <Route path='/partial-tfa' Component={PartialTFA}></Route>
         </Routes>
       </Router>
     </SocketProvider>

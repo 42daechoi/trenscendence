@@ -6,7 +6,6 @@ import "../css/Profile.css";
 import { useNavigate } from "react-router-dom";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { response } from "express";
 
 interface ProfileNode {
   currUser: string;
@@ -27,7 +26,7 @@ function ModifyModalButton(props: { modalType: string; callback }) {
         else if (props.modalType === mNM) window[mNM].showModal();
         else if (props.modalType === aFM) window[aFM].showModal();
         else if (props.modalType === iGM) window[iGM].showModal();
-        else if (props.modalType === "false") navigate("/two-factory-auth");
+        else if (props.modalType === "false") navigate("/full-tfa");
         else if (props.modalType === "true") {
           axios.post("http://localhost:3001/2fa/disable", null, {
             withCredentials: true,
@@ -41,7 +40,7 @@ function ModifyModalButton(props: { modalType: string; callback }) {
             },
             autoClose: 1500,
           });
-          props.callback(false);
+          props.callback('false');
         }
       }}
       className="btn-fix glass"
