@@ -1,7 +1,10 @@
 import axios, { AxiosResponse } from "axios";
 
+const serverUrl: string = "http://localhost:3001";
+const tagUser: string = "users";
+
 export const apiRequest = <T = any,>(
-  method: "get" | "post",
+  method: "get" | "post" | "patch",
   url: string,
   data?: any
 ): Promise<AxiosResponse<T>> => {
@@ -29,7 +32,7 @@ export const apiRequest = <T = any,>(
 };
 
 export function getWhoami<T = any>(): Promise<AxiosResponse<T>> {
-  return apiRequest("get", "http://localhost:3001/users/whoami").then(
+  return apiRequest("get", `${serverUrl}/${tagUser}/whoami`).then(
     (response) => response
   );
 }
@@ -37,8 +40,19 @@ export function getWhoami<T = any>(): Promise<AxiosResponse<T>> {
 export function getIntraId<T = any>(
   intraId: string
 ): Promise<AxiosResponse<T>> {
-  return apiRequest(
-    "get",
-    "http://localhost:3001/users/intraId/" + intraId
-  ).then((response) => response);
+  return apiRequest("get", `${serverUrl}/${tagUser}/intraId/${intraId}`).then(
+    (response) => response
+  );
+}
+
+export function getId<T = any>(Id: string): Promise<AxiosResponse<T>> {
+  return apiRequest("get", `${serverUrl}/${tagUser}/${Id}`).then(
+    (response) => response
+  );
+}
+
+export function patchId<T = any>(Id: string): Promise<AxiosResponse<T>> {
+  return apiRequest("patch", `${serverUrl}/${tagUser}/${Id}`).then(
+    (response) => response
+  );
 }

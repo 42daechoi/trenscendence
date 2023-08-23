@@ -1,7 +1,12 @@
 import React, { useEffect, useRef, useState } from "react";
 import "../css/Profile.css";
 import axios from "axios";
-import { apiRequest, getWhoami, getIntraId } from "../utils/ApiRequest";
+import {
+  apiRequest,
+  getWhoami,
+  getIntraId,
+  patchId,
+} from "../utils/ApiRequest";
 import "../css/Profile.css";
 import { useNavigate } from "react-router-dom";
 import { toast, ToastContainer } from "react-toastify";
@@ -161,10 +166,11 @@ function ModifyNicknameSetting() {
     setSelectedFile(event.target.files[0]);
   };
   const handleFileUpload = () => {
+    patchId("1");
     if (text.current.value) {
       {
         /*파일 전송*/
-        apiRequest<any>(
+        apiRequest(
           "post",
           "http://localhost:3001/users/modifyNickname/" + text.current.value
         )
