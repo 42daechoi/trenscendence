@@ -1,4 +1,9 @@
-//import { CANVAS_HEIGHT, CANVAS_WIDTH } from '../interfaces/game.interface';
+import { CANVAS_HEIGHT, CANVAS_WIDTH } from '../interfaces/game.interface';
+export enum PlayerStatus {
+  Waiting = 0,
+  Ready = 1,
+  Playing = 2,
+}
 
 class PadItem {
   x: number;
@@ -79,6 +84,7 @@ export class Player1 {
 	arrowUp: boolean;
 	score: number;
 	color: string;
+	playerStatus: PlayerStatus;
 
   constructor(socketID?: string, userID?: number, nickname?: string) {
 	this.paddle = new PadItem(0, 0, 0, 0, "#023904", 0);
@@ -89,6 +95,7 @@ export class Player1 {
 	this.socketID = socketID;
 	this.userID = userID;
 	this.nickname = nickname;
+	this.playerStatus = PlayerStatus.Waiting;
   }
 }
 
@@ -104,6 +111,7 @@ export class Player2 {
 	arrowUp: boolean;
 	score: number;
 	color: string;
+	playerStatus: PlayerStatus;
 
   constructor(socketID?: string, userID?: number, nickname?: string) {
 	this.paddle = new PadItem(0, 0, 0, 0, "#023904", 0);
@@ -114,6 +122,7 @@ export class Player2 {
 	this.socketID = socketID;
 	this.userID = userID;
 	this.nickname = nickname;
+	this.playerStatus = PlayerStatus.Waiting;
   }
 }
 
@@ -152,6 +161,7 @@ export class Game {
 	host: Player1;
 	guest: Player2;
 	obastacles : Obstacle[];
+	readyNum: number;
 
 	constructor(player1? : Player1, player2? : Player2){
 		this.ball = new Ball();
@@ -159,5 +169,86 @@ export class Game {
 		this.player2 = player2;
 		this.host = player1;
 		this.guest = player2;
+		this.readyNum = 0;
 	}
+
+	bounce() {
+		let ball : Ball = this.ball;
+		if (ball.x + ball.r > CANVAS_WIDTH) {
+		  // ball.x = board_x / 2;
+		  // ball.y = board_y / 2;
+		  // updatedirection(ball);
+		  ball.dx *= -1;
+		  ball.x += ball.dx * ball.v;
+		  // player1_win();
+		} else if (ball.x - ball.r < 0) {
+		  // ball.x = board_x / 2;
+		  // ball.y = board_y / 2;
+		  // updatedirection(ball);
+		  ball.temp = -1;
+		  ball.dx *= -1;
+		  ball.x += ball.dx * ball.v;
+		  // player2_win();
+		} else if (ball.y + ball.r > CANVAS_HEIGHT || ball.y - ball.r < 0) {
+		  ball.dy *= -1;
+		  ball.y += ball.dy * ball.v;
+		  ball.temp = -1;
+    }
+  }
+
+  bounce_obstacle() {
+    // console.log(obs.length);
+	const obs = this.obastacles;
+	let ball : Ball = this.ball;
+    for (let i = 0; i < obs.length; i++) {
+      if (ball.temp != i)
+      {
+        if (ball.x > obs[i].x && ball.x < obs[i].x + obs[i].width)
+        {
+          if (ball.y > obs[i].y - ball.r && ball.y < obs[i].y + obs[i].height + ball.r)
+          {
+            ball.dy *= -1;
+            ball.y += ball.dy * ball.v;
+            ball.temp = i;
+          }
+        }
+        else if (ball.y > obs[i].y && ball.y < obs[i].y + obs[i].height)
+        {
+          if (ball.x > obs[i].x - ball.r && ball.x < obs[i].x + obs[i].width + ball.r)
+          {
+            ball.dx *= -1;
+            ball.x += ball.dx * ball.v;
+            ball.temp = i;
+          }
+        }
+        else
+        {
+          if (Math.sqrt((ball.x - obs[i].x) * (ball.x - obs[i].x) + (ball.y - obs[i].y) * (ball.y - obs[i].y)) < ball.r)
+          {
+            ball.dx *= -1;
+            ball.x += ball.dx * ball.v;
+            ball.temp = i;
+          }
+          else if (Math.sqrt((ball.x - obs[i].x - obs[i].width) * (ball.x - obs[i].x - obs[i].width) + (ball.y - obs[i].y) * (ball.y - obs[i].y)) < ball.r)
+          {
+            ball.dx *= -1;
+            ball.x += ball.dx * ball.v;
+            ball.temp = i;
+          }
+          else if (Math.sqrt((ball.x - obs[i].x) * (ball.x - obs[i].x) + (ball.y - obs[i].y - obs[i].height) * (ball.y - obs[i].y - obs[i].height)) < ball.r)
+          {
+            ball.dx *= -1;
+            ball.x += ball.dx * ball.v;
+            ball.temp = i;
+          }
+          else if (Math.sqrt((ball.x - obs[i].x - obs[i].width) * (ball.x - obs[i].x - obs[i].width) + (ball.y - obs[i].y - obs[i].height) * (ball.y - obs[i].y) - obs[i].height) < ball.r)
+          {
+            ball.dx *= -1;
+            ball.x += ball.dx * ball.v;
+            ball.temp = i;
+          }
+        }
+      }
+	}
+  }
 }

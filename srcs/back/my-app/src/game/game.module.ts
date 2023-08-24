@@ -8,9 +8,14 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import {Games} from 'src/typeorm/game.entity';
 import { GamePlayer } from 'src/typeorm/gamePlayer.entity';
 import { User } from 'src/typeorm';
+import {JwtModule} from '@nestjs/jwt';
 
 @Module({
 	imports: [
+			  	JwtModule.register({
+			secret: 'SECRET_KEY',
+			signOptions: {expiresIn: '3000s'},
+		}),
 		forwardRef(() => AuthModule),
 		forwardRef(() => UsersModule),
 	  	TypeOrmModule.forFeature([Games, GamePlayer, User])],
