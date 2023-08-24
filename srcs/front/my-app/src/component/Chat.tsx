@@ -191,8 +191,17 @@ export default function Chat(props) {
         target.value = "";
         return;
       } else if (target && target.value.length) {
+        addMessage(
+          {
+            name: data.nickname,
+            profile: null,
+            id: data.id,
+            isChecked: false,
+          },
+          target.value,
+          "chat chat-end"
+        );
         const channel = where(socket, data.nickname);
-
         channel
           .then((channel) => {
             console.log(channel);
@@ -206,16 +215,6 @@ export default function Chat(props) {
           .catch((error) => {
             console.log(error);
           });
-        addMessage(
-          {
-            name: data.nickname,
-            profile: null,
-            id: data.id,
-            isChecked: false,
-          },
-          target.value,
-          "chat chat-end"
-        );
       }
     } catch (error) {
       console.log(error);
@@ -283,20 +282,23 @@ export default function Chat(props) {
     }
   };
 
-  const setChannel = async () => {
-    try {
-      const data = await whoami();
-    } catch (error) {
-      console.log(error);
-    }
-  };
+  const receiveMessage = () => {
+    let receiveData;
 
-  const receiveMessage = (msg) => {
-    addMessage(
-      { name: "daechoi", profile: null, id: 1, isChecked: false },
-      msg,
-      "chat chat-start"
-    );
+    socket.on('chat', receiveData);
+    if (!receiveData)
+      return;
+    axios.get('http://localhost:3001/users/nickname/' + receiveData.nickname, { withCredentials: true })
+      .then(response => {
+        if (!response.data)
+          return ;
+        addMessage(
+          { name: receiveData.nickname, profile: receiveData.avatar, id: receiveData.id, isChecked: false },
+          receiveData.msg,
+          "chat chat-start"
+        );
+      })
+
   };
 
   const [isModalOpen, setModalOpen] = useState(false);
@@ -547,7 +549,6 @@ export default function Chat(props) {
         >
           ↵
         </button>
->>>>>>> ec93f17546e4bbdfa9a8d182927afabecee55fb0
       </div>
       <div className="chat-member-list">
         <ul>
