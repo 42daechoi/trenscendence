@@ -1,6 +1,17 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import "../css/Profile.css";
-
+import axios from "axios";
+import "../css/Profile.css";
+import { useNavigate } from "react-router-dom";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import {
+  apiRequest,
+  getWhoami,
+  getIntraId,
+  patchId,
+  modifyNickname,
+} from "../utils/ApiRequest";
 interface ProfileNode {
   currUser: string;
 }
@@ -10,7 +21,9 @@ const mNM: string = "modifyNicknameModal";
 const aFM: string = "addFriendModal";
 const iGM: string = "inviteGameModal";
 
-function ModifyModalButton(props: { modalType: string }) {
+function ModifyModalButton(props: { modalType: string; callback }) {
+  const navigate = useNavigate();
+
   return (
     <button
       onClick={() => {
@@ -18,6 +31,22 @@ function ModifyModalButton(props: { modalType: string }) {
         else if (props.modalType === mNM) window[mNM].showModal();
         else if (props.modalType === aFM) window[aFM].showModal();
         else if (props.modalType === iGM) window[iGM].showModal();
+        else if (props.modalType === "false") navigate("/full-tfa");
+        else if (props.modalType === "true") {
+          axios.post("http://localhost:3001/2fa/disable", null, {
+            withCredentials: true,
+          });
+          toast.error("OTP가 비활성화 되었습니다.", {
+            position: toast.POSITION.TOP_LEFT,
+            style: {
+              width: "500px",
+              height: "100px",
+              fontSize: "30px",
+            },
+            autoClose: 1500,
+          });
+          props.callback("false");
+        }
       }}
       className="btn-fix glass"
     >
@@ -29,7 +58,9 @@ function ModifyModalButton(props: { modalType: string }) {
         ? "친구 추가"
         : props.modalType === iGM
         ? "게임 초대"
-        : "기본 텍스트"}
+        : props.modalType === "true"
+        ? "OTP 해제"
+        : "OTP 설정"}
     </button>
   );
 }
@@ -94,15 +125,22 @@ function InviteGameSetting(props: { num: number }) {
 
 function ModifyAvatarSetting() {
   const [selectedFile, setSelectedFile] = useState(null);
+  const image = useRef(null);
   const handleFileChange = (event) => {
     setSelectedFile(event.target.files[0]);
   };
   const handleFileUpload = () => {
-    if (selectedFile) {
+    if (image.current.value) {
       {
         /*파일 전송*/
+        apiRequest<any>(
+          "post",
+          "http://localhost:3001/users/modifyAvatar/" + image.current.value
+          // 이미지를 어떻게 받을지에 따라 수정
+        )
+          .then((response) => {})
+          .catch((error) => {});
       }
-      console.log();
     }
   };
   return (
@@ -112,6 +150,7 @@ function ModifyAvatarSetting() {
         type="file"
         accept=".jpg, .jpeg, .png"
         onChange={handleFileChange}
+        ref={image}
       />
       <button className="avatar-upload" onClick={handleFileUpload}>
         수정하기
@@ -121,22 +160,23 @@ function ModifyAvatarSetting() {
 }
 
 function ModifyNicknameSetting() {
-  const [selectedFile, setSelectedFile] = useState(null);
-  const handleFileChange = (event) => {
-    setSelectedFile(event.target.files[0]);
-  };
+  const textbox = useRef(null);
   const handleFileUpload = () => {
-    if (selectedFile) {
+    if (textbox.current.value) {
       {
-        /*파일 전송*/
+        if (textbox.current.value.search(/\W|\s/g) > -1) {
+          alert("닉네임은 영문과 숫자만 가능합니다!!");
+          return;
+        }
+        modifyNickname(textbox.current.value);
+        textbox.current.value = "";
       }
-      console.log();
-    }
+    } else alert("닉네임을 수정하지 못했습니다!");
   };
   return (
     <>
       <h3 className="font-bold text-lg">닉네임 수정</h3>
-      <input type="text" />
+      <input type="text" ref={textbox} />
       <button className="avatar-upload" onClick={handleFileUpload}>
         수정하기
       </button>
@@ -144,7 +184,42 @@ function ModifyNicknameSetting() {
   );
 }
 
+let userName: string = "username";
+let rank: string = "rank";
+let avatar: string = "avatar";
+let isCurrentUser: string = "";
+
 export default function Profile(pn: ProfileNode) {
+  const [res, setRes] = useState(null);
+  function LoadUserInfo() {
+    useEffect(() => {
+      getWhoami().then((response) => {
+        if (pn.currUser === response.data.intraId) {
+          if (!response.data.twoFA) setTwoFA("false");
+          else setTwoFA("true");
+          if (userName !== response.data.nickname)
+            userName = response.data.nickname;
+          if (rank !== response.data.rank) rank = response.data.rank;
+          setRes(response);
+          isCurrentUser = userName;
+        } else {
+          getIntraId(pn.currUser).then((response) => {
+            if (userName !== response.data.intraId)
+              userName = response.data.intraId;
+            if (rank !== response.data.rank) rank = response.data.rank;
+            setRes(response);
+          });
+        }
+      });
+    }, []);
+  }
+
+  const [twoFA, setTwoFA] = useState("false");
+  const changeTwoFA = (s) => {
+    setTwoFA(s);
+  };
+
+  LoadUserInfo();
   return (
     <div className="my-profile-container">
       <div className="avatar-button-div">
@@ -152,28 +227,42 @@ export default function Profile(pn: ProfileNode) {
           <img src="/img/img.jpg" alt="" className="avatar-img"></img>
         </div>
         <div className="my-nickname">
-          daechoi
-          <h1 style={{ fontSize: "20px", paddingTop: "10px" }}>Rank : 1</h1>
+          {userName}
+          <h1 style={{ fontSize: "20px", paddingTop: "10px" }}>
+            Rank : {rank}
+          </h1>
         </div>
         <div className="fix-profile">
           <div className="modal-avatar">
-            <ModifyModalButton modalType={pn.currUser === "me" ? mAM : aFM} />
-            <ModalWindow modalType={pn.currUser === "me" ? mAM : aFM} />
+            <ModifyModalButton
+              modalType={isCurrentUser === userName ? mAM : aFM}
+              callback={changeTwoFA}
+            />
+            <ModalWindow modalType={isCurrentUser === userName ? mAM : aFM} />
           </div>
           <div className="modal-nickname">
-            <ModifyModalButton modalType={pn.currUser === "me" ? mNM : iGM} />
-            <ModalWindow modalType={pn.currUser === "me" ? mNM : iGM} />
+            <ModifyModalButton
+              modalType={isCurrentUser === userName ? mNM : iGM}
+              callback={changeTwoFA}
+            />
+            <ModalWindow modalType={isCurrentUser === userName ? mNM : iGM} />
           </div>
+          {isCurrentUser === userName && (
+            <div className="2fa">
+              <ModifyModalButton modalType={twoFA} callback={changeTwoFA} />
+            </div>
+          )}
         </div>
       </div>
       <div className="nickname-history-div">
         <div className="history">
           <ul>
-            <li>daechoi vs king 2:1 win</li>
-            <li>eunji vs hello 1:2 lose</li>
+            <li style={{ userSelect: "auto" }}>daechoi vs king 2:1 win</li>
+            <li style={{ userSelect: "auto" }}>eunji vs hello 1:2 lose</li>
           </ul>
         </div>
       </div>
+      <ToastContainer />
     </div>
   );
 }

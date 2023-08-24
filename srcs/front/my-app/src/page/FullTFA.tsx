@@ -4,13 +4,15 @@ import OtpSet from '../component/OtpSet';
 import GoogleAuth from '../component/GoogleAuth';
 import axios from 'axios';
 
-export default function TwoFactoryAuth() {
+export default function FullTFA() {
 	const [curPage, setCurPage] = useState("google_auth");
-
+	const [curState, setState] = useState(true);
 	useEffect(() => {
-		axios.get('http://localhost:3001/users/whoami',{ withCredentials: true })
+		axios.get('http://localhost:3001/users/OTPwhoami', { withCredentials: true })
 			.then(response => {
-				response.data.twoFA === true ? setCurPage('google_auth') : setCurPage('otp_set');
+				response.data.twoFASecret === null ? setCurPage('otp_set') : setCurPage('google_auth');
+				if (response.data.twoFASecret && !response.data.twoFA) setCurPage('otp_set');
+				response.data.twoFA === true ? setState(true) : setState(false);
 			})
 			.catch(error => {
 				console.log(error);
@@ -22,7 +24,7 @@ export default function TwoFactoryAuth() {
 			case 'otp_set':
 				return <OtpSet onChangePage={changePage}/>;
 			case 'google_auth':
-				return <GoogleAuth/>;
+				return <GoogleAuth state={curState} />;
 		}
 	};
 	const changePage = (nextPage) => {

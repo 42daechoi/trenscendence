@@ -61,7 +61,9 @@ export class TwoFactorAuthController {
   @UseGuards(JwtAuthGuard)
   async disableTwoFactorAuth(
 	@CurrentUser() user: User,
+//	@Body() twoFactorAuthCode: TwoFactorAuthCodeDto,
 	) {
+//    this.validateCode(user, twoFactorAuthCode.twoFactorAuthCode);
     await this.twoFactorAuthService.disableTwoFactor(user);
     this.logger.log(`2FA has been disabled for user ${user.id}`);
   }
@@ -89,7 +91,8 @@ export class TwoFactorAuthController {
 	//bake cookie with FULL Token
 	this.authService.setJwtCookie(res, full_token.accessToken);
 //    res.setHeader("Set-Cookie", authCookie);
-	return res.json(user);
+      res.json(user);
+	    return ;
   }
 
   private validateCode(user: User, twoFactorAuthCode: string) {

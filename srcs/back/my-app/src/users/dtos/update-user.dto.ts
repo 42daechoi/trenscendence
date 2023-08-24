@@ -12,9 +12,6 @@ export class UpdateUserDto {
 	friends: User[];
 
 	@IsOptional()
-	blocked: User[];
-
-	@IsOptional()
 	@IsNumber()
 	wins: number;
 
@@ -41,9 +38,4 @@ export class UpdateUserDto {
 	@IsString()
 	@IsOptional()
 	twoFASecret: string;
-
-	@IsOptional()
-	@IsNumber()
-	status: UserStatus;
-
 }

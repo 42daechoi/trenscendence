@@ -63,7 +63,7 @@ export class AuthController {
 		//#########     2FA     ###########
 		//#################################
 		if (user.twoFA == true){
-			return res.redirect('http://localhost:3000/two-factory-auth');
+			return res.redirect('http://localhost:3000/partial-tfa');
 		}
 		if (user.currentAvatarData == false){
 			return res.redirect('http://localhost:3000/create-account');
@@ -100,7 +100,7 @@ export class AuthController {
 		const user : User = find_user;
 		const twoFA: boolean = user.twoFA;
 		let tokenType : TokenType;
-		tokenType = (twoFA === true) ? TokenType.PARTIAL: TokenType.FULL;
+		tokenType = (twoFA == true) ? TokenType.PARTIAL: TokenType.FULL;
 		//ticket a token to user
 		const user_token = await this.authService.validateUser(user.intraId, tokenType);
 		//bake cookie

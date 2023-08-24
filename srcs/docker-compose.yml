@@ -14,16 +14,30 @@ services:
       - front_vol:/front/my-app
     env_file:
       - .env
+
   back:
     container_name: back
     build: ./back
     restart: always
+    ports:
+      - "3001:3001"
     networks:
       - tran_net
     volumes:
       - back_vol:/back/my-app
+
+
+  temp_serv:
+    container_name: temp
+    build: ./temp_serv
+
+    restart: always
     ports:
-      - "3001:3001"
+      - "3004:3004"
+    networks:
+      - tran_net
+    volumes:
+      - temp_vol:/server
     env_file:
       - .env
     depends_on:
@@ -65,17 +79,16 @@ services:
     depends_on:
       - db
 
-
 volumes:
   front_vol:
     driver_opts:
       type: none
       device: ${PWD}/srcs/front/my-app
       o: bind
-  back_vol:
+  temp_vol:
     driver_opts:
       type: none
-      device: ${PWD}/srcs/back/my-app
+      device: ${PWD}/srcs/temp_serv/server
       o: bind
   postgres_vol: # This volume will persist the PostgreSQL data
     driver_opts:
@@ -87,6 +100,12 @@ volumes:
       type: none
       device: ${PWD}/srcs/database/pg_admin
       o: bind
+  back_vol:
+    driver_opts:
+      type: none
+      device: ${PWD}/srcs/back/my-app
+      o: bind
+
 
 networks:
   tran_net:
