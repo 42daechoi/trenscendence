@@ -13,6 +13,7 @@ import "../css/Chat.css";
 import { where } from "../utils/where";
 import axios from "axios";
 import { response } from "express";
+import { isBindingElement } from "typescript";
 
 interface IUsers {
   name: string;
@@ -43,6 +44,7 @@ const initTmpMessages: IMessage[] = [
   },
 ];
 
+
 export default function Chat(props) {
   // 임시 초기값 지정
   const [users, setUsers] = useState<IUsers[]>(initTmpUsers);
@@ -53,6 +55,12 @@ export default function Chat(props) {
   // const [messages, setMessages] = useState<IMessage[]>([]);
   const lastMessageRef = useRef<HTMLDivElement>(null);
 
+  const init = async() => {
+    const data = await whoami();
+    socket.emit('bind', data.nickname);
+    receiveMessage();
+  }
+  init();
   function addUsers(name: string) {
     setUsers([
       ...users,
