@@ -7,18 +7,26 @@ import LeaderBoard from "../component/LeaderBoard";
 import FriendsList from "../component/FriendsList";
 import ChannelsList from "../component/ChannelsList";
 import Chat from "../component/Chat";
-import io from "socket.io-client";
-import axios from "axios";
-
-// const socket = io('http://localhost:3002');
+import { useSocket } from "../component/SocketContext";
+import { apiRequest } from "../utils/ApiRequest";
 
 export default function MainPage() {
+  const socket = useSocket();
   const [curPage, setCurPage] = useState("my_profile");
-  // useEffect(() => {
-  //   return () => {
-  //     socket.disconnect();
-  //   }
-  // },[socket]);
+  useEffect(() => {
+    apiRequest<any>(
+      "get",
+      "http://localhost:3001/users/whoami"
+    ).then((response) => {
+      if (socket)
+      {
+        socket.on("message", data =>{
+          console.log("bind:", data);
+        });
+        socket.emit("bindId", response.data.id);
+      }
+    });
+  },[socket]);
 
   const renderPage = () => {
     switch (curPage) {

@@ -233,7 +233,7 @@ io.on('connection', (socket) => {
     
     const interval = setInterval(() => {
       pong();
-      io.emit('draw', ball);
+      io.emit('draw', xball);
     }, 20);
     
   });
