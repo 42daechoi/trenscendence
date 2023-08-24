@@ -15,9 +15,9 @@ import {
 } from 'typeorm';
 
 export enum UserStatus {
-  Online = 0,
-  Offline = 1,
-  InGame = 2,
+  OFFLINE,
+  ONLINE,
+  GAME,
 }
 
 import { GamePlayer } from './gamePlayer.entity';
@@ -38,11 +38,10 @@ export class User {
 
   @Column({ unique: true, nullable: true })
   name: string;
-
-  //0 -> offline
-  //1 -> online
-  //2 -> ongame
-  @Column({ default: 0})
+  
+  @Column({
+    default: UserStatus.OFFLINE,
+  })
   status: UserStatus;
 
   @ManyToMany(() => User)

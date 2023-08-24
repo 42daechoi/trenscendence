@@ -1,6 +1,9 @@
 import { 
 	Logger, 
-	Inject } from '@nestjs/common';
+	Inject,
+	UseGuards,
+	Req
+} from '@nestjs/common';
 import { 
 	WebSocketServer,
 	SubscribeMessage, 
@@ -15,23 +18,34 @@ import {
 import { 
 	Server,
 	Namespace,
-	Socket 
+	Socket,
 } from 'socket.io';
 import { UsersService } from 'src/users/users.service';
 import { User } from 'src/typeorm';
 import { GameService } from './game.service';
+import { JwtAuthGuard } from 'src/auth/guards/auth-jwt.guard';
+import {CurrentUser} from 'src/users/decorators/current-user.decorator';
+import {JwtService} from '@nestjs/jwt';
+import { TokenPayload } from 'src/auth/interfaces/token-payload.interface';
+import { WsJwtGuard } from './guards/ws.jwt.guard';
+import {AuthService} from 'src/auth/auth.service';
+import {CurrentUserWs} from './decorators/ws.current-user.decorator';
 
 @WebSocketGateway({
   namespace: 'game',
   cors: {
     origin: ['http://localhost:3000'],
+	credentials: true,
   },
 })
 export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
 	private readonly logger = new Logger(GameGateway.name);
 	constructor(
 		@Inject(UsersService)private usersService: UsersService,
-		@Inject(GameService) private gameService: GameService) {}
+		@Inject(AuthService)private authService: AuthService,
+		@Inject(GameService) private gameService: GameService,
+		@Inject(JwtService) private jwtService : JwtService,
+	) {}
 	//@WebSocketServer 데코레이터 부분을 주목해주세요.
 
 	//현재 네임스페이스를 설정했기 때문에 @WebSocketServer 데코레이터가 반환하는 값은 서버 인스턴스가 아닌 네임스페이스 인스턴스입니다.
@@ -44,34 +58,45 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
   	//execute right after init
 	afterInit() {
 		this.nsp.adapter.on('create-room', (room) => {
-	  this.logger.log(`"Room:${room}"이 생성되었습니다.`);
+	  this.logger.log(`"Room:${room}" has been created.`);
     });
 
     this.nsp.adapter.on('join-room', (room, id) => {
-      this.logger.log(`"Socket:${id}"이 "Room:${room}"에 참여하였습니다.`);
+      this.logger.log(`"Socket:${id}" has joined "Room:${room}".`);
     });
 
     this.nsp.adapter.on('leave-room', (room, id) => {
-      this.logger.log(`"Socket:${id}"이 "Room:${room}"에서 나갔습니다.`);
+      this.logger.log(`"Socket:${id}" has left "Room:${room}".`);
     });
 
     this.nsp.adapter.on('delete-room', (roomName) => {
-      this.logger.log(`"Room:${roomName}"이 삭제되었습니다.`);
+      this.logger.log(`"Room:${roomName}"is deleted.`);
     });
 
     this.logger.log('WebSocketServer init ✅');
 	}
   
   	//execute right after connection
-	handleConnection(@ConnectedSocket() socket: Socket) {
+	@UseGuards(WsJwtGuard)
+	async handleConnection(@ConnectedSocket() socket: Socket) {
 		this.logger.log(`${socket.id} socket connected`);
-
 		//broadcast
 		socket.emit('message', {
 		  message: `${socket.id} has connected.`,
 		});
-
-		//how about to emit an event to one socket?
+		const jwtCookie = socket.handshake.headers.cookie?.split('; ').find(row => row.startsWith('jwt='))?.split('=')[1];
+		if (jwtCookie)
+		{
+			const user: User = await this.authService.verifyUser(jwtCookie);
+			this.logger.log("found jwt in cookie : " + jwtCookie);
+			//binding user and socket id
+			if (!user)
+				return ;
+			this.logger.log("binding socket id with user id " + user.intraId);
+			await this.usersService.update(user.id, {socketId: socket.id});
+			await this.gameService.userComeNsp(socket);
+			return Boolean(user);
+		}
 	}
 
 	async handleDisconnect(@ConnectedSocket() socket: Socket) {
@@ -80,8 +105,10 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
 		if (!out_user)
 			return;
 		await this.usersService.update(out_user.id, {socketId: null});
+		await this.gameService.userOutNsp(socket);
 	}
 
+//	@UseGuards(WsJwtGuard)
 	@SubscribeMessage('bindId')
 	async bindId(
 		@ConnectedSocket() socket: Socket,
@@ -97,11 +124,11 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
 
 	@SubscribeMessage('whoamiGateway')
 	async idnetifyId(
-		@ConnectedSocket() socket: Socket) {
+		@ConnectedSocket() socket: Socket,
+		@CurrentUserWs() userId : string) {
 		this.logger.log("finding socket id : " + socket.id);
-		const user : User = await this.usersService.findUserBySocketId(socket.id);
-//		socket.emit('whoamiGateway', { socketId: socket.id, userId: user.id});
-		return { socketId: socket.id, user};
+		this.logger.log("userId : " + userId);
+		return (userId);
 	}
 
 	@SubscribeMessage('gameRoomCreate')
@@ -120,22 +147,6 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
 		return { socketId: socket.id, userId: user.id };
 	}
 
-	@SubscribeMessage('gameRoomOut')
-	async gameRoomOut(
-		@ConnectedSocket() socket: Socket) {
-		const user : User = await this.usersService.findUserBySocketId(socket.id);
-		socket.emit('gameRoomOut', { socketId: socket.id, userId: user.id});
-		return { socketId: socket.id, userId: user.id };
-	}
-
-	@SubscribeMessage('gameStart')
-	async gameStart(
-		@ConnectedSocket() socket: Socket) {
-		const user : User = await this.usersService.findUserBySocketId(socket.id);
-		socket.emit('gameStart', { socketId: socket.id, userId: user.id});
-		return { socketId: socket.id, userId: user.id };
-	}
-
 	@SubscribeMessage('match')
 	async pushQueue(
 		@ConnectedSocket() socket: Socket) {
@@ -147,28 +158,14 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
 		socket.emit('matching waiting', { socketId: socket.id, userId: user.id});
 		return { socketId: socket.id, userId: user.id };
 	}
-
-	@SubscribeMessage('ready')
-	async ready(
-		@ConnectedSocket() socket: Socket) {
-		const user : User = await this.usersService.findUserBySocketId(socket.id);
-		const clientSocket: Socket = socket;
-		socket.emit('ready, game start waiting', { socketId: socket.id, userId: user.id});
-		return { socketId: socket.id, userId: user.id };
-	}
-
-	@SubscribeMessage('allReady')
-	async allReady(
-		@ConnectedSocket() socket: Socket) {
-		const user : User = await this.usersService.findUserBySocketId(socket.id);
-		const clientSocket: Socket = socket;
-		await this.gameService.pushQueue(clientSocket);
-		await this.gameService.monitorQueue(this.server);
-
-		socket.emit('gameStart', { socketId: socket.id, userId: user.id});
-		return { socketId: socket.id, userId: user.id };
-	}
-	
+//	@SubscribeMessage('allReady') async allReady(
+//		@ConnectedSocket() socket: Socket) {
+//		const user : User = await this.usersService.findUserBySocketId(socket.id);
+//		const clientSocket: Socket = socket;
+//
+//		return { socketId: socket.id, userId: user.id };
+//	}
+//	
 	@SubscribeMessage('matchQueueOut')
 	async popQueue(
 		@ConnectedSocket() socket: Socket) {
@@ -179,16 +176,66 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
 		return { socketId: socket.id, userId: user.id };
 	}
 
+	@SubscribeMessage('testnsp')
+	async testnsp(
+		@ConnectedSocket() socket: Socket,
+		@MessageBody() gameSetting: any 
+	){
+		this.gameService.testnsp(this.nsp, socket, gameSetting);
+	}
+
+	//#############################################################
+	// ##########           AFTER MATCH UP            #############
+	//#############################################################
+	
 	@SubscribeMessage('setUp')
 	async setupRoom(
 		@ConnectedSocket() socket: Socket,
-		@MessageBody() gameSetting: any 
+		@MessageBody() gameSetting: any ,
 	) {
+		this.gameService.echoRoomByGameHost(socket, this.server, gameSetting);
+	}
+	
+	@SubscribeMessage('ready')
+	async ready(
+		@ConnectedSocket() socket: Socket) {
+		await this.gameService.playerReady(socket, this.nsp);
+	}
+
+	@SubscribeMessage('unReady')
+	async unready(
+		@ConnectedSocket() socket: Socket) {
+		await this.gameService.playerUnready(socket);
+	}
+
+	@SubscribeMessage('gameRoomOut')
+	async gameRoomOut(
+		@ConnectedSocket() socket: Socket) {
 		const user : User = await this.usersService.findUserBySocketId(socket.id);
-		const client: Socket = socket;
-		await this.gameService.popQueue(client);
-		socket.emit('setUp', { socketId: socket.id, userId: user.id});
+		//set user's status Online not InGame
+
+		socket.emit('gameRoomOut', { socketId: socket.id, userId: user.id});
+		await this.gameService.destroyGame(socket);
 		return { socketId: socket.id, userId: user.id };
 	}
+
+	@SubscribeMessage('gameStart')
+	async gameStart(
+		@ConnectedSocket() socket: Socket, 
+
+		@MessageBody()
+		game_info: {
+
+		},
+	) {
+		await this.gameService.gameStart(socket, this.nsp);
+		const user : User = await this.usersService.findUserBySocketId(socket.id);
+		return { socketId: socket.id, userId: user.id };
+	}
+
+
+	//#############################################################
+	// ##########          AFTER GAME START           #############
+	//#############################################################
 
 }

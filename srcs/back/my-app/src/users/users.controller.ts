@@ -22,13 +22,15 @@ import { CurrentUser } from './decorators/current-user.decorator';
 import { JwtAuthGuard } from 'src/auth/guards/auth-jwt.guard';
 import {Request, Response}  from 'express';
 import PartialJwtGuard from 'src/auth/guards/auth-partial-jwt.guard';
+import {currentAuthUser} from 'src/auth/decorators/auth-user.decorator';
+import {Serialize} from 'src/interceptors/serialize.interceptor';
 @Controller('users')
 export class UsersController { 
 	constructor(private usersService: UsersService ){}
 
 	@UseGuards(JwtAuthGuard)
 	@Get('/whoami')
-	whoAmI(@CurrentUser() user: User, @Res() res: Response) {//user CurrentUser Decorator -> extract user from request
+	whoAmI(@currentAuthUser() user: User, @Res() res: Response) {//user CurrentUser Decorator -> extract user from request
 		res.json(user);
 		return user;
 	}
@@ -51,11 +53,11 @@ export class UsersController {
 		console.log("test post users/test/")
 	}
 
-	@Get('/:id')
+	@Get('id/:id')
 	async findUserById(@Param('id') id: string, @Req() req: Request){
-		console.log(req);
+//		console.log(req);
 //		console.log("GET PARAM called");
-		console.log("Handler is running");
+//		console.log("Handler is running");
 		const user : User = await this.usersService.findUserById(parseInt(id));
 		if (!user) {
 		  throw new NotFoundException('user not found');
@@ -95,12 +97,13 @@ export class UsersController {
 
 	@Patch('/:id')
 //	@UseGuards(JwtAuthGuard)
+	@Serialize(UpdateUserDto)
 	updateUser(@Param('id') id: string, @Body() body: UpdateUserDto){
 		return this.usersService.update(parseInt(id), body);
 	}
 
 	@Get('findAll')
-	@UseGuards(JwtAuthGuard)
+//	@UseGuards(JwtAuthGuard)
 	findAllUser(){
 		return this.usersService.findAllUsers();
 	}

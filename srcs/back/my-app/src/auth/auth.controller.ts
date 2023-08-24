@@ -28,6 +28,7 @@ import {LocalAuthGuard} from './guards/auth-local.guard';
 import {AuthGuard} from '@nestjs/passport';
 import {JwtAuthGuard} from './guards/auth-jwt.guard';
 import { TokenType } from './interfaces/token-payload.interface';
+import {UserStatus} from 'src/typeorm/user.entity';
 
 @Controller('auth')
 export class AuthController {
@@ -58,6 +59,7 @@ export class AuthController {
 		const user_token = await this.authService.validateUser(user.intraId, tokenType);
 		//bake cookie
 		this.authService.setJwtCookie(res, user_token.accessToken);
+		this.authService.setJwtHeader(res, user_token.accessToken)
 		//redirect to 2FA
 		//#################################
 		//#########     2FA     ###########
@@ -65,13 +67,19 @@ export class AuthController {
 		if (user.twoFA == true){
 			return res.redirect('http://localhost:3000/two-factory-auth');
 		}
-		if (user.currentAvatarData == false){
-			return res.redirect('http://localhost:3000/create-account');
-		}
 		else{
-			return res.redirect('http://localhost:3000/main');
+			this.authService.updateUserStatusOnline(user);
+			//if no avata data
+			if (user.currentAvatarData == false){
+				this.usersService.update(user.id, {status: UserStatus.ONLINE})
+				return res.redirect('http://localhost:3000/create-account');
+			}
+				//else redirect to main page
+			else{
+				this.usersService.update(user.id, {status: UserStatus.ONLINE})
+				return res.redirect('http://localhost:3000/main');
+			}
 		}
-		//else redirect to main page
 	}
 
 	@Post('/signup')
@@ -106,6 +114,7 @@ export class AuthController {
 		const user_token = await this.authService.validateUser(user.intraId, tokenType);
 		//bake cookie
 		this.authService.setJwtCookie(res, user_token.accessToken);
+		this.authService.setJwtHeader(res, user_token.accessToken)
 		//redirect to 2FA
 		//#################################
 		//#########     2FA     ###########
@@ -120,7 +129,9 @@ export class AuthController {
 //			return res.redirect('http://localhost:3000/main');
 //		}
 		//else redirect to main page
-		return res.json(user_token);
+		await this.authService.updateUserStatusOnline(user);
+		res.json(user_token);
+		return user;
 	}
 
 	@Get('/authentication')
@@ -140,7 +151,8 @@ export class AuthController {
 
 	@Post('/signout')
 	@UseGuards(JwtAuthGuard)
-	async signOut(@Req() req : Request, @Res() res : Response) : Promise<any> {
+	async signOut(@Req() req : Request, @Res() res : Response, @currentAuthUser() user: User) : Promise<any> {
+		this.authService.updateUserStatusOffline(user);
 		return (await this.authService.destoryJwtCookie(res));
 	}
 }
