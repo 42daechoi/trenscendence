@@ -1,17 +1,16 @@
 import React, { useEffect, useRef, useState } from "react";
 import "../css/Profile.css";
 import axios from "axios";
+import "../css/Profile.css";
+import { useNavigate } from "react-router-dom";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import {
   apiRequest,
   getWhoami,
   getIntraId,
   patchId,
 } from "../utils/ApiRequest";
-import "../css/Profile.css";
-import { useNavigate } from "react-router-dom";
-import { toast, ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
-
 interface ProfileNode {
   currUser: string;
 }
@@ -45,7 +44,7 @@ function ModifyModalButton(props: { modalType: string; callback }) {
             },
             autoClose: 1500,
           });
-          props.callback('false');
+          props.callback("false");
         }
       }}
       className="btn-fix glass"
@@ -160,29 +159,37 @@ function ModifyAvatarSetting() {
 }
 
 function ModifyNicknameSetting() {
-  const [selectedFile, setSelectedFile] = useState(null);
-  const text = useRef(null);
-  const handleFileChange = (event) => {
-    setSelectedFile(event.target.files[0]);
-  };
+  const textbox = useRef(null);
   const handleFileUpload = () => {
-    patchId("1");
-    if (text.current.value) {
+    if (textbox.current.value) {
       {
         /*파일 전송*/
-        apiRequest(
-          "post",
-          "http://localhost:3001/users/modifyNickname/" + text.current.value
-        )
-          .then((response) => {})
-          .catch((error) => {});
+        // apiRequest("patch", "http://localhost:3001/users/blocks/add/1").then(
+        //   (response) => {
+        //     console.log(response.data);
+        //   }
+        // );
+        // apiRequest("get", "http://localhost:3001/users/friends/list").then(
+        //   (response) => {
+        //     console.log(response.data);
+        //   }
+        // );
+
+        patchId("2", { nickname: textbox.current.value })
+          .then((response) => {
+            console.log("수정 성공!", response.data);
+          })
+          .catch((error) => {
+            console.error("수정 실패", error);
+          });
+        textbox.current.value = "";
       }
     }
   };
   return (
     <>
       <h3 className="font-bold text-lg">닉네임 수정</h3>
-      <input type="text" ref={text} />
+      <input type="text" ref={textbox} />
       <button className="avatar-upload" onClick={handleFileUpload}>
         수정하기
       </button>
@@ -203,8 +210,8 @@ export default function Profile(pn: ProfileNode) {
         if (pn.currUser === response.data.intraId) {
           if (!response.data.twoFA) setTwoFA("false");
           else setTwoFA("true");
-          if (userName !== response.data.intraId)
-            userName = response.data.intraId;
+          if (userName !== response.data.nickname)
+            userName = response.data.nickname;
           if (rank !== response.data.rank) rank = response.data.rank;
           setRes(response);
           isCurrentUser = userName;
