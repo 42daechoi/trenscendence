@@ -11,6 +11,7 @@ export default function GameWaiting() {
   const socket = useSocket();
   const navigate = useNavigate();
   const [Ready, setReady] = useState(false);
+  const [State, setState] = useState(false);
   const handleButtonClick = () => {
     setReady(!Ready);
   };
@@ -22,15 +23,23 @@ export default function GameWaiting() {
           console.log(data);
         });
         socket.on("matchInfo", data => {
-          console.log("match!", data);
+          setState(true);
+          if (Ready)
+            socket.emit("ready", "");
         });
+        socket.on("allReady",() => {
+          navigate("/game");
+        })
         socket.emit("match", "");
       }
     ;
   }, [socket]);
   useEffect(() => {
-      // console.log("ready");
-      //  socket.emit("Ready", Ready);
+      console.log(Ready);
+      if (Ready && State)
+        socket.emit("ready", Ready);
+      else if (!Ready && State)
+        socket.emit("unReady", Ready);
   }, [Ready]);
   return (
     <div className="game-waiting-container">

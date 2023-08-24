@@ -164,9 +164,11 @@ useEffect(() => {
       socket.on('client', data => {
         console.log("client", data);
         client = data;
+      });
+      socket.on('gameset', ()=>{
         if (client === 0)
-          socket.emit('gameset', gameset);
-      })
+          socket.emit('gameStart', gameset);
+      });
       socket.on('pad1', (data) => {
         pad[0] = data;
       });

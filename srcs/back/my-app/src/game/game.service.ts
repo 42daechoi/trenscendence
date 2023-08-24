@@ -76,6 +76,7 @@ export class GameService {
 
 		/* add that game info to the gameSessions */
 		this.gameSessions.set(gameInfo.gameID, gameInfo);
+		this.logger.log("created game session, size : " + this.gameSessions.size);
 
 		/* send all active game sessions */
 		const gameSessions = [];
@@ -154,21 +155,30 @@ export class GameService {
 	async playerReady(client: Socket, nsp : Namespace){
 		const cur_game_id = await this.getCurGameRoomId(client);
 		const cur_game  = this.gameSessions.get(cur_game_id);
-		let cur_player = cur_game_id === client.id ? cur_game.host : cur_game.guest;
+		if (!cur_game)
+			return;
+		let cur_player = (cur_game_id === client.id) ? cur_game.host : cur_game.guest;
 		cur_player.playerStatus = PlayerStatus.Ready;
-		cur_game.readyNum++;
-		nsp.to(cur_game_id).emit("ready", { message: `Player ${cur_player.userID} is ready` });
-		this.logger.log("Ready! from " + cur_game_id);
+		(cur_game.readyNum)++;
+		nsp.to(cur_game_id).emit("ready", { message: `Player ${cur_player.socketID} is ready` });
+		this.logger.log("Ready! from " + cur_player.socketID);
 		if (cur_game.readyNum == 2)
 		{
 			this.logger.log("game is good to go!");
 			nsp.to(cur_game_id).emit("allReady");
+			const to_host : Player1 = cur_game.host;
+			const to_guest : Player2 = cur_game.guest;
+			nsp.to(to_host.socketID).emit("client", 0);
+			nsp.to(to_guest.socketID).emit("client", 1);
+			nsp.to(cur_game_id).emit("gameset");
 		}
 	}
 
 	async playerUnready(client: Socket){
 		const cur_game_id = await this.getCurGameRoomId(client);
 		const cur_game = this.gameSessions.get(cur_game_id);
+		if (!cur_game)
+			return;
 		let cur_player = cur_game_id === client.id ? cur_game.host : cur_game.guest;
 		cur_player.playerStatus = PlayerStatus.Waiting;
 		cur_game.readyNum--;
@@ -179,6 +189,7 @@ export class GameService {
 	}
 
 	async userOutNsp(client: Socket){
+		this.logger.log("user out!!! " + client.id);
 		this.usersSockets.delete(client.id);
 	}
 
@@ -196,25 +207,31 @@ export class GameService {
 		this.authService.updateUserStatusOnline(user);
 	}
 
-	async gameStart(client: Socket, nsp: Namespace){
+	async gameStart(client: Socket, nsp: Namespace, game_info : any){
 		const cur_game_id = await this.getCurGameRoomId(client);
 		const cur_game = this.gameSessions.get(cur_game_id);
 		const host : Player2 = cur_game.host;
 		const guest : Player2 = cur_game.guest;
 		guest.playerStatus = PlayerStatus.Playing;
 		host.playerStatus = PlayerStatus.Playing;
-		nsp.to(cur_game_id).emit('gameStart');
+		//nsp.to(cur_game_id).emit('gameStart');
 		const guestSocket : Socket = this.usersSockets.get(guest.socketID); 
 		const hostSocket : Socket = this.usersSockets.get(host.socketID); 
+		this.logger.log(JSON.stringify(game_info));
 	}
 
 	async gameOver(clinet: Socket){
 
 	}
 
+
+
 	async destroyGame(client: Socket){
 		const cur_game_id = await this.getCurGameRoomId(client);
-		const cur_game = this.gameSessions.get(cur_game_id);
+		this.logger.log(JSON.stringify(client.rooms));
+		const cur_game : Game = this.gameSessions.get(cur_game_id);
+		if (!cur_game)
+			return;
 		const guest : Player2 = cur_game.guest;
 		const guestSocket : Socket = this.usersSockets.get(guest.socketID); 
 
@@ -223,9 +240,15 @@ export class GameService {
 
 		//destory gameSession
 		this.gameSessions.delete(cur_game_id);
+
+		this.logger.log("destoyed game : " + JSON.stringify(this.gameSessions.get(cur_game_id)));
 	}
 
 	testnsp(nsp: Namespace, socket: Socket, body: any){
 		nsp.to(socket.id).emit("message", body);
+	}
+
+	async destroysession(id: string){
+		this.gameSessions.delete(id);
 	}
 }
