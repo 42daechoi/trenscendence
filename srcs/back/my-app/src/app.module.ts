@@ -6,10 +6,9 @@ import { UsersModule } from './users/users.module';
 import { AuthController } from './auth/auth.controller';
 import { AuthModule } from './auth/auth.module';
 import { UsersController } from './users/users.controller';
-import { ChannelModule } from './channel/channel.module';
 import {HttpModule} from '@nestjs/axios';
 import { TwoFactorModule } from './twofactor-auth/twofactor-auth.module';
-
+import { ChatModule } from './chat/chat.module';
 @Module({
   imports: [
 		forwardRef(() => AuthModule),
@@ -26,7 +25,7 @@ import { TwoFactorModule } from './twofactor-auth/twofactor-auth.module';
 		  autoLoadEntities: true,
 		  "entities": ["dist/**/*.entity.{ts,js}"]
 		}),
-		ChannelModule,
+		ChatModule,
 		TwoFactorModule
 //	  TypeOrmModule.forRoot({
 //      type: 'postgres',//orm type notification
