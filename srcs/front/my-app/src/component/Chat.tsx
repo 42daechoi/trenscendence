@@ -5,7 +5,6 @@ import Modal from "../component/Modal";
 import { whoami } from "../utils/whoami";
 import "../css/Chat.css";
 import { where } from "../utils/where";
-import { defaultMaxListeners } from "events";
 import axios from "axios";
 import { response } from "express";
 
@@ -79,12 +78,13 @@ export default function Chat(props) {
       event.preventDefault();
       try {
         const data = await whoami();
-        //닉네임이 뮤트인 경우를 대비해 닉네임 수정 시 5자 이상 강제
         if (target && target.value.substring(0, 6) === "/mute ") {
-          const target_name: string = target.value.substring(7, target.value.length - 1);
+          console.log(target.value.substring(0, 6));
+          const target_name: string = target.value.substring(6, target.value.length);
+          console.log(target_name);
           axios.get('http://localhost:3001/users/nickname/' + target_name, { withCredentials: true })
             .then ( response => {
-              axios.patch('http://localhost:3001/users/blocks/add/' + response.data.id, { withCredentials:true })
+              axios.patch('http://localhost:3001/users/blocks/add/' + response.data.id, null, { withCredentials:true })
                 .catch( error => {
                   console.log(error);
                 })
@@ -92,13 +92,14 @@ export default function Chat(props) {
             .catch (error => {
               console.log(error);
             })
+            target.value = "";
           return;
         }
         else if (target && target.value.substring(0, 8) === "/unmute ") {
-          const target_name: string = target.value.substring(7, target.value.length - 1);
+          const target_name: string = target.value.substring(8, target.value.length);
           axios.get('http://localhost:3001/users/nickname/' + target_name, { withCredentials: true })
           .then ( response => {
-            axios.patch('http://localhost:3001/users/blocks/remove/' + response.data.id, { withCredentials:true })
+            axios.patch('http://localhost:3001/users/blocks/remove/' + response.data.id, null, { withCredentials:true })
               .catch( error => {
                 console.log(error);
               })
@@ -106,13 +107,28 @@ export default function Chat(props) {
           .catch (error => {
             console.log(error);
           })
+          target.value = "";
           return;
         }
         else if (target && target.value.substring(0, 9) === "/mutelist") {
           axios.get('http://localhost:3001/users/blocks/list', { withCredentials: true })
+          .then(response => {
+            if (!response.data.length){
+              console.log('null response');
+              return;
+            }
+            let msg:string = "[";
+            let i:number;
+            for (i = 0; i < response.data.length - 1; i++) {
+              msg += response.data[i].nickname + ", ";
+            }
+            msg += response.data[i].nickname + ']';
+            addMessage({ name: data.nickname, profile: null, id: data.id, isChecked: false}, msg,"chat chat-end")
+          })
           .catch (error => {
             console.log(error);
           })
+          target.value = "";
           return;
         }
         else if (target && target.value[0] === "/" && target.value[1] === '/') {
