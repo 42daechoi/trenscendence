@@ -10,6 +10,7 @@ import {
   getWhoami,
   getIntraId,
   patchId,
+  modifyNickname,
 } from "../utils/ApiRequest";
 interface ProfileNode {
   currUser: string;
@@ -163,28 +164,14 @@ function ModifyNicknameSetting() {
   const handleFileUpload = () => {
     if (textbox.current.value) {
       {
-        /*파일 전송*/
-        // apiRequest("patch", "http://localhost:3001/users/blocks/add/1").then(
-        //   (response) => {
-        //     console.log(response.data);
-        //   }
-        // );
-        // apiRequest("get", "http://localhost:3001/users/friends/list").then(
-        //   (response) => {
-        //     console.log(response.data);
-        //   }
-        // );
-
-        patchId("2", { nickname: textbox.current.value })
-          .then((response) => {
-            console.log("수정 성공!", response.data);
-          })
-          .catch((error) => {
-            console.error("수정 실패", error);
-          });
+        if (textbox.current.value.search(/\W|\s/g) > -1) {
+          alert("닉네임은 영문과 숫자만 가능합니다!!");
+          return;
+        }
+        modifyNickname(textbox.current.value);
         textbox.current.value = "";
       }
-    }
+    } else alert("닉네임을 수정하지 못했습니다!");
   };
   return (
     <>

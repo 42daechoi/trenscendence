@@ -1,5 +1,6 @@
 import axios, { AxiosResponse } from "axios";
 import { type } from "os";
+import { whoami } from "./whoami";
 
 const serverUrl: string = "http://localhost:3001";
 const tagUser: string = "users";
@@ -14,56 +15,54 @@ export const apiRequest = <T = any,>(
     url,
     data,
     withCredentials: true,
-  })
-    .then((response) => response)
-    .catch((error) => error);
-  // if (error.response) {
-  //   // 서버가 요청을 받았으나 응답 상태 코드가 실패인 경우
-  //   console.error(error.response.data);
-  //   console.error(error.response.status);
-  // } else if (error.request) {
-  //   // 요청이 브라우저에 도달하지 않은 경우 (CORS 등의 이유)
-  //   console.error(error.request);
-  // } else {
-  //   // 기타 다른 오류
-  //   console.error("Error", error.message);
-  // }
-  //   return error;
-  // });
+  });
 };
 
 export function getWhoami<T = any>(): Promise<AxiosResponse<T>> {
-  return apiRequest("get", `${serverUrl}/${tagUser}/whoami`).then(
-    (response) => response
-  );
+  return apiRequest("get", `${serverUrl}/${tagUser}/whoami`);
 }
 
 export function getIntraId<T = any>(
   intraId: string
 ): Promise<AxiosResponse<T>> {
-  return apiRequest("get", `${serverUrl}/${tagUser}/intraId/${intraId}`).then(
-    (response) => response
-  );
+  return apiRequest("get", `${serverUrl}/${tagUser}/intraId/${intraId}`);
 }
 
 export function getId<T = any>(Id: string): Promise<AxiosResponse<T>> {
-  return apiRequest("get", `${serverUrl}/${tagUser}/${Id}`).then(
-    (response) => response
-  );
+  return apiRequest("get", `${serverUrl}/${tagUser}/${Id}`);
 }
 
 export function patchId<T = any>(
-  Id: string,
+  id: number,
   body: { nickname: string }
 ): Promise<AxiosResponse<T>> {
-  return apiRequest("patch", `${serverUrl}/${tagUser}/${Id}`, body)
-    .then((response) => {
-      // console.log(22);
-      return response;
+  return apiRequest("patch", `${serverUrl}/${tagUser}/${String(id)}`, body);
+}
+
+export function patchAddFriend<T = any>(id: number): Promise<AxiosResponse<T>> {
+  return apiRequest(
+    "patch",
+    `${serverUrl}/${tagUser}/friends/add/${String(id)}}`
+  );
+}
+
+export function getFriendList<T = any>(id: number): Promise<AxiosResponse<T>> {
+  return apiRequest("get", `${serverUrl}/${tagUser}/friends/list`);
+}
+
+export function modifyNickname(name: string) {
+  getWhoami()
+    .then((res) => {
+      patchId(res.data.id, { nickname: name })
+        .then((response) => {
+          alert("닉네임을 수정 성공!");
+        })
+        .catch((error) => {
+          if (error.response.data.statusCode)
+            alert("닉네임을 수정하지 못했습니다!");
+        });
     })
-    .then((error) => {
-      // console.log(11);
-      // console.log(error);
-      return error;
+    .catch((error) => {
+      console.log(error);
     });
 }
