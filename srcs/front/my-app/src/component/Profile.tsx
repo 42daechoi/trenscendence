@@ -11,9 +11,11 @@ import {
   getIntraId,
   patchId,
   modifyNickname,
+  getFriendList,
+  getId,
 } from "../utils/ApiRequest";
 interface ProfileNode {
-  currUser: string;
+  currUser: number;
 }
 
 const mAM: string = "modifyAvatarModal";
@@ -92,7 +94,7 @@ function ModalWindow(props: { modalType: string }) {
     return (
       <dialog id={aFM} className="modal">
         <form method="dialog" className="modal-box">
-          <AddFriendSetting num={1} />
+          <FriendButtonSetting num={1} />
         </form>
         <form method="dialog" className="modal-backdrop">
           {/* close의 용도? */}
@@ -113,8 +115,9 @@ function ModalWindow(props: { modalType: string }) {
     );
 }
 
-function AddFriendSetting(props: { num: number }) {
+function FriendButtonSetting(props: { num: number }) {
   // console.log(aFM);
+
   return <div>AddFriend</div>;
 }
 
@@ -194,7 +197,7 @@ export default function Profile(pn: ProfileNode) {
   function LoadUserInfo() {
     useEffect(() => {
       getWhoami().then((response) => {
-        if (pn.currUser === response.data.intraId) {
+        if (pn.currUser === response.data.id) {
           if (!response.data.twoFA) setTwoFA("false");
           else setTwoFA("true");
           if (userName !== response.data.nickname)
@@ -203,9 +206,9 @@ export default function Profile(pn: ProfileNode) {
           setRes(response);
           isCurrentUser = userName;
         } else {
-          getIntraId(pn.currUser).then((response) => {
-            if (userName !== response.data.intraId)
-              userName = response.data.intraId;
+          getId(String(pn.currUser)).then((response) => {
+            if (userName !== response.data.nickname)
+              userName = response.data.nickname;
             if (rank !== response.data.rank) rank = response.data.rank;
             setRes(response);
           });

@@ -5,7 +5,7 @@ import Profile from "./Profile";
 
 type ProfileModalProps = {
   name: string;
-  currUser: string;
+  currUser: number;
 };
 
 export default function ProfileModal({ name, currUser }: ProfileModalProps) {
