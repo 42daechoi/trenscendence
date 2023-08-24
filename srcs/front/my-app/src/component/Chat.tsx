@@ -60,7 +60,11 @@ export default function Chat(props) {
     socket.emit('bind', data.nickname);
     receiveMessage();
   }
-  init();
+  
+  useEffect(()=>{
+    init();
+  },[]);
+
   function addUsers(name: string) {
     setUsers([
       ...users,
@@ -169,8 +173,7 @@ export default function Chat(props) {
       } else if (chat[0] === "/" && chat[1] === "/") {
         const firstSpaceIdx = chat.indexOf(" ");
         const target_name: string = chat.substring(2, firstSpaceIdx);
-        const msg: string = chat.substring(firstSpaceIdx, chat.length - 1);
-
+        const msg: string = chat.substring(firstSpaceIdx + 1, chat.length);
         socket.emit("chat", {
           nickname: data.nickname,
           target: target_name,
@@ -190,13 +193,11 @@ export default function Chat(props) {
         chat = "";
         return;
       } else if (chat.length) {
-        const channel = where(socket, data.nickname);
-        channel
+        where(socket, data.nickname)
           .then((channel) => {
-            console.log(channel);
             socket.emit("chat", {
               nickname: data.nickname,
-              target: "channel",
+              target: channel.channelname,
               flag: "broad",
               msg: chat,
             });
@@ -282,26 +283,23 @@ export default function Chat(props) {
   };
 
   const receiveMessage = () => {
-    let receiveData;
-
-    socket.on("chat", receiveData);
-    if (!receiveData) return;
-    axios
-      .get("http://localhost:3001/users/nickname/" + receiveData.nickname, {
-        withCredentials: true,
-      })
-      .then((response) => {
-        if (!response.data) return;
-        addMessage(
-          {
-            name: receiveData.nickname,
-            profile: receiveData.avatar,
-            id: receiveData.id,
-            isChecked: false,
-          },
-          receiveData.msg,
-          "chat chat-start"
-        );
+    socket.on("chat", receiveData => {
+      if (!receiveData) return;
+      axios
+        .get("http://localhost:3001/users/nickname/" + receiveData.nickname, { withCredentials: true })
+        .then((response) => {
+          if (!response.data) return;
+          addMessage(
+            {
+              name: receiveData.nickname,
+              profile: receiveData.avatar,
+              id: receiveData.id,
+              isChecked: false,
+            },
+            receiveData.msg,
+            "chat chat-start"
+          );
+        });
       });
   };
 

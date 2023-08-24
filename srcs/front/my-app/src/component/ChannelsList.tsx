@@ -15,20 +15,20 @@ export default function ChannelsList() {
   let password;
 
   const joinChannel = async(password) => {
-    try {
-      const data = await whoami();
-      const channel = where(socket, "temp");
+    // try {
+    //   const data = await whoami();
+    //   const channel = where(socket, "temp");
 
-      channel.then(channel => {
-        setModalOpen(true);
-        socket.emit('join', { nickname:data.nickname, channelname:channel.channelname, password:password });
-      }) .catch (error => {
-        console.log(error);
-      })
+    //   channel.then(channel => {
+    //     setModalOpen(true);
+    //     socket.emit('join', { nickname:data.nickname, channelname:channel.channelname, password:password });
+    //   }) .catch (error => {
+    //     console.log(error);
+    //   })
 
-    } catch (error) {
-      console.log(error);
-    }
+    // } catch (error) {
+    //   console.log(error);
+    // }
   }
 
   function addChannelList(channelName: string) {

@@ -130,7 +130,6 @@ import { WebSocketGateway,
       else
       {
         //* 귓속말
-        console.log("dm part");
         const target = this.users.find(u => u.nickname === msgobj.target)
         console.log("target check :", target);
         if (target)
