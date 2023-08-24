@@ -5,7 +5,8 @@ import Modal from "../component/Modal";
 import { whoami } from "../utils/whoami";
 import "../css/Chat.css";
 import { where } from "../utils/where";
-import { defaultMaxListeners } from "events";
+import axios from "axios";
+import { response } from "express";
 
 interface IUsers {
   name: string;
@@ -77,17 +78,62 @@ export default function Chat(props) {
       event.preventDefault();
       try {
         const data = await whoami();
-        //닉네임이 뮤트인 경우를 대비해 닉네임 수정 시 5자 이상 강제
         if (target && target.value.substring(0, 6) === "/mute ") {
-          const target_name: string = target.value.substring(
-            7,
-            target.value.length - 1
-          );
+          console.log(target.value.substring(0, 6));
+          const target_name: string = target.value.substring(6, target.value.length);
+          console.log(target_name);
+          axios.get('http://localhost:3001/users/nickname/' + target_name, { withCredentials: true })
+            .then ( response => {
+              axios.patch('http://localhost:3001/users/blocks/add/' + response.data.id, null, { withCredentials:true })
+                .catch( error => {
+                  console.log(error);
+                })
+            })
+            .catch (error => {
+              console.log(error);
+            })
+            target.value = "";
           return;
         }
-        if (target && target.value[0] === "/") {
+        else if (target && target.value.substring(0, 8) === "/unmute ") {
+          const target_name: string = target.value.substring(8, target.value.length);
+          axios.get('http://localhost:3001/users/nickname/' + target_name, { withCredentials: true })
+          .then ( response => {
+            axios.patch('http://localhost:3001/users/blocks/remove/' + response.data.id, null, { withCredentials:true })
+              .catch( error => {
+                console.log(error);
+              })
+          })
+          .catch (error => {
+            console.log(error);
+          })
+          target.value = "";
+          return;
+        }
+        else if (target && target.value.substring(0, 9) === "/mutelist") {
+          axios.get('http://localhost:3001/users/blocks/list', { withCredentials: true })
+          .then(response => {
+            if (!response.data.length){
+              console.log('null response');
+              return;
+            }
+            let msg:string = "[";
+            let i:number;
+            for (i = 0; i < response.data.length - 1; i++) {
+              msg += response.data[i].nickname + ", ";
+            }
+            msg += response.data[i].nickname + ']';
+            addMessage({ name: data.nickname, profile: null, id: data.id, isChecked: false}, msg,"chat chat-end")
+          })
+          .catch (error => {
+            console.log(error);
+          })
+          target.value = "";
+          return;
+        }
+        else if (target && target.value[0] === "/" && target.value[1] === '/') {
           const firstSpaceIdx = target.value.indexOf(" ");
-          const target_name: string = target.value.substring(1, firstSpaceIdx);
+          const target_name: string = target.value.substring(2, firstSpaceIdx);
           const msg: string = target.value.substring(
             firstSpaceIdx,
             target.value.length - 1
@@ -112,7 +158,7 @@ export default function Chat(props) {
           target.value = "";
           return;
         }
-        if (target && target.value.length) {
+        else if (target && target.value.length) {
           const channel = where(socket, data.nickname);
 
           channel
@@ -138,11 +184,11 @@ export default function Chat(props) {
             target.value,
             "chat chat-end"
           );
-          target.value = "";
         }
       } catch (error) {
         console.log(error);
       }
+      target.value = "";
     }
   };
 
@@ -166,13 +212,15 @@ export default function Chat(props) {
       console.log(error);
     }
   };
-  // useEffect(() => {
-  //   props.socket.on('message', receiveMessage);
 
-  //   return () => {
-  //     props.socket.off('message', receiveMessage);
-  //   };
-  // }, []);
+  const goHome = async() => {
+    try {
+      const data = await whoami();
+      socket.emit("home", data.nickname);
+    } catch (error) {
+      console.log(error);
+    }
+  }
 
   const givePermission = async () => {
     try {
@@ -428,9 +476,9 @@ export default function Chat(props) {
           ))}
         </ul>
         <div className="chat-member-button">
-          <button>home</button>
+          <button onClick={goHome}>home</button>
           <button onClick={kick}>kick</button>
-          <button>oper</button>
+          <button onClick={givePermission}>oper</button>
           <button
             style={{ width: "70%", marginTop: "5%" }}
             onClick={() => {
