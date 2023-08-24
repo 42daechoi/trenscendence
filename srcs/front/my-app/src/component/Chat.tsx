@@ -85,15 +85,12 @@ export default function Chat(props) {
     lastMessageRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-  const chatEnter = async (target: HTMLInputElement) => {
+  const chatEnter = async (chat: string) => {
     try {
       const data = await whoami();
-      if (target && target.value.substring(0, 6) === "/mute ") {
-        console.log(target.value.substring(0, 6));
-        const target_name: string = target.value.substring(
-          6,
-          target.value.length
-        );
+      if (chat.substring(0, 6) === "/mute ") {
+        console.log(chat.substring(0, 6));
+        const target_name: string = chat.substring(6, chat.length);
         console.log(target_name);
         axios
           .get("http://localhost:3001/users/nickname/" + target_name, {
@@ -113,13 +110,10 @@ export default function Chat(props) {
           .catch((error) => {
             console.log(error);
           });
-        target.value = "";
+        chat = "";
         return;
-      } else if (target && target.value.substring(0, 8) === "/unmute ") {
-        const target_name: string = target.value.substring(
-          8,
-          target.value.length
-        );
+      } else if (chat.substring(0, 8) === "/unmute ") {
+        const target_name: string = chat.substring(8, chat.length);
         axios
           .get("http://localhost:3001/users/nickname/" + target_name, {
             withCredentials: true,
@@ -138,9 +132,9 @@ export default function Chat(props) {
           .catch((error) => {
             console.log(error);
           });
-        target.value = "";
+        chat = "";
         return;
-      } else if (target && target.value.substring(0, 9) === "/mutelist") {
+      } else if (chat.substring(0, 9) === "/mutelist") {
         axios
           .get("http://localhost:3001/users/blocks/list", {
             withCredentials: true,
@@ -170,15 +164,12 @@ export default function Chat(props) {
           .catch((error) => {
             console.log(error);
           });
-        target.value = "";
+        chat = "";
         return;
-      } else if (target && target.value[0] === "/" && target.value[1] === "/") {
-        const firstSpaceIdx = target.value.indexOf(" ");
-        const target_name: string = target.value.substring(2, firstSpaceIdx);
-        const msg: string = target.value.substring(
-          firstSpaceIdx,
-          target.value.length - 1
-        );
+      } else if (chat[0] === "/" && chat[1] === "/") {
+        const firstSpaceIdx = chat.indexOf(" ");
+        const target_name: string = chat.substring(2, firstSpaceIdx);
+        const msg: string = chat.substring(firstSpaceIdx, chat.length - 1);
 
         socket.emit("chat", {
           nickname: data.nickname,
@@ -193,22 +184,12 @@ export default function Chat(props) {
             id: data.id,
             isChecked: false,
           },
-          target.value,
+          chat,
           "chat chat-end"
         );
-        target.value = "";
+        chat = "";
         return;
-      } else if (target && target.value.length) {
-        addMessage(
-          {
-            name: data.nickname,
-            profile: null,
-            id: data.id,
-            isChecked: false,
-          },
-          target.value,
-          "chat chat-end"
-        );
+      } else if (chat.length) {
         const channel = where(socket, data.nickname);
         channel
           .then((channel) => {
@@ -217,12 +198,22 @@ export default function Chat(props) {
               nickname: data.nickname,
               target: "channel",
               flag: "broad",
-              msg: target.value,
+              msg: chat,
             });
           })
           .catch((error) => {
             console.log(error);
           });
+        addMessage(
+          {
+            name: data.nickname,
+            profile: null,
+            id: data.id,
+            isChecked: false,
+          },
+          chat,
+          "chat chat-end"
+        );
       }
     } catch (error) {
       console.log(error);
@@ -233,7 +224,7 @@ export default function Chat(props) {
     const target = inputRef.current as HTMLInputElement;
     console.log(target.value);
     event.preventDefault();
-    chatEnter(target);
+    chatEnter(target.value);
     target.value = "";
   };
 
@@ -241,9 +232,9 @@ export default function Chat(props) {
     // keyCode는 잘 사용되지 않는다고한다. 추후 리팩토링 예정
     if (event.keyCode === 13 && event.key === "Enter" && !event.shiftKey) {
       const target = event.target as HTMLInputElement;
-      console.log(target.value);
       event.preventDefault();
-      chatEnter(target);
+      console.log(target.value);
+      chatEnter(target.value);
       target.value = "";
     }
   };
@@ -293,20 +284,25 @@ export default function Chat(props) {
   const receiveMessage = () => {
     let receiveData;
 
-    socket.on('chat', receiveData);
-    if (!receiveData)
-      return;
-    axios.get('http://localhost:3001/users/nickname/' + receiveData.nickname, { withCredentials: true })
-      .then(response => {
-        if (!response.data)
-          return ;
+    socket.on("chat", receiveData);
+    if (!receiveData) return;
+    axios
+      .get("http://localhost:3001/users/nickname/" + receiveData.nickname, {
+        withCredentials: true,
+      })
+      .then((response) => {
+        if (!response.data) return;
         addMessage(
-          { name: receiveData.nickname, profile: receiveData.avatar, id: receiveData.id, isChecked: false },
+          {
+            name: receiveData.nickname,
+            profile: receiveData.avatar,
+            id: receiveData.id,
+            isChecked: false,
+          },
           receiveData.msg,
           "chat chat-start"
         );
-      })
-
+      });
   };
 
   const [isModalOpen, setModalOpen] = useState(false);
@@ -321,17 +317,23 @@ export default function Chat(props) {
 
   function ChatSetting() {
     const [isChecked, setChecked] = useState("public");
-    const [password, setPassword] = useState('');
+    const [password, setPassword] = useState("");
 
-  const passwordChange = (event) => {
-    setPassword(event.target.value);
-  };
+    const passwordChange = (event) => {
+      setPassword(event.target.value);
+    };
 
-    const modifyChatSock = async() => {
+    const modifyChatSock = async () => {
       try {
         const data = await whoami();
-        socket.emit('modify', { nickname: data.nickname, maxmember: 10, option: isChecked, password: password})
-          .catch( error => {
+        socket
+          .emit("modify", {
+            nickname: data.nickname,
+            maxmember: 10,
+            option: isChecked,
+            password: password,
+          })
+          .catch((error) => {
             console.log(error);
           });
       } catch (error) {
@@ -407,30 +409,42 @@ export default function Chat(props) {
               {isChecked === "protected" && (
                 <div style={{ padding: "10px" }}>
                   password
-                  <input onChange={passwordChange} type="text" style={{ marginLeft: "10px" }} />
+                  <input
+                    onChange={passwordChange}
+                    type="text"
+                    style={{ marginLeft: "10px" }}
+                  />
                 </div>
               )}
             </div>
           </div>
         </div>
-        <button onClick={modifyChatSock} className="setting-button">수정</button>
+        <button onClick={modifyChatSock} className="setting-button">
+          수정
+        </button>
       </div>
     );
   }
 
   function CreateChat() {
     const [isChecked, setChecked] = useState("public");
-    const [password, setPassword] = useState('');
+    const [password, setPassword] = useState("");
 
     const passwordChange = (event) => {
       setPassword(event.target.value);
     };
 
-    const createChatSock = async() => {
+    const createChatSock = async () => {
       try {
         const data = await whoami();
-        socket.emit('create', { nickname: data.nickname, maxmember: 10, option: "public", password: password})
-          .catch( error => {
+        socket
+          .emit("create", {
+            nickname: data.nickname,
+            maxmember: 10,
+            option: "public",
+            password: password,
+          })
+          .catch((error) => {
             console.log(error);
           });
       } catch (error) {
@@ -506,13 +520,19 @@ export default function Chat(props) {
               {isChecked === "protected" && (
                 <div style={{ padding: "10px" }}>
                   password
-                  <input onChange={passwordChange} type="text" style={{ marginLeft: "10px" }} />
+                  <input
+                    onChange={passwordChange}
+                    type="text"
+                    style={{ marginLeft: "10px" }}
+                  />
                 </div>
               )}
             </div>
           </div>
         </div>
-        <button onClick={createChatSock} className="setting-button">생성</button>
+        <button onClick={createChatSock} className="setting-button">
+          생성
+        </button>
       </div>
     );
   }
@@ -583,7 +603,7 @@ export default function Chat(props) {
             style={{ width: "70%", marginTop: "5%" }}
             onClick={() => {
               setChatConfigure("create");
-              
+
               openModal();
             }}
           >
