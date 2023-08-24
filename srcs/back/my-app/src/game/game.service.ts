@@ -9,8 +9,9 @@ import { User, GamePlayer, Games } from 'src/typeorm';
 import { Server, Socket, Namespace } from 'socket.io';
 import { ConnectedSocket } from '@nestjs/websockets';
 import { Repository } from 'typeorm';
-import  {Game, Player1, Player2, PlayerStatus}  from './classes/game.class';
+import  {Game, Player1, Player2, PlayerStatus, PadItem, Ball, Obstacle, Collidable}  from './classes/game.class';
 import { UserStatus } from 'src/typeorm/user.entity';
+
 
 @Injectable()
 export class GameService {
@@ -215,9 +216,24 @@ export class GameService {
 		guest.playerStatus = PlayerStatus.Playing;
 		host.playerStatus = PlayerStatus.Playing;
 		//nsp.to(cur_game_id).emit('gameStart');
+		cur_game.ball.isEqual(game_info.ball);
+		cur_game.board_x = game_info.board_x;
+		cur_game.board_y = game_info.board_y;
+		for(let i = 0 ; i < 2; i++)
+		{
+			cur_game.pad.push(new PadItem(0,0,0,0,"0",0));
+			cur_game.pad[i].isEqual(game_info.pad[i]);
+		}
+		for(let i :number = 0 ; i <  game_info.obs.length; i++)
+		{
+			cur_game.obstacles.push(new Obstacle(0,0,0,0));
+			cur_game.obstacles[i].isEqual(game_info.obs[i]);
+		}
 		const guestSocket : Socket = this.usersSockets.get(guest.socketID); 
 		const hostSocket : Socket = this.usersSockets.get(host.socketID); 
-		this.logger.log(JSON.stringify(game_info));
+		this.logger.log(JSON.stringify(cur_game.ball));
+		this.logger.log(JSON.stringify(cur_game.pad));
+		this.logger.log(JSON.stringify(cur_game.obstacles));
 	}
 
 	async gameOver(clinet: Socket){
@@ -250,5 +266,25 @@ export class GameService {
 
 	async destroysession(id: string){
 		this.gameSessions.delete(id);
+	}
+
+	async movePad1(client: Socket, pad_info : any, nsp: Namespace){
+		const cur_game_id = await this.getCurGameRoomId(client);
+		const cur_game : Game = this.gameSessions.get(cur_game_id);
+		if (!cur_game)
+			return;
+		cur_game.pad[0].isEqual(pad_info);
+		nsp.to(cur_game_id).emit("pad1", pad_info);
+		nsp.to(cur_game_id).emit("draw", cur_game.ball);
+	}
+
+	async movePad2(client: Socket, pad_info : any, nsp: Namespace){
+		const cur_game_id = await this.getCurGameRoomId(client);
+		const cur_game : Game = this.gameSessions.get(cur_game_id);
+		if (!cur_game)
+			return;
+		cur_game.pad[1].isEqual(pad_info);
+		nsp.to(cur_game_id).emit("pad2", pad_info);
+		nsp.to(cur_game_id).emit("draw", cur_game.ball);
 	}
 }

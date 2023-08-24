@@ -107,6 +107,7 @@ export default function GamePage() {
   let move_px = 2;
   
   function draw() {
+    console.log("asdasdasd");
     ctx.clearRect(0, 0, board_x, board_y);
     ctx.beginPath();
     ctx.arc(ball.x, ball.y, ball.r, 0, Math.PI * 2);

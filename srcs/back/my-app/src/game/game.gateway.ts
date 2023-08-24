@@ -223,13 +223,32 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
 
 	@SubscribeMessage('gameStart')
 	async gameStart(
-		@ConnectedSocket() socket: Socket, 
-
+		@ConnectedSocket() socket: Socket,
 		@MessageBody()
 		game_info
 	) {
 		await this.gameService.gameStart(socket, this.nsp, game_info);
 	}
+
+	@SubscribeMessage('pad1')
+	async pad1(
+		@ConnectedSocket() socket: Socket,
+	
+		@MessageBody()
+		pad_info
+	) {
+		await this.gameService.movePad1(socket, pad_info, this.nsp);
+	}
+
+	@SubscribeMessage('pad2')
+	async pad2(
+		@ConnectedSocket() socket: Socket,
+		@MessageBody()
+		pad_info
+	) {
+		await this.gameService.movePad2(socket, pad_info, this.nsp);
+	}
+
 
 
 	//#############################################################

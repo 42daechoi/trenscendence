@@ -1,3 +1,4 @@
+import { setInterval } from 'timers/promises';
 import { CANVAS_HEIGHT, CANVAS_WIDTH } from '../interfaces/game.interface';
 export enum PlayerStatus {
   Waiting = 0,
@@ -5,7 +6,14 @@ export enum PlayerStatus {
   Playing = 2,
 }
 
-class PadItem {
+export interface Collidable{
+	x: number;
+	y: number;
+	width: number;
+	height: number;
+}
+
+export class PadItem {
   x: number;
   y: number;
   width: number;
@@ -150,6 +158,7 @@ export class Obstacle {
 
 
 
+
 export class Game {
 	player1: Player1;
 	player2: Player2;
@@ -160,45 +169,56 @@ export class Game {
 	gameLoser: string;
 	host: Player1;
 	guest: Player2;
-	obastacles : Obstacle[];
+	obstacles : Obstacle[];
 	readyNum: number;
-
-	constructor(player1? : Player1, player2? : Player2){
+	pad : PadItem[];
+	board_x : number;
+	board_y : number;
+	intervalId : NodeJS.Timeout;
+	constructor(player1 : Player1, player2 : Player2){
 		this.ball = new Ball();
 		this.player1 = player1;
 		this.player2 = player2;
 		this.host = player1;
 		this.guest = player2;
 		this.readyNum = 0;
+		this.pad = [];
+		this.obstacles = [];
 	}
 
 	bounce() {
 		let ball : Ball = this.ball;
-		if (ball.x + ball.r > CANVAS_WIDTH) {
-		  // ball.x = board_x / 2;
-		  // ball.y = board_y / 2;
-		  // updatedirection(ball);
+		if (ball.x + ball.r > this.board_x) {
 		  ball.dx *= -1;
 		  ball.x += ball.dx * ball.v;
 		  // player1_win();
 		} else if (ball.x - ball.r < 0) {
-		  // ball.x = board_x / 2;
-		  // ball.y = board_y / 2;
-		  // updatedirection(ball);
 		  ball.temp = -1;
 		  ball.dx *= -1;
 		  ball.x += ball.dx * ball.v;
 		  // player2_win();
-		} else if (ball.y + ball.r > CANVAS_HEIGHT || ball.y - ball.r < 0) {
+		} else if (ball.y + ball.r > this.board_y|| ball.y - ball.r < 0) {
 		  ball.dy *= -1;
 		  ball.y += ball.dy * ball.v;
 		  ball.temp = -1;
-    }
-  }
+    	}
+  	}
 
-  bounce_obstacle() {
+	move(){
+	}
+
+	pong() {
+		let ball : Ball = this.ball;
+		ball.x += ball.dx * ball.v;
+		ball.y += ball.dy * ball.v;
+		this.bounce();
+		this.bounce_obstacle(this.obstacles);
+		this.bounce_obstacle(this.pad);
+	}
+
+  	bounce_obstacle(obs_collidable : Collidable[]) {
     // console.log(obs.length);
-	const obs = this.obastacles;
+	const obs = obs_collidable;
 	let ball : Ball = this.ball;
     for (let i = 0; i < obs.length; i++) {
       if (ball.temp != i)
