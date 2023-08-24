@@ -1,12 +1,17 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import "../css/Profile.css";
 import axios from "axios";
-import { apiRequest } from "../utils/ApiRequest";
 import "../css/Profile.css";
 import { useNavigate } from "react-router-dom";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-
+import {
+  apiRequest,
+  getWhoami,
+  getIntraId,
+  patchId,
+  modifyNickname,
+} from "../utils/ApiRequest";
 interface ProfileNode {
   currUser: string;
 }
@@ -40,7 +45,7 @@ function ModifyModalButton(props: { modalType: string; callback }) {
             },
             autoClose: 1500,
           });
-          props.callback('false');
+          props.callback("false");
         }
       }}
       className="btn-fix glass"
@@ -120,15 +125,22 @@ function InviteGameSetting(props: { num: number }) {
 
 function ModifyAvatarSetting() {
   const [selectedFile, setSelectedFile] = useState(null);
+  const image = useRef(null);
   const handleFileChange = (event) => {
     setSelectedFile(event.target.files[0]);
   };
   const handleFileUpload = () => {
-    if (selectedFile) {
+    if (image.current.value) {
       {
         /*파일 전송*/
+        apiRequest<any>(
+          "post",
+          "http://localhost:3001/users/modifyAvatar/" + image.current.value
+          // 이미지를 어떻게 받을지에 따라 수정
+        )
+          .then((response) => {})
+          .catch((error) => {});
       }
-      console.log();
     }
   };
   return (
@@ -138,6 +150,7 @@ function ModifyAvatarSetting() {
         type="file"
         accept=".jpg, .jpeg, .png"
         onChange={handleFileChange}
+        ref={image}
       />
       <button className="avatar-upload" onClick={handleFileUpload}>
         수정하기
@@ -147,22 +160,23 @@ function ModifyAvatarSetting() {
 }
 
 function ModifyNicknameSetting() {
-  const [selectedFile, setSelectedFile] = useState(null);
-  const handleFileChange = (event) => {
-    setSelectedFile(event.target.files[0]);
-  };
+  const textbox = useRef(null);
   const handleFileUpload = () => {
-    if (selectedFile) {
+    if (textbox.current.value) {
       {
-        /*파일 전송*/
+        if (textbox.current.value.search(/\W|\s/g) > -1) {
+          alert("닉네임은 영문과 숫자만 가능합니다!!");
+          return;
+        }
+        modifyNickname(textbox.current.value);
+        textbox.current.value = "";
       }
-      console.log();
-    }
+    } else alert("닉네임을 수정하지 못했습니다!");
   };
   return (
     <>
       <h3 className="font-bold text-lg">닉네임 수정</h3>
-      <input type="text" />
+      <input type="text" ref={textbox} />
       <button className="avatar-upload" onClick={handleFileUpload}>
         수정하기
       </button>
@@ -170,45 +184,40 @@ function ModifyNicknameSetting() {
   );
 }
 
-let userName = "username";
-let rank = "rank";
+let userName: string = "username";
+let rank: string = "rank";
 let avatar: string = "avatar";
+let isCurrentUser: string = "";
 
 export default function Profile(pn: ProfileNode) {
   const [res, setRes] = useState(null);
   function LoadUserInfo() {
     useEffect(() => {
-      // any 대신 타입을 지정하려면 서버에서 보내오는 객체를 알아야될거같다.
-      // apiRequest<any>("get", "http://localhost:3001/users/whoami").then(
-      apiRequest<any>(
-        "get",
-        "http://localhost:3001/users/intraId/" + pn.currUser
-      ).then((response) => {
-        if (userName !== response.data.intraId)
-          userName = response.data.intraId;
-        if (rank !== response.data.rank) rank = response.data.rank;
-        setRes(response);
+      getWhoami().then((response) => {
+        if (pn.currUser === response.data.intraId) {
+          if (!response.data.twoFA) setTwoFA("false");
+          else setTwoFA("true");
+          if (userName !== response.data.nickname)
+            userName = response.data.nickname;
+          if (rank !== response.data.rank) rank = response.data.rank;
+          setRes(response);
+          isCurrentUser = userName;
+        } else {
+          getIntraId(pn.currUser).then((response) => {
+            if (userName !== response.data.intraId)
+              userName = response.data.intraId;
+            if (rank !== response.data.rank) rank = response.data.rank;
+            setRes(response);
+          });
+        }
       });
     }, []);
   }
 
-  //   LoadUserInfo();
   const [twoFA, setTwoFA] = useState("false");
   const changeTwoFA = (s) => {
     setTwoFA(s);
   };
-
-  useEffect(() => {
-    axios
-      .get("http://localhost:3001/users/whoami", { withCredentials: true })
-      .then((response) => {
-        if (!response.data.twoFA) setTwoFA("false");
-        else setTwoFA("true");
-      })
-      .catch((error) => {
-        console.log(error);
-      });
-  }, []);
 
   LoadUserInfo();
   return (
@@ -226,19 +235,19 @@ export default function Profile(pn: ProfileNode) {
         <div className="fix-profile">
           <div className="modal-avatar">
             <ModifyModalButton
-              modalType={pn.currUser === userName ? mAM : aFM}
+              modalType={isCurrentUser === userName ? mAM : aFM}
               callback={changeTwoFA}
             />
-            <ModalWindow modalType={pn.currUser === userName ? mAM : aFM} />
+            <ModalWindow modalType={isCurrentUser === userName ? mAM : aFM} />
           </div>
           <div className="modal-nickname">
             <ModifyModalButton
-              modalType={pn.currUser === userName ? mNM : iGM}
+              modalType={isCurrentUser === userName ? mNM : iGM}
               callback={changeTwoFA}
             />
-            <ModalWindow modalType={pn.currUser === userName ? mNM : iGM} />
+            <ModalWindow modalType={isCurrentUser === userName ? mNM : iGM} />
           </div>
-          {pn.currUser === userName && (
+          {isCurrentUser === userName && (
             <div className="2fa">
               <ModifyModalButton modalType={twoFA} callback={changeTwoFA} />
             </div>
@@ -248,8 +257,8 @@ export default function Profile(pn: ProfileNode) {
       <div className="nickname-history-div">
         <div className="history">
           <ul>
-            <li>daechoi vs king 2:1 win</li>
-            <li>eunji vs hello 1:2 lose</li>
+            <li style={{ userSelect: "auto" }}>daechoi vs king 2:1 win</li>
+            <li style={{ userSelect: "auto" }}>eunji vs hello 1:2 lose</li>
           </ul>
         </div>
       </div>
