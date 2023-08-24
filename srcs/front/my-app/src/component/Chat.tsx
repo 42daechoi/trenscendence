@@ -262,6 +262,24 @@ export default function Chat(props) {
 
   function ChatSetting() {
     const [isChecked, setChecked] = useState("public");
+    const [password, setPassword] = useState('');
+
+  const passwordChange = (event) => {
+    setPassword(event.target.value);
+  };
+
+    const modifyChatSock = async() => {
+      try {
+        const data = await whoami();
+        socket.emit('modify', { nickname: data.nickname, maxmember: 10, option: isChecked, password: password})
+          .catch( error => {
+            console.log(error);
+          });
+      } catch (error) {
+        console.log(error);
+      }
+    };
+
     return (
       <div id="ChatSetting">
         <h1
@@ -330,19 +348,36 @@ export default function Chat(props) {
               {isChecked === "protected" && (
                 <div style={{ padding: "10px" }}>
                   password
-                  <input type="text" style={{ marginLeft: "10px" }} />
+                  <input onChange={passwordChange} type="text" style={{ marginLeft: "10px" }} />
                 </div>
               )}
             </div>
           </div>
         </div>
-        <button className="setting-button">수정</button>
+        <button onClick={modifyChatSock} className="setting-button">수정</button>
       </div>
     );
   }
 
   function CreateChat() {
     const [isChecked, setChecked] = useState("public");
+    const [password, setPassword] = useState('');
+
+    const passwordChange = (event) => {
+      setPassword(event.target.value);
+    };
+
+    const createChatSock = async() => {
+      try {
+        const data = await whoami();
+        socket.emit('create', { nickname: data.nickname, maxmember: 10, option: "public", password: password})
+          .catch( error => {
+            console.log(error);
+          });
+      } catch (error) {
+        console.log(error);
+      }
+    };
 
     return (
       <div id="ChatSetting">
@@ -412,13 +447,13 @@ export default function Chat(props) {
               {isChecked === "protected" && (
                 <div style={{ padding: "10px" }}>
                   password
-                  <input type="text" style={{ marginLeft: "10px" }} />
+                  <input onChange={passwordChange} type="text" style={{ marginLeft: "10px" }} />
                 </div>
               )}
             </div>
           </div>
         </div>
-        <button className="setting-button">생성</button>
+        <button onClick={createChatSock} className="setting-button">생성</button>
       </div>
     );
   }
@@ -456,7 +491,7 @@ export default function Chat(props) {
           className="input input-bordered input-accent w-full max-w-xs"
           onKeyDown={handleKeyPress}
         />
-        <button className="btn btn-active btn-primary">↵</button>
+        <button className="btn btn-active btn-primary" >↵</button>
       </div>
       <div className="chat-member-list">
         <ul>
@@ -482,7 +517,8 @@ export default function Chat(props) {
           <button
             style={{ width: "70%", marginTop: "5%" }}
             onClick={() => {
-              setChatConfigure("setting");
+              setChatConfigure("create");
+              
               openModal();
             }}
           >
@@ -491,7 +527,7 @@ export default function Chat(props) {
           <button
             style={{ width: "70%", marginTop: "5%" }}
             onClick={() => {
-              setChatConfigure("create");
+              setChatConfigure("setting");
               openModal();
             }}
           >
