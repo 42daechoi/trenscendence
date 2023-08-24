@@ -26,23 +26,6 @@ services:
     volumes:
       - back_vol:/back/my-app
 
-
-  temp_serv:
-    container_name: temp
-    build: ./temp_serv
-
-    restart: always
-    ports:
-      - "3004:3004"
-    networks:
-      - tran_net
-    volumes:
-      - temp_vol:/server
-    env_file:
-      - .env
-    depends_on:
-      - db
-
   # PostgreSQL service
   db:
     container_name: postgres
@@ -84,11 +67,6 @@ volumes:
     driver_opts:
       type: none
       device: ${PWD}/srcs/front/my-app
-      o: bind
-  temp_vol:
-    driver_opts:
-      type: none
-      device: ${PWD}/srcs/temp_serv/server
       o: bind
   postgres_vol: # This volume will persist the PostgreSQL data
     driver_opts:

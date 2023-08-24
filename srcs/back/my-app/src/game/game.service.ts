@@ -9,7 +9,7 @@ import { User, GamePlayer, Games } from 'src/typeorm';
 import { Server, Socket, Namespace } from 'socket.io';
 import { ConnectedSocket } from '@nestjs/websockets';
 import { Repository } from 'typeorm';
-import  {Game, Player1, Player2, PlayerStatus, PadItem, Ball, Obstacle, Collidable}  from './classes/game.class';
+import  {updatedirection, Game, Player1, Player2, PlayerStatus, PadItem, Ball, Obstacle, Collidable}  from './classes/game.class';
 import { UserStatus } from 'src/typeorm/user.entity';
 
 
@@ -39,6 +39,7 @@ export class GameService {
 		if (!client_user){
 			//not 
 			this.logger.log("cannot find user");
+			return ;
 		}
 //		if (client_user.status !== UserStatus.Online){
 //			this.logger.log("cannot find user is not online");
@@ -58,6 +59,7 @@ export class GameService {
 			//not 
 			throw new Error("NotFoundException : cannot find user");
 		}
+
 		this.queue.delete(clientSocket.id);
 		console.log("poping in queue user id : " + client_user.id);
 
@@ -231,9 +233,11 @@ export class GameService {
 		}
 		const guestSocket : Socket = this.usersSockets.get(guest.socketID); 
 		const hostSocket : Socket = this.usersSockets.get(host.socketID); 
-		this.logger.log(JSON.stringify(cur_game.ball));
-		this.logger.log(JSON.stringify(cur_game.pad));
-		this.logger.log(JSON.stringify(cur_game.obstacles));
+		updatedirection(cur_game.ball);
+		cur_game.intervalId = setInterval(() => {
+			cur_game.pong(nsp);
+			nsp.to(cur_game_id).emit('draw', cur_game.ball);
+		  }, 20);
 	}
 
 	async gameOver(clinet: Socket){
@@ -275,7 +279,7 @@ export class GameService {
 			return;
 		cur_game.pad[0].isEqual(pad_info);
 		nsp.to(cur_game_id).emit("pad1", pad_info);
-		nsp.to(cur_game_id).emit("draw", cur_game.ball);
+		// nsp.to(cur_game_id).emit("draw", cur_game.ball);
 	}
 
 	async movePad2(client: Socket, pad_info : any, nsp: Namespace){
@@ -285,6 +289,6 @@ export class GameService {
 			return;
 		cur_game.pad[1].isEqual(pad_info);
 		nsp.to(cur_game_id).emit("pad2", pad_info);
-		nsp.to(cur_game_id).emit("draw", cur_game.ball);
+		// nsp.to(cur_game_id).emit("draw", cur_game.ball);
 	}
 }

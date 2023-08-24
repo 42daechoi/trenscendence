@@ -1,5 +1,4 @@
-import { setInterval } from 'timers/promises';
-import { CANVAS_HEIGHT, CANVAS_WIDTH } from '../interfaces/game.interface';
+import { Namespace } from 'socket.io';
 export enum PlayerStatus {
   Waiting = 0,
   Ready = 1,
@@ -12,6 +11,13 @@ export interface Collidable{
 	width: number;
 	height: number;
 }
+
+export function updatedirection(ball : Ball) {
+	ball.dy = 0.5 * Math.random() + 0.5;
+	ball.dx = 1;
+	ball.dx *= Math.random() < 0.5 ? -1 : 1;
+	ball.dy *= Math.random() < 0.5 ? -1 : 1;
+  }
 
 export class PadItem {
   x: number;
@@ -93,6 +99,7 @@ export class Player1 {
 	score: number;
 	color: string;
 	playerStatus: PlayerStatus;
+	interval : NodeJS.Timeout
 
   constructor(socketID?: string, userID?: number, nickname?: string) {
 	this.paddle = new PadItem(0, 0, 0, 0, "#023904", 0);
@@ -186,16 +193,31 @@ export class Game {
 		this.obstacles = [];
 	}
 
-	bounce() {
+	bounce(nsp : Namespace) {
 		let ball : Ball = this.ball;
 		if (ball.x + ball.r > this.board_x) {
-		  ball.dx *= -1;
-		  ball.x += ball.dx * ball.v;
+			ball.x = this.board_x / 2;
+			ball.y = this.board_y / 2;
+			updatedirection(this.ball);
+			this.player2.score++;
+			if (this.player2.score >= 3){
+				clearInterval(this.intervalId);
+				nsp.to(this.gameID).emit('guestWin',"");
+				return ;
+			}
+		  nsp.to(this.gameID).emit("guestScore", ball);
 		  // player1_win();
 		} else if (ball.x - ball.r < 0) {
-		  ball.temp = -1;
-		  ball.dx *= -1;
-		  ball.x += ball.dx * ball.v;
+			ball.x = this.board_x / 2;
+			ball.y = this.board_y / 2;
+			updatedirection(this.ball);
+			this.player1.score++;
+			if (this.player1.score >= 3){
+				clearInterval(this.intervalId);
+				nsp.to(this.gameID).emit('hostWin',"");
+				return ;
+			}
+		  nsp.to(this.gameID).emit("hostScore", ball);
 		  // player2_win();
 		} else if (ball.y + ball.r > this.board_y|| ball.y - ball.r < 0) {
 		  ball.dy *= -1;
@@ -207,11 +229,11 @@ export class Game {
 	move(){
 	}
 
-	pong() {
+	pong(nsp: Namespace) {
 		let ball : Ball = this.ball;
 		ball.x += ball.dx * ball.v;
 		ball.y += ball.dy * ball.v;
-		this.bounce();
+		this.bounce(nsp);
 		this.bounce_obstacle(this.obstacles);
 		this.bounce_obstacle(this.pad);
 	}

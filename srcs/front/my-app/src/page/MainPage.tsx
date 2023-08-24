@@ -18,13 +18,6 @@ export default function MainPage() {
       "get",
       "http://localhost:3001/users/whoami"
     ).then((response) => {
-      if (socket)
-      {
-        socket.on("message", data =>{
-          console.log("bind:", data);
-        });
-        socket.emit("bindId", response.data.id);
-      }
     });
   },[socket]);
 

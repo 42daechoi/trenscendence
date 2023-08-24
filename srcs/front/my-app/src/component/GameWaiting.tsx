@@ -3,9 +3,7 @@ import { useSocket } from './SocketContext';
 import "../css/GameWaiting.css";
 import { useNavigate } from "react-router-dom";
 import { apiRequest } from "../utils/ApiRequest";
-//bindid
-//match
-//setUp
+
 export default function GameWaiting() {
   let player = 0;
   const socket = useSocket();

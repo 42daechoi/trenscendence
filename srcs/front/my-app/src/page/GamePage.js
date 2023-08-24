@@ -1,17 +1,20 @@
 import React, { useRef, useEffect } from "react";
 import "../css/GamePage.css";
 import { useSocket } from '../component/SocketContext';
+import { useNavigate } from "react-router-dom";
+
 
 export default function GamePage() {
-  function player1_win() {
-    let score_1 = document.getElementById("score_1");
+  const navigate = useNavigate();
+  function host_win() {
+    let score_1 = document.getElementById("score_2");
     let score = score_1.innerText;
     score = parseInt(score) + 1;
     score_1.innerText = score;
   }
   const socket = useSocket();
-  function player2_win() {
-    let score_2 = document.getElementById("score_2");
+  function guest_win() {
+    let score_2 = document.getElementById("score_1");
     console.log(score_2);
     let score = score_2.innerText;
     score = parseInt(score) + 1;
@@ -137,9 +140,6 @@ useEffect(() => {
   if (socket)
   {
     const handlKeyDown = (e) => {
-      if (e.key == "Enter") {
-        player1_win();
-      }
       if (e.key == "ArrowUp") {
         e.preventDefault();
         a += 1;
@@ -170,6 +170,20 @@ useEffect(() => {
         if (client === 0)
           socket.emit('gameStart', gameset);
       });
+      socket.on('hostScore', (data)=>{
+        host_win();
+        ball.isEqual(data);
+      });
+      socket.on("hostWin",()=>{
+        navigate("/main");
+      });
+      socket.on("guestWin",()=>{
+        navigate("/main");
+      });
+      socket.on('guestScore', (data)=>{
+        guest_win();
+        ball.isEqual(data);
+      })
       socket.on('pad1', (data) => {
         pad[0] = data;
       });
