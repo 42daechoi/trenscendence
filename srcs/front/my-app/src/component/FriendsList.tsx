@@ -17,8 +17,6 @@ export default function Friends_list() {
     getWhoami().then((myid) => {
       getFriendList(myid.data.id).then((friends) => {
         for (let i = 0; i < friends.data.length; i++) {
-          console.log(friends.data[i].nickname);
-          console.log(friends.data[i].id);
           const friend: friendMap = {
             nickname: friends.data[i].nickname,
             id: friends.data[i].id,

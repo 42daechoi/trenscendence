@@ -187,33 +187,59 @@ function ModifyNicknameSetting() {
   );
 }
 
-let userName: string = "username";
-let rank: string = "rank";
-let avatar: string = "avatar";
-let isCurrentUser: string = "";
-
+type profileInfo = {
+  id: number;
+  nickname: string;
+  avatar: string;
+  rank: string;
+  isMyProfile: boolean;
+};
+const info: profileInfo = {
+  id: -1,
+  nickname: "unknown",
+  avatar: "unknown",
+  rank: "unknown",
+  isMyProfile: false,
+};
 export default function Profile(pn: ProfileNode) {
-  const [res, setRes] = useState(null);
+  const [tmpInfo, setInfo] = useState<profileInfo>({
+    id: -1,
+    nickname: "unknown",
+    avatar: "unknown",
+    rank: "unknown",
+    isMyProfile: false,
+  });
   function LoadUserInfo() {
     useEffect(() => {
       getWhoami().then((response) => {
         if (pn.currUser === response.data.id) {
           if (!response.data.twoFA) setTwoFA("false");
           else setTwoFA("true");
-          if (userName !== response.data.nickname)
-            userName = response.data.nickname;
-          if (rank !== response.data.rank) rank = response.data.rank;
-          setRes(response);
-          isCurrentUser = userName;
+          if (tmpInfo.nickname !== response.data.nickname)
+            info.nickname = response.data.nickname;
+          if (tmpInfo.rank !== response.data.rank)
+            info.rank = response.data.rank;
+          info.isMyProfile = true;
+          setInfo(info);
         } else {
           getId(String(pn.currUser)).then((response) => {
-            if (userName !== response.data.nickname)
-              userName = response.data.nickname;
-            if (rank !== response.data.rank) rank = response.data.rank;
-            setRes(response);
+            if (tmpInfo.nickname !== response.data.nickname)
+              info.nickname = response.data.nickname;
+            if (tmpInfo.rank !== response.data.rank)
+              info.rank = response.data.rank;
+            info.isMyProfile = false;
+            setInfo(info);
           });
         }
       });
+      return () => {
+        getWhoami().then((response) => {
+          info.nickname = response.data.nickname;
+          info.rank = response.data.rank;
+          info.id = response.data.id;
+          info.isMyProfile = true;
+        });
+      };
     }, []);
   }
 
@@ -223,6 +249,7 @@ export default function Profile(pn: ProfileNode) {
   };
 
   LoadUserInfo();
+
   return (
     <div className="my-profile-container">
       <div className="avatar-button-div">
@@ -230,27 +257,27 @@ export default function Profile(pn: ProfileNode) {
           <img src="/img/img.jpg" alt="" className="avatar-img"></img>
         </div>
         <div className="my-nickname">
-          {userName}
+          {info.nickname}
           <h1 style={{ fontSize: "20px", paddingTop: "10px" }}>
-            Rank : {rank}
+            Rank : {info.rank}
           </h1>
         </div>
         <div className="fix-profile">
           <div className="modal-avatar">
             <ModifyModalButton
-              modalType={isCurrentUser === userName ? mAM : aFM}
+              modalType={info.isMyProfile ? mAM : aFM}
               callback={changeTwoFA}
             />
-            <ModalWindow modalType={isCurrentUser === userName ? mAM : aFM} />
+            <ModalWindow modalType={info.isMyProfile ? mAM : aFM} />
           </div>
           <div className="modal-nickname">
             <ModifyModalButton
-              modalType={isCurrentUser === userName ? mNM : iGM}
+              modalType={info.isMyProfile ? mNM : iGM}
               callback={changeTwoFA}
             />
-            <ModalWindow modalType={isCurrentUser === userName ? mNM : iGM} />
+            <ModalWindow modalType={info.isMyProfile ? mNM : iGM} />
           </div>
-          {isCurrentUser === userName && (
+          {info.isMyProfile && (
             <div className="2fa">
               <ModifyModalButton modalType={twoFA} callback={changeTwoFA} />
             </div>
