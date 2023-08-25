@@ -46,7 +46,6 @@ const initTmpMessages: IMessage[] = [
 
 
 export default function Chat(props) {
-  // 임시 초기값 지정
   const [users, setUsers] = useState<IUsers[]>(initTmpUsers);
   const [messages, setMessages] = useState<IMessage[]>(initTmpMessages);
   const socket = useSocket();
@@ -61,8 +60,36 @@ export default function Chat(props) {
     receiveMessage();
   }
   
+  const receiveMessage = () => {
+    socket.on("chat", receiveData => {
+      if (!receiveData) return;
+      axios
+        .get("http://localhost:3001/users/nickname/" + receiveData.nickname, { withCredentials: true })
+        .then((response) => {
+          if (!response.data) return;
+          addMessage(
+            {
+              name: receiveData.nickname,
+              profile: receiveData.avatar,
+              id: receiveData.id,
+              isChecked: false,
+            },
+            receiveData.msg,
+            "chat chat-start"
+          );
+          // for (let i = 0; i < messages.length-1; i++) {
+          //   console.log(messages[i]);
+          // }
+          console.log(messages.length);
+        });
+      });
+  };
+
   useEffect(()=>{
     init();
+    return () => {
+      socket.off('chat', receiveMessage);
+    };
   },[]);
 
   function addUsers(name: string) {
@@ -282,26 +309,7 @@ export default function Chat(props) {
     }
   };
 
-  const receiveMessage = () => {
-    socket.on("chat", receiveData => {
-      if (!receiveData) return;
-      axios
-        .get("http://localhost:3001/users/nickname/" + receiveData.nickname, { withCredentials: true })
-        .then((response) => {
-          if (!response.data) return;
-          addMessage(
-            {
-              name: receiveData.nickname,
-              profile: receiveData.avatar,
-              id: receiveData.id,
-              isChecked: false,
-            },
-            receiveData.msg,
-            "chat chat-start"
-          );
-        });
-      });
-  };
+
 
   const [isModalOpen, setModalOpen] = useState(false);
   const openModal = (): void => {
