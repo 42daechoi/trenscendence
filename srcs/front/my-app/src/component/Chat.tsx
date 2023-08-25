@@ -106,8 +106,8 @@ export default function Chat(props) {
     // else
     // const className = "chat chat-start";
 
-    setMessages([
-      ...messages,
+    setMessages((prevMessages) => [
+      ...prevMessages,
       { user: user, sender: className, text: text, time: time },
     ]);
   };
@@ -449,9 +449,6 @@ export default function Chat(props) {
             maxmember: 10,
             option: "public",
             password: password,
-          })
-          .catch((error) => {
-            console.log(error);
           });
       } catch (error) {
         console.log(error);
