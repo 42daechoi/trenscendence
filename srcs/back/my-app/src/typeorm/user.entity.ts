@@ -82,9 +82,12 @@ export class User {
   @OneToMany(() => GamePlayer, (gamePlayer) => gamePlayer.user)
   gamePlayer: GamePlayer;
 
-//  @ManyToMany(() => GameHistory, histories => histories.players)
-//  @JoinTable()
-//  histories: GameHistory[];
+  //I want to add picture column for user
+  @Column({ type: 'bytea', nullable: true })
+  profilePicture: Buffer | string;
+
+  @Column({nullable : true})
+  ft_pictureUrl : string;
 
   @AfterInsert()
   logInsert() {
