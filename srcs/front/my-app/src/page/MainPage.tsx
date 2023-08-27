@@ -9,11 +9,13 @@ import ChannelsList from "../component/ChannelsList";
 import Chat from "../component/Chat";
 import io from "socket.io-client";
 import axios from "axios";
+import { useSocket } from '../component/SocketContext';
 
 // const socket = io('http://localhost:3002');
 
 export default function MainPage() {
   const [curPage, setCurPage] = useState("my_profile");
+  const socket = useSocket();
   // useEffect(() => {
   //   return () => {
   //     socket.disconnect();
@@ -48,14 +50,24 @@ export default function MainPage() {
     }
   };
 
+  const updateChannel = () => {
+    socket.emit('allchannel', null);
+    socket.on('allchannel', channelList => {
+      console.log(channelList);
+      // return channelList;
+    });
+  }
+
   const renderSide = () => {
     switch (curSide) {
       case "friends_list":
         return <FriendsList />;
       case "channels_list":
-        return <ChannelsList />;
+        return <ChannelsList channelList={updateChannel()} />;
     }
   };
+
+
   return (
     <div className="background">
       <div className="drawer drawer-end">

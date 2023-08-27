@@ -58,6 +58,7 @@ export default function Chat(props) {
     const data = await whoami();
     socket.emit('bind', data.nickname);
     receiveMessage();
+    updateUsers();
   }
   
   const receiveMessage = () => {
@@ -92,9 +93,9 @@ export default function Chat(props) {
     };
   },[]);
 
-  function addUsers(name: string) {
-    setUsers([
-      ...users,
+  function addUsers(name: string, profile:string, id:number) {
+    setUsers((prevUsers) =>[
+      ...prevUsers,
       { name: name, profile: null, id: 1, isChecked: false },
     ]);
   }
@@ -292,6 +293,17 @@ export default function Chat(props) {
     try {
       const data = await whoami();
       socket.emit("home", data.nickname);
+      setMessages([]);
+      addMessage(
+        {
+          name: "SERVER",
+          profile: null,
+          id: 0,
+          isChecked: false,
+        },
+        "Home 채널에 참가하셨습니다.",
+        "chat chat-start"
+      );
     } catch (error) {
       console.log(error);
     }
@@ -309,7 +321,51 @@ export default function Chat(props) {
     }
   };
 
+  const updateUsers = async() => {
+    // try {
+    //   const data = await whoami();
+    //   where(socket, data.nickname)
+    //     .then(channel => {
+    //       console.log(channel.users);
+    //       for (let i = 0; i < channel.users.length; i++) {
+    //         axios.get('http://localhost:3001/users/' + channel.users[i], { withCredentials:true })
+    //           .then(response => {
+    //             addUsers(response.data.nickname, null, response.data.id);
+    //           })
+    //       }
+    //     })
+    //     .catch(error => {
+    //       console.log(error);
+    //     })
+    // } catch (error) {
+    //   console.log(error);
+    // };
+  }
 
+  const initMessages = async() => {
+    setMessages([]);
+    try {
+      const data = await whoami();
+      where(socket, data.nickname)
+          .then(channel => {
+            addMessage(
+              {
+                name: "SERVER",
+                profile: null,
+                id: 0,
+                isChecked: false,
+              },
+              channel.channelname + " 채널에 참가하셨습니다.",
+              "chat chat-start"
+            );
+          })
+          .catch (error => {
+            console.log(error);
+          });
+    } catch (error) {
+      console.log(error);
+    }
+  }
 
   const [isModalOpen, setModalOpen] = useState(false);
   const openModal = (): void => {
@@ -339,9 +395,6 @@ export default function Chat(props) {
             option: isChecked,
             password: password,
           })
-          .catch((error) => {
-            console.log(error);
-          });
       } catch (error) {
         console.log(error);
       }
@@ -432,7 +485,7 @@ export default function Chat(props) {
     );
   }
 
-  function CreateChat() {
+  function CreateChat(props) {
     const [isChecked, setChecked] = useState("public");
     const [password, setPassword] = useState("");
 
@@ -443,13 +496,23 @@ export default function Chat(props) {
     const createChatSock = async () => {
       try {
         const data = await whoami();
-        socket
-          .emit("create", {
-            nickname: data.nickname,
-            maxmember: 10,
-            option: "public",
-            password: password,
-          });
+        where(socket, data.nickname)
+          .then(channel => {
+            console.log(channel.channelname);
+            if (channel.channelname === '$home') {
+              socket
+              .emit("create", {
+                nickname: data.nickname,
+                maxmember: 10,
+                option: "public",
+                password: password,
+              });
+              props.entryChannel();
+            }
+          })
+          .catch(error => {
+            console.log(error);
+          })
       } catch (error) {
         console.log(error);
       }
@@ -627,7 +690,7 @@ export default function Chat(props) {
             <Modal
               closeModal={closeModal}
               ConfigureModal={() =>
-                chatConfigure === "setting" ? <ChatSetting /> : <CreateChat />
+                chatConfigure === "setting" ? <ChatSetting/> : <CreateChat entryChannel={initMessages}/>
               }
             />
           </div>

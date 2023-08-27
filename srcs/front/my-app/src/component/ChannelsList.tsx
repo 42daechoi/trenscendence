@@ -7,9 +7,9 @@ import { where } from "../utils/where";
 
 const initChannels: string[] = ["a", "b", "c"];
 
-export default function ChannelsList() {
+export default function ChannelsList(props) {
   // 초기 채널 설정
-  const [channelList, setChannelList] = useState<string[]>(initChannels);
+  const [channelList, setChannelList] = useState<string[]>(initChannels);//props.channelList
   // const [channelList, setChannelList] = useState<string[]>([]);
   const socket = useSocket();
   let password;
@@ -20,7 +20,7 @@ export default function ChannelsList() {
     //   const channel = where(socket, "temp");
 
     //   channel.then(channel => {
-    //     setModalOpen(true);
+        setModalOpen(true);
     //     socket.emit('join', { nickname:data.nickname, channelname:channel.channelname, password:password });
     //   }) .catch (error => {
     //     console.log(error);
