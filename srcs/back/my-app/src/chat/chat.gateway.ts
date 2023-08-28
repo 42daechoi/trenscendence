@@ -39,13 +39,15 @@ import { channel } from 'diagnostics_channel';
 
     sendDataToSocket(socket: Socket, data : any)
     {
-      socket.emit('allchannel', data);
+      socket.emit('allinfo', data);
     }
 
-    startSendingAllChannels() {
+    startSendingAllInfo() {
       setInterval(() => {
         this.connectedSockets.forEach(socket => {
-          this.sendDataToSocket(socket, this.channelnames);
+          const user = this.users.find(u => u.socketid === socket.id );
+          const channel = this.channels.find(u => u.channelname === user.channelname);
+          this.sendDataToSocket(socket, {channelnames: this.channelnames, memberlist: channel.users});
         });
       }, 2000);
     }
@@ -69,7 +71,7 @@ import { channel } from 'diagnostics_channel';
           password: null,
       }
       this.channels.push(channel);
-      this.startSendingAllChannels();
+      this.startSendingAllInfo();
     }
 
 
@@ -766,7 +768,7 @@ import { channel } from 'diagnostics_channel';
       {
         console.log("------------------here 2-----------------------");
         console.log(beforeChannel.users[0]);
-        
+
         const removeIdx = beforeChannel.users.indexOf(user.id);
         if (removeIdx !== -1) {
           beforeChannel.users.splice(removeIdx, 1);
