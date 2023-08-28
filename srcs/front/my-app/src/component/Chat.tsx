@@ -101,6 +101,19 @@ export default function Chat(props) {
     };
   },[]);
 
+  useEffect(() => {
+    for (let i = 0; i < props.memberList.length; i++) {
+      axios.get('http://localhost:3001/users/' + props.memberList[i], { withCredentials: true })
+        .then(response => {
+          const data = response.data;
+          addUsers(data.nickname, data.avatar, data.id);
+        })
+        .catch(error => {
+          console.log(error);
+        });
+    }
+  }, [props.memberList]);
+
   function addUsers(name: string, profile:string, id:number) {
     setUsers((prevUsers) =>[
       ...prevUsers,
