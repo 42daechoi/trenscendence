@@ -16,27 +16,25 @@ export default function ChannelsList(props) {
   let password;
 
   useEffect(() => {
-    console.log(props.channelList);
     for (let i = 0; i < props.channelList.length; i++) {
       addChannelList(props.channelList[i]);
     }
   }, []);
 
   const joinChannel = async(password) => {
-    // try {
-    //   const data = await whoami();
-    //   const channel = where(socket, "temp");
+    try {
+      const data = await whoami();
 
-    //   channel.then(channel => {
+      where(socket, data.id).then(channel => {
         setModalOpen(true);
-    //     socket.emit('join', { nickname:data.nickname, channelname:channel.channelname, password:password });
-    //   }) .catch (error => {
-    //     console.log(error);
-    //   })
+        socket.emit('join', { id:data.id, channelname:channel.channelname, password:password });
+      }) .catch (error => {
+        console.log(error);
+      })
 
-    // } catch (error) {
-    //   console.log(error);
-    // }
+    } catch (error) {
+      console.log(error);
+    }
   }
 
   function addChannelList(channelName: string) {

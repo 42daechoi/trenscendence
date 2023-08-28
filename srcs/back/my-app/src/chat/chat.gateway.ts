@@ -153,19 +153,19 @@ import { channel } from 'diagnostics_channel';
       console.log('SocketId: ', socket.id);
       console.log('----------------------------------------');
 
-      const block_users : User[] = await this.usersService.getUserBlocks(id);
-      let   block_list : Map<number, string>;
+      // const block_users : User[] = await this.usersService.getUserBlocks(id);
+      // let   block_list : Map<number, string>;
 
-      for (const blockuser of block_users) {
-        block_list.set(blockuser.id, blockuser.nickname);
-      }
+      // for (const blockuser of block_users) {
+      //   block_list.set(blockuser.id, blockuser.nickname);
+      // }
 
       const user: userDTO = {
         socketid: socket.id,
         id: id,
         channelname: '$home',
         socket: socket,
-        blocklist: block_list
+     //   blocklist: block_list
       };
 
       this.users.push(user);
@@ -207,31 +207,31 @@ import { channel } from 'diagnostics_channel';
 
         const target = this.users.find(u => u.id === chatobj.target);
 
-        const blocks = target.blocklist;
-        const block_check = blocks.get(user.id);
+        // const blocks = target.blocklist;
+        // const block_check = blocks.get(user.id);
 
-        console.log('----------------------------------------');
-        console.log(blocks)
-        //console.log('target check :', target);
-        console.log('----------------------------------------');
+        // console.log('----------------------------------------');
+        // console.log(blocks)
+        // //console.log('target check :', target);
+        // console.log('----------------------------------------');
 
 
-        if (block_check === undefined)
-        {
+        // if (block_check === undefined)
+        // {
           if (target && target.id !== user.id)
           {
             //유저 한명에게 dm보내기. 
             socket.to(target.socketid).emit('chat', chatobj);
           }
+      //   }
+      //   else
+      //   {
+      //    console.log('----------------------------------------');
+      //    console.log('                  blocked               ');
+      //    console.log('----------------------------------------');
+      //    return;
+      //   }
         }
-        else
-        {
-         console.log('----------------------------------------');
-         console.log('                  blocked               ');
-         console.log('----------------------------------------');
-         return;
-        }
-      }
     }
 
 

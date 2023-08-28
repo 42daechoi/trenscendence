@@ -18,6 +18,14 @@ export default function MainPage() {
   const [channelList, setChannelList] = useState([]);
   const socket = useSocket();
 
+  useEffect(() => {
+    socket.on('allchannel', data => {
+      setChannelList(data);
+    });
+    return () => {
+      socket.off('allchannel');
+    }
+  }, []);
 
   const renderPage = () => {
     switch (curPage) {
@@ -47,20 +55,12 @@ export default function MainPage() {
     }
   };
 
-  const updateChannel = () => {
-    socket.emit('allchannel', null);
-    socket.on('allchannel', data => {
-      console.log('data:' + data);
-      return channelList;
-    });
-  }
-
   const renderSide = () => {
     switch (curSide) {
       case "friends_list":
         return <FriendsList />;
       case "channels_list":
-        return <ChannelsList channelList={updateChannel()} />;
+        return <ChannelsList channelList={channelList} />;
     }
   };
 

@@ -55,5 +55,5 @@ export class userDTO {
     id: number;
     channelname: string;
     socket: Socket;
-    blocklist: Map<number, string>;
+   // blocklist: Map<number, string>;
 }

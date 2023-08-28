@@ -84,8 +84,20 @@ export default function Chat(props) {
 
   useEffect(()=>{
     init();
+    socket.on('kick', data => {
+      if (data.flag){
+        const newUsers = users.filter(value => value !== data.id);
+        setUsers(newUsers);
+      }
+    })
+    socket.on('join', channel => {
+      if (channel.flag)
+        initMessages();
+    })
     return () => {
-      socket.off('chat', receiveMessage);
+      socket.off('chat');
+      socket.off('kick');
+      socket.off('join')
     };
   },[]);
 
@@ -283,9 +295,6 @@ export default function Chat(props) {
             id: data.id,
             target: users[i].name,
           });
-          socket.on('kick', flag => {
-            if (flag) users.splice(i, 1);
-          })
       }
     } catch (error) {
       console.log(error);
