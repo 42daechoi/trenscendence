@@ -65,23 +65,19 @@ export default function Chat(props) {
     socket.on("chat", receiveData => {
       if (!receiveData) return;
       axios
-        .get("http://localhost:3001/users/nickname/" + receiveData.id, { withCredentials: true })
+        .get("http://localhost:3001/users/" + receiveData.id, { withCredentials: true })
         .then((response) => {
           if (!response.data) return;
           addMessage(
             {
-              name: receiveData.id,
-              profile: receiveData.avatar,
-              id: receiveData.id,
+              name: response.data.nickname,
+              profile: response.data.avatar,
+              id: response.data.id,
               isChecked: false,
             },
             receiveData.msg,
             "chat chat-start"
           );
-          // for (let i = 0; i < messages.length-1; i++) {
-          //   console.log(messages[i]);
-          // }
-          console.log(messages.length);
         });
       });
   };
@@ -207,14 +203,14 @@ export default function Chat(props) {
         .then(response => {
           socket.emit("chat", {
             id: data.id,
-            target: target_name,
+            target: response.data.id,
             flag: "dm",
             msg: msg,
           });
         })
         addMessage(
           {
-            name: data.id,
+            name: data.nickname,
             profile: null,
             id: data.id,
             isChecked: false,
@@ -239,7 +235,7 @@ export default function Chat(props) {
           });
         addMessage(
           {
-            name: data.id,
+            name: data.nickname,
             profile: null,
             id: data.id,
             isChecked: false,
@@ -329,24 +325,24 @@ export default function Chat(props) {
   };
 
   const updateUsers = async() => {
-    // try {
-    //   const data = await whoami();
-    //   where(socket, data.id)
-    //     .then(channel => {
-    //       console.log(channel.users);
-    //       for (let i = 0; i < channel.users.length; i++) {
-    //         axios.get('http://localhost:3001/users/' + channel.users[i], { withCredentials:true })
-    //           .then(response => {
-    //             addUsers(response.data.id, null, response.data.id);
-    //           })
-    //       }
-    //     })
-    //     .catch(error => {
-    //       console.log(error);
-    //     })
-    // } catch (error) {
-    //   console.log(error);
-    // };
+    try {
+      const data = await whoami();
+      where(socket, data.id)
+        .then(channel => {
+          console.log(channel.users);
+          for (let i = 0; i < channel.users.length; i++) {
+            axios.get('http://localhost:3001/users/' + channel.users[i], { withCredentials:true })
+              .then(response => {
+                addUsers(response.data.id, null, response.data.id);
+              })
+          }
+        })
+        .catch(error => {
+          console.log(error);
+        })
+    } catch (error) {
+      console.log(error);
+    };
   }
 
   const initMessages = async() => {

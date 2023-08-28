@@ -11,12 +11,12 @@ interface Channel {
 	password?:number | null;
 }
 
-export const where = (socket, nickname: string): Promise<Channel> => {
+export const where = (socket, id: number): Promise<Channel> => {
 	return new Promise((resolve, reject) => {
-	  axios
-		.get('http://localhost:3001/users/nickname/' + nickname)
-		.then((response) => {
-		  socket.emit('where', response.data.nickname);
+	//   axios
+	// 	.get('http://localhost:3001/users/nickname/' + id)
+	// 	.then((response) => {
+		  socket.emit('where', id);
 		  socket.on('where', (channel: Channel) => {
 			resolve(channel);
 		  });
@@ -24,10 +24,10 @@ export const where = (socket, nickname: string): Promise<Channel> => {
 		  setTimeout(() => {
 			reject(new Error('채널 정보를 불러올 수 없습니다.'));
 		  }, 5000);
-		})
-		.catch((error) => {
-		  console.log(error);
-		  reject(error);
-		});
+		// })
+		// .catch((error) => {
+		//   console.log(error);
+		//   reject(error);
+		// });
 	});
 }

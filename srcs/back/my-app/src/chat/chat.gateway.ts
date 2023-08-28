@@ -146,14 +146,14 @@ import { channel } from 'diagnostics_channel';
     //***************************  bind  **********************************//
     //*********************************************************************//
     @SubscribeMessage('bind')
-    handlebind(@MessageBody() id: number, @ConnectedSocket() socket: Socket) : void {
+    async handlebind(@MessageBody() id: number, @ConnectedSocket() socket: Socket) {
       console.log('----------------------------------------');
       console.log('-----------------BIND-------------------');
       console.log('Userid: ', id);
       console.log('SocketId: ', socket.id);
       console.log('----------------------------------------');
 
-      const block_users : User[] = this.usersService.getUserBlocks(id);
+      const block_users : User[] = await this.usersService.getUserBlocks(id);
       let   block_list : Map<number, string>;
 
       for (const blockuser of block_users) {
@@ -195,6 +195,7 @@ import { channel } from 'diagnostics_channel';
         console.log('----------------------------------------');
         console.log("             broad chat part            ");
         console.log('----------------------------------------');
+        console.log(user.channelname);
         socket.broadcast.to(user.channelname).emit('chat', chatobj);
       }
       else
@@ -206,12 +207,15 @@ import { channel } from 'diagnostics_channel';
 
         const target = this.users.find(u => u.id === chatobj.target);
 
-        console.log('----------------------------------------');
-        console.log('target check :', target);
-        console.log('----------------------------------------');
-
         const blocks = target.blocklist;
         const block_check = blocks.get(user.id);
+
+        console.log('----------------------------------------');
+        console.log(blocks)
+        //console.log('target check :', target);
+        console.log('----------------------------------------');
+
+
         if (block_check === undefined)
         {
           if (target && target.id !== user.id)
@@ -257,7 +261,7 @@ import { channel } from 'diagnostics_channel';
     //***************************  create  ********************************//
     //*********************************************************************//
     @SubscribeMessage('create')
-    handlecreate(@MessageBody() room: roomDTO, @ConnectedSocket() socket: Socket) {
+    async handlecreate(@MessageBody() room: roomDTO, @ConnectedSocket() socket: Socket) {
       console.log('----------------------------------------');
       console.log('-----------------CREATE-----------------');  
       console.log(room);
@@ -282,9 +286,14 @@ import { channel } from 'diagnostics_channel';
         return;
       }
 
+      const user_info : User = await this.usersService.findUserById(user.id);
+      console.log('----------------------------------------');
+      console.log(user_info.nickname)
+      console.log('----------------------------------------'); 
+
       // 채널 생성
       const newChannel = {
-        channelname: room.nickname,
+        channelname: user_info.nickname,
         host: room.id,
         operator: [],
         users: [user.id],
@@ -349,8 +358,8 @@ import { channel } from 'diagnostics_channel';
           }
 
           socket.leave(user.channelname);
-          user.channelname = room.nickname;
-          socket.join(room.nickname);
+          user.channelname = user_info.nickname;
+          socket.join(user.channelname);
 
           socket.emit('create', newChannel);
           socket.broadcast.to(beforeChannel.channelname).emit('update', false);   //퇴장 메시지
@@ -711,7 +720,7 @@ import { channel } from 'diagnostics_channel';
     //****************************  home   ********************************//
     //*********************************************************************//
     @SubscribeMessage('home')
-    handlehome(@MessageBody() id: number, @ConnectedSocket() socket: Socket) {
+    async handlehome(@MessageBody() id: number, @ConnectedSocket() socket: Socket) {
       console.log('----------------------------------------');
       console.log('-----------------HOME-------------------');  
       console.log('userId: ', id);
@@ -780,7 +789,7 @@ import { channel } from 'diagnostics_channel';
         {
           beforeChannel.host = beforeChannel.users[0];
           let newhost = this.users.find(u => u.id === beforeChannel.users[0])
-          const newhost_user : User = this.usersService.findUserById(newhost.id);
+          const newhost_user : User = await this.usersService.findUserById(newhost.id);
           beforeChannel.channelname = newhost_user.nickname;
         }
 
