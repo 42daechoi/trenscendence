@@ -53,7 +53,7 @@ export default function Friends_list() {
       {isModalOpen && (
         <Modal
           closeModal={closeModal}
-          ConfigureModal={() => <Profile currUser={id} />}
+          ConfigureModal={() => <Profile currUser={id} isMe={false} />}
         />
       )}
     </div>

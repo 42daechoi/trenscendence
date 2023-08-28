@@ -24,7 +24,7 @@ export default function ProfileModal({ name, currUser }: ProfileModalProps) {
       {isModalOpen && (
         <Modal
           closeModal={closeModal}
-          ConfigureModal={() => <Profile currUser={currUser} />}
+          ConfigureModal={() => <Profile currUser={currUser} isMe={false} />}
         />
       )}
     </div>

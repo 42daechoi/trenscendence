@@ -10,28 +10,38 @@ import {
   getWhoami,
   getIntraId,
   patchId,
+  patchAddFriend,
+  patchDeleteFriend,
   modifyNickname,
   getFriendList,
   getId,
 } from "../utils/ApiRequest";
+
 interface ProfileNode {
   currUser: number;
+  isMe: Boolean;
 }
+let index: number = 0;
 
-const mAM: string = "modifyAvatarModal";
-const mNM: string = "modifyNicknameModal";
-const aFM: string = "addFriendModal";
-const iGM: string = "inviteGameModal";
+let mAM: string = "modifyAvatarModal" + index;
+let mNM: string = "modifyNicknameModal" + index;
+let aFM: string = "addFriendModal" + index;
+let dFM: string = "deleteFriendModal" + index;
+let iGM: string = "inviteGameModal" + index;
 
 function ModifyModalButton(props: { modalType: string; callback }) {
   const navigate = useNavigate();
+  const typeRef = useRef(null);
 
   return (
     <button
       onClick={() => {
-        if (props.modalType === mAM) window[mAM].showModal();
-        else if (props.modalType === mNM) window[mNM].showModal();
+        if (props.modalType === mAM) {
+          // console.log(typeRef.current.value);
+          window[mAM].showModal();
+        } else if (props.modalType === mNM) window[mNM].showModal();
         else if (props.modalType === aFM) window[aFM].showModal();
+        else if (props.modalType === dFM) window[dFM].showModal();
         else if (props.modalType === iGM) window[iGM].showModal();
         else if (props.modalType === "false") navigate("/full-tfa");
         else if (props.modalType === "true") {
@@ -51,6 +61,7 @@ function ModifyModalButton(props: { modalType: string; callback }) {
         }
       }}
       className="btn-fix glass"
+      ref={typeRef}
     >
       {props.modalType === mAM
         ? "아바타 수정"
@@ -58,6 +69,8 @@ function ModifyModalButton(props: { modalType: string; callback }) {
         ? "닉네임 수정"
         : props.modalType === aFM
         ? "친구 추가"
+        : props.modalType === dFM
+        ? "친구 해제"
         : props.modalType === iGM
         ? "게임 초대"
         : props.modalType === "true"
@@ -90,11 +103,11 @@ function ModalWindow(props: { modalType: string }) {
         </form>
       </dialog>
     );
-  else if (props.modalType === aFM)
+  else if (props.modalType === aFM || props.modalType === dFM)
     return (
-      <dialog id={aFM} className="modal">
+      <dialog id={props.modalType === aFM ? aFM : dFM} className="modal">
         <form method="dialog" className="modal-box">
-          <FriendButtonSetting num={1} />
+          <FriendButtonSetting num={1} modalType={props.modalType} />
         </form>
         <form method="dialog" className="modal-backdrop">
           {/* close의 용도? */}
@@ -115,10 +128,40 @@ function ModalWindow(props: { modalType: string }) {
     );
 }
 
-function FriendButtonSetting(props: { num: number }) {
-  // console.log(aFM);
-
-  return <div>AddFriend</div>;
+function FriendButtonSetting(props: { num: number; modalType: string }) {
+  if (props.modalType === aFM) {
+    return (
+      <button
+        onClick={() => {
+          patchAddFriend(props.num)
+            .then((result) => {
+              alert("친구 추가 성공!");
+            })
+            .catch((err) => {
+              alert("친구 추가 실패");
+            });
+        }}
+      >
+        AddFriend
+      </button>
+    );
+  } else {
+    return (
+      <button
+        onClick={() => {
+          patchDeleteFriend(props.num)
+            .then((result) => {
+              alert("친구 삭제 성공");
+            })
+            .catch((err) => {
+              alert("친구 삭제 실패");
+            });
+        }}
+      >
+        DeleteFriend
+      </button>
+    );
+  }
 }
 
 function InviteGameSetting(props: { num: number }) {
@@ -174,7 +217,7 @@ function ModifyNicknameSetting() {
         modifyNickname(textbox.current.value);
         textbox.current.value = "";
       }
-    } else alert("닉네임을 수정하지 못했습니다!");
+    } else alert("닉네임 수정 실패");
   };
   return (
     <>
@@ -193,51 +236,84 @@ type profileInfo = {
   avatar: string;
   rank: string;
   isMyProfile: boolean;
+  isFriendly: boolean;
 };
-const info: profileInfo = {
+
+const MyInfo: profileInfo = {
   id: -1,
   nickname: "unknown",
   avatar: "unknown",
   rank: "unknown",
   isMyProfile: false,
+  isFriendly: true,
 };
+
 export default function Profile(pn: ProfileNode) {
-  const [tmpInfo, setInfo] = useState<profileInfo>({
+  const [info, setInfo] = useState<profileInfo>({
     id: -1,
     nickname: "unknown",
     avatar: "unknown",
     rank: "unknown",
     isMyProfile: false,
+    isFriendly: true,
   });
+
+  getWhoami()
+    .then((result) => {
+      MyInfo.id = result.data.id;
+      MyInfo.avatar = result.data.avatar;
+      MyInfo.rank = result.data.rank;
+    })
+    .catch((err) => {});
+
   function LoadUserInfo() {
+    let newInfo: profileInfo = {
+      id: -1,
+      nickname: "unknown",
+      avatar: "unknown",
+      rank: "unknown",
+      isMyProfile: false,
+      isFriendly: true,
+    };
     useEffect(() => {
       getWhoami().then((response) => {
+        console.log(pn.currUser);
         if (pn.currUser === response.data.id) {
           if (!response.data.twoFA) setTwoFA("false");
           else setTwoFA("true");
-          if (tmpInfo.nickname !== response.data.nickname)
-            info.nickname = response.data.nickname;
-          if (tmpInfo.rank !== response.data.rank)
-            info.rank = response.data.rank;
-          info.isMyProfile = true;
-          setInfo(info);
+          if (info.nickname !== response.data.nickname)
+            newInfo.nickname = response.data.nickname;
+          if (info.rank !== response.data.rank)
+            newInfo.rank = response.data.rank;
+          newInfo.isMyProfile = true;
+          setInfo(newInfo);
         } else {
           getId(String(pn.currUser)).then((response) => {
-            if (tmpInfo.nickname !== response.data.nickname)
-              info.nickname = response.data.nickname;
-            if (tmpInfo.rank !== response.data.rank)
-              info.rank = response.data.rank;
+            if (info.nickname !== response.data.nickname)
+              newInfo.nickname = response.data.nickname;
+            if (info.rank !== response.data.rank)
+              newInfo.rank = response.data.rank;
             info.isMyProfile = false;
-            setInfo(info);
+            getFriendList(pn.currUser)
+              .then((res) => {
+                res.data.forEach((element) => {
+                  if (element.id === pn.currUser) newInfo.isFriendly = true;
+                  else newInfo.isFriendly = false;
+                });
+              })
+              .catch((err) => {});
+            setInfo(newInfo);
           });
         }
       });
       return () => {
         getWhoami().then((response) => {
-          info.nickname = response.data.nickname;
-          info.rank = response.data.rank;
-          info.id = response.data.id;
-          info.isMyProfile = true;
+          console.log(info.nickname);
+          newInfo.nickname = response.data.nickname;
+          newInfo.rank = response.data.rank;
+          newInfo.id = response.data.id;
+          newInfo.isMyProfile = true;
+          setInfo(newInfo);
         });
       };
     }, []);
@@ -247,9 +323,8 @@ export default function Profile(pn: ProfileNode) {
   const changeTwoFA = (s) => {
     setTwoFA(s);
   };
-
+  index++;
   LoadUserInfo();
-
   return (
     <div className="my-profile-container">
       <div className="avatar-button-div">
@@ -263,24 +338,34 @@ export default function Profile(pn: ProfileNode) {
           </h1>
         </div>
         <div className="fix-profile">
-          <div className="modal-avatar">
-            <ModifyModalButton
-              modalType={info.isMyProfile ? mAM : aFM}
-              callback={changeTwoFA}
-            />
-            <ModalWindow modalType={info.isMyProfile ? mAM : aFM} />
-          </div>
-          <div className="modal-nickname">
-            <ModifyModalButton
-              modalType={info.isMyProfile ? mNM : iGM}
-              callback={changeTwoFA}
-            />
-            <ModalWindow modalType={info.isMyProfile ? mNM : iGM} />
-          </div>
-          {info.isMyProfile && (
-            <div className="2fa">
-              <ModifyModalButton modalType={twoFA} callback={changeTwoFA} />
-            </div>
+          {(pn.isMe || pn.currUser !== MyInfo.id) && (
+            <>
+              <div className="modal-avatar">
+                <ModifyModalButton
+                  modalType={
+                    info.isMyProfile ? mAM : info.isFriendly ? dFM : aFM
+                  }
+                  callback={changeTwoFA}
+                />
+                <ModalWindow
+                  modalType={
+                    info.isMyProfile ? mAM : info.isFriendly ? dFM : aFM
+                  }
+                />
+              </div>
+              <div className="modal-nickname">
+                <ModifyModalButton
+                  modalType={info.isMyProfile ? mNM : iGM}
+                  callback={changeTwoFA}
+                />
+                <ModalWindow modalType={info.isMyProfile ? mNM : iGM} />
+              </div>
+              {info.isMyProfile && (
+                <div className="2fa">
+                  <ModifyModalButton modalType={twoFA} callback={changeTwoFA} />
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>

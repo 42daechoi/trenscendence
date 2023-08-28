@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 
 import "../css/MainPage.css";
 import Profile from "../component/Profile";
@@ -7,13 +7,14 @@ import LeaderBoard from "../component/LeaderBoard";
 import FriendsList from "../component/FriendsList";
 import ChannelsList from "../component/ChannelsList";
 import Chat from "../component/Chat";
-import io from "socket.io-client";
-import axios from "axios";
+import { getUserByNickname } from "../utils/ApiRequest";
+import Modal from "../component/Modal";
 
 // const socket = io('http://localhost:3002');
 
 export default function MainPage() {
   const [curPage, setCurPage] = useState("my_profile");
+
   // useEffect(() => {
   //   return () => {
   //     socket.disconnect();
@@ -23,7 +24,7 @@ export default function MainPage() {
   const renderPage = () => {
     switch (curPage) {
       case "my_profile":
-        return <Profile currUser={3} />;
+        return <Profile currUser={2} isMe={true} />;
       case "game_waiting":
         return <GameWaiting />;
       case "leaderboard":
@@ -47,6 +48,23 @@ export default function MainPage() {
       setChannelsButtonClass("clicked-button");
     }
   };
+  const [currUser, setCurrUser] = useState(null); // 현재 유저 상태
+  const searchText = useRef(null);
+  function searchUser() {
+    // console.log(searchText.current.value);
+    getUserByNickname(searchText.current.value)
+      .then((result) => {
+        if (result.data) {
+          setModalOpen(true);
+          setCurrUser(result.data.id);
+        } else {
+          // alert("해당 유저가 없습니다");
+        }
+      })
+      .catch((err) => {
+        // alert("해당 유저가 없습니다");
+      });
+  }
 
   const renderSide = () => {
     switch (curSide) {
@@ -55,6 +73,11 @@ export default function MainPage() {
       case "channels_list":
         return <ChannelsList />;
     }
+  };
+
+  const [isModalOpen, setModalOpen] = useState(false);
+  const closeModal = (): void => {
+    setModalOpen(false);
   };
   return (
     <div className="background">
@@ -118,8 +141,18 @@ export default function MainPage() {
               <div className="list">{renderSide()}</div>
             </div>
             <div className="search-side ">
-              <input type="text"></input>
-              <button>🔍</button>
+              <input ref={searchText} type="text"></input>
+              <button className="search-button" onClick={searchUser}>
+                🔍
+              </button>
+              {currUser && isModalOpen && (
+                <Modal
+                  closeModal={closeModal}
+                  ConfigureModal={() => (
+                    <Profile currUser={currUser} isMe={false} />
+                  )}
+                />
+              )}
             </div>
           </div>
         </div>
