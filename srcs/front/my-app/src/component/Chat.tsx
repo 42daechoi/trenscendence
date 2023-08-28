@@ -333,7 +333,7 @@ export default function Chat(props) {
           for (let i = 0; i < channel.users.length; i++) {
             axios.get('http://localhost:3001/users/' + channel.users[i], { withCredentials:true })
               .then(response => {
-                addUsers(response.data.id, null, response.data.id);
+                addUsers(response.data.nickname, null, response.data.id);
               })
           }
         })

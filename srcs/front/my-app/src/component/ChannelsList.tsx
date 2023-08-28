@@ -1,18 +1,26 @@
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import Modal from "./Modal";
 import "../css/ChannelList.css";
 import { useSocket } from "../component/SocketContext"
 import { whoami } from "../utils/whoami";
 import { where } from "../utils/where";
+import { channel } from "diagnostics_channel";
 
 const initChannels: string[] = ["a", "b", "c"];
 
 export default function ChannelsList(props) {
   // 초기 채널 설정
-  const [channelList, setChannelList] = useState<string[]>(initChannels);//props.channelList
-  // const [channelList, setChannelList] = useState<string[]>([]);
+  // const [channelList, setChannelList] = useState<string[]>(props.channelList);//props.channelList
+  const [channelList, setChannelList] = useState<string[]>([]);
   const socket = useSocket();
   let password;
+
+  useEffect(() => {
+    console.log(props.channelList);
+    for (let i = 0; i < props.channelList.length; i++) {
+      addChannelList(props.channelList[i]);
+    }
+  }, []);
 
   const joinChannel = async(password) => {
     // try {
@@ -32,7 +40,7 @@ export default function ChannelsList(props) {
   }
 
   function addChannelList(channelName: string) {
-    setChannelList([...channelList, channelName]);
+    setChannelList((prevChannelList) => [...prevChannelList, channelName]);
   }
   const [isModalOpen, setModalOpen] = useState(false);
   const openModal = (): void => {

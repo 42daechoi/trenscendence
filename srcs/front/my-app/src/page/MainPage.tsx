@@ -11,16 +11,13 @@ import io from "socket.io-client";
 import axios from "axios";
 import { useSocket } from '../component/SocketContext';
 
-// const socket = io('http://localhost:3002');
+
 
 export default function MainPage() {
   const [curPage, setCurPage] = useState("my_profile");
+  const [channelList, setChannelList] = useState([]);
   const socket = useSocket();
-  // useEffect(() => {
-  //   return () => {
-  //     socket.disconnect();
-  //   }
-  // },[socket]);
+
 
   const renderPage = () => {
     switch (curPage) {
@@ -52,9 +49,9 @@ export default function MainPage() {
 
   const updateChannel = () => {
     socket.emit('allchannel', null);
-    socket.on('allchannel', channelList => {
-      console.log(channelList);
-      // return channelList;
+    socket.on('allchannel', data => {
+      console.log('data:' + data);
+      return channelList;
     });
   }
 
