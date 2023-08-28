@@ -19,7 +19,7 @@ import { WebSocketGateway,
 import { UsersService } from 'src/users/users.service';
 import { Inject } from '@nestjs/common';
 import { User } from 'src/typeorm';
-//import { use } from 'passport';
+import { use } from 'passport';
 import { channel } from 'diagnostics_channel';
 
   @WebSocketGateway({
@@ -35,6 +35,20 @@ import { channel } from 'diagnostics_channel';
     private users: userDTO[] = [];
     private channels: channelDTO[] = [];
     public channelnames: string[] = [];
+    private connectedSockets: Map<number, Socket> = new Map();
+
+    sendDataToSocket(socket: Socket, data : any)
+    {
+      socket.emit('allchannel', data);
+    }
+
+    startSendingAllChannels() {
+      setInterval(() => {
+        this.connectedSockets.forEach(socket => {
+          this.sendDataToSocket(socket, this.channelnames);
+        });
+      }, 2000);
+    }
 
     //**********************************************************************//
     //****************************** init **********************************//
@@ -55,7 +69,7 @@ import { channel } from 'diagnostics_channel';
           password: null,
       }
       this.channels.push(channel);
-      this.channelnames.push(channel.channelname);
+      this.startSendingAllChannels();
     }
 
 
@@ -83,6 +97,9 @@ import { channel } from 'diagnostics_channel';
 
       let user = this.users.find(u => u.socketid === socket.id);
       if (user) {
+        //2초마다 보내는 socket에서 해제
+        this.connectedSockets.delete(user.id);
+
         //users에서 지우기.
         const userIndex = this.users.indexOf(user);
         this.users.splice(userIndex, 1);
@@ -153,8 +170,10 @@ import { channel } from 'diagnostics_channel';
       console.log('SocketId: ', socket.id);
       console.log('----------------------------------------');
 
+      this.connectedSockets.set(id, socket);
+
       const block_users : User[] = await this.usersService.getUserBlocks(id);
-      let   block_list : Map<number, string>;
+      let   block_list : Map<number, string> = new Map();
 
       for (const blockuser of block_users) {
         block_list.set(blockuser.id, blockuser.nickname);
@@ -173,6 +192,11 @@ import { channel } from 'diagnostics_channel';
       this.channels[0].member++;
       socket.join(user.channelname);
       socket.broadcast.to(user.channelname).emit('update', true); //$home 채널 입장 시 정보 업데이트
+
+      console.log('----------------------------------------');
+      console.log('-----------------BIND USER--------------');
+      console.log(user);
+      console.log('----------------------------------------');
     }
 
 
@@ -206,7 +230,6 @@ import { channel } from 'diagnostics_channel';
             socket.to(userchecking.socketid).emit('chat', chatobj);
           }
         }
-        //socket.broadcast.to(user.channelname).emit('chat', chatobj);
       }
       else
       {
@@ -217,7 +240,7 @@ import { channel } from 'diagnostics_channel';
 
         const target = this.users.find(u => u.id === chatobj.target);
         if (!target) return;
-        
+
         console.log('----------------------------------------');
         console.log('target check :', target);
         console.log('----------------------------------------');
@@ -324,8 +347,8 @@ import { channel } from 'diagnostics_channel';
       }
           
       socket.leave('$home');
-      user.channelname = room.nickname;
-      socket.join(room.nickname);
+      user.channelname = newChannel.channelname;
+      socket.join(user.channelname);
 
       socket.emit('create', newChannel);
       socket.broadcast.to(home.channelname).emit('update', false);   //퇴장 메시지
@@ -430,7 +453,6 @@ import { channel } from 'diagnostics_channel';
 
       // 방 입장.
       if (channel.maxmember - channel.member >= 1) {
-        channel.users.push(user.id);
 
         // 이전 채널 정보 업데이트
         let beforeChannel = this.channels.find(c => c.channelname === user.channelname);
@@ -439,6 +461,14 @@ import { channel } from 'diagnostics_channel';
 
           if (beforeChannel.member === 0)
           {
+            if (beforeChannel.channelname === '$home')
+            {
+              const removeIdx = beforeChannel.users.indexOf(user.id);
+              if (removeIdx !== -1) {
+                beforeChannel.users.splice(removeIdx, 1);
+              }
+            }
+
             if (beforeChannel.channelname !== '$home')
             {
               //channels에서 삭제
@@ -452,23 +482,19 @@ import { channel } from 'diagnostics_channel';
                 this.channelnames.splice(removeChannelnameIdx, 1);
               }
             }
-
-            socket.leave(user.channelname);
-            user.channelname = joinobj.channelname;
-            socket.join(channel.channelname);
             
-            //이전 channel 객체 삭제
+            socket.leave(user.channelname);
+
             beforeChannel = null;
 
-            channel.member++;              //이동한 채널 명수 늘리기.
-            channel.users.push(user.id);   //이동한 채널 유저 목록에 추가.
-            socket.emit('join', { flag: true, list: channel.users });
+            user.channelname = joinobj.channelname;
+            socket.join(user.channelname);
 
-            if (beforeChannel.channelname === '$home')
-            {
-              socket.broadcast.to('$home').emit('update', false);   //퇴장 메시지
-            }
-            socket.broadcast.to(user.channelname).emit('update', true); //이 부분 메시지로 바꿀지 생각.
+            channel.member++;             //이동한 채널 명수 늘리기.
+            channel.users.push(user.id);  //이동한 채널 유저 목록에 추가.
+            socket.emit('join', { flag: true, list: channel.users, channelname: user.channelname });
+
+            socket.broadcast.to(user.channelname).emit('update', true);             //입장 메시지
 
           }
           else
@@ -493,17 +519,17 @@ import { channel } from 'diagnostics_channel';
               let newhost = this.users.find(u => u.id === beforeChannel.users[0])
               const newhost_user : User = await this.usersService.findUserById(newhost.id);
               beforeChannel.channelname = newhost_user.nickname;
+              socket.broadcast.to(beforeChannel.channelname).emit('update', false);   //퇴장 메시지
             }
 
             socket.leave(user.channelname);
             user.channelname = joinobj.channelname;
-            socket.join(channel.channelname);
+            socket.join(user.channelname);
 
             channel.member++;             //이동한 채널 명수 늘리기.
             channel.users.push(user.id);  //이동한 채널 유저 목록에 추가.
-            socket.emit('join', { flag: true, list: channel.users });
+            socket.emit('join', { flag: true, list: channel.users, channelname: user.channelname });
 
-            socket.broadcast.to(beforeChannel.channelname).emit('update', false);   //퇴장 메시지
             socket.broadcast.to(user.channelname).emit('update', true);             //입장 메시지
           }
         }
@@ -512,7 +538,7 @@ import { channel } from 'diagnostics_channel';
         console.log('----------------------------------------');
         console.log('           room is fulled               ');
         console.log('----------------------------------------'); 
-        socket.emit('join', { flag: false, list: null });
+        socket.emit('join', { flag: false, list: null, channelname: null });
       }
     }
 
@@ -615,7 +641,7 @@ import { channel } from 'diagnostics_channel';
           console.log('----------------------------------------');
           console.log('                 no access              ');
           console.log('----------------------------------------'); 
-          socket.emit("kick", false);
+          socket.emit("kick", {id: kickobj.id, flag: false});
           return;
         }
       }
@@ -628,7 +654,7 @@ import { channel } from 'diagnostics_channel';
         console.log('----------------------------------------');
         console.log('                 no target              ');
         console.log('----------------------------------------'); 
-        socket.emit("kick", false);
+        socket.emit("kick", {id: kickobj.id, flag: false});
         return;
       }
 
@@ -638,7 +664,7 @@ import { channel } from 'diagnostics_channel';
         console.log('----------------------------------------');
         console.log('               no kick myself           ');
         console.log('----------------------------------------'); 
-        socket.emit("kick", false);
+        socket.emit("kick", {id: kickobj.id, flag: false});
         return;
       } 
       
@@ -648,7 +674,7 @@ import { channel } from 'diagnostics_channel';
         console.log('----------------------------------------');
         console.log('              target is host            ');
         console.log('----------------------------------------'); 
-        socket.emit("kick", false);
+        socket.emit("kick", {id: kickobj.id, flag: false});
         return;
       }
 
@@ -673,7 +699,7 @@ import { channel } from 'diagnostics_channel';
         let home = this.channels.find(c => c.channelname === target.channelname);
         home.member++;
         home.users.push(target.id);
-        socket.emit("kick", true);
+        socket.emit("kick", {id: kickobj.id, flag: true});
 
         socket.broadcast.to(channel.channelname).emit('update', false);   //퇴장 메시지
         socket.broadcast.to('$home').emit('update', true);                //입장 메시지
@@ -709,6 +735,7 @@ import { channel } from 'diagnostics_channel';
       beforeChannel.member--;
       if (beforeChannel.member === 0)
       {
+        console.log("------------------here 1-----------------------");
         if (beforeChannel.channelname !== '$home')
         {
           //channels에서 삭제
@@ -737,6 +764,9 @@ import { channel } from 'diagnostics_channel';
       }
       else
       {
+        console.log("------------------here 2-----------------------");
+        console.log(beforeChannel.users[0]);
+        
         const removeIdx = beforeChannel.users.indexOf(user.id);
         if (removeIdx !== -1) {
           beforeChannel.users.splice(removeIdx, 1);
@@ -752,6 +782,9 @@ import { channel } from 'diagnostics_channel';
         //이전 채널에서 유저가 host였을 경우
         if (beforeChannel.host === user.id)
         {
+          console.log("------------------here 3-----------------------");
+          console.log(beforeChannel.users[0]);
+
           beforeChannel.host = beforeChannel.users[0];
           let newhost = this.users.find(u => u.id === beforeChannel.users[0])
           const newhost_user : User = await this.usersService.findUserById(newhost.id);
