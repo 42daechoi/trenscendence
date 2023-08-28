@@ -56,7 +56,7 @@ export default function Chat(props) {
 
   const init = async() => {
     const data = await whoami();
-    socket.emit('bind', data.nickname);
+    socket.emit('bind', data.id);
     receiveMessage();
     updateUsers();
   }
@@ -65,12 +65,12 @@ export default function Chat(props) {
     socket.on("chat", receiveData => {
       if (!receiveData) return;
       axios
-        .get("http://localhost:3001/users/nickname/" + receiveData.nickname, { withCredentials: true })
+        .get("http://localhost:3001/users/nickname/" + receiveData.id, { withCredentials: true })
         .then((response) => {
           if (!response.data) return;
           addMessage(
             {
-              name: receiveData.nickname,
+              name: receiveData.id,
               profile: receiveData.avatar,
               id: receiveData.id,
               isChecked: false,
@@ -184,7 +184,7 @@ export default function Chat(props) {
             msg += response.data[i].nickname + "]";
             addMessage(
               {
-                name: data.nickname,
+                name: data.id,
                 profile: null,
                 id: data.id,
                 isChecked: false,
@@ -202,15 +202,19 @@ export default function Chat(props) {
         const firstSpaceIdx = chat.indexOf(" ");
         const target_name: string = chat.substring(2, firstSpaceIdx);
         const msg: string = chat.substring(firstSpaceIdx + 1, chat.length);
-        socket.emit("chat", {
-          nickname: data.nickname,
-          target: target_name,
-          flag: "dm",
-          msg: msg,
-        });
+
+        axios.get('http://localhost:3001/users/nickname/' + target_name, { withCredentials: true })
+        .then(response => {
+          socket.emit("chat", {
+            id: data.id,
+            target: target_name,
+            flag: "dm",
+            msg: msg,
+          });
+        })
         addMessage(
           {
-            name: data.nickname,
+            name: data.id,
             profile: null,
             id: data.id,
             isChecked: false,
@@ -221,10 +225,10 @@ export default function Chat(props) {
         chat = "";
         return;
       } else if (chat.length) {
-        where(socket, data.nickname)
+        where(socket, data.id)
           .then((channel) => {
             socket.emit("chat", {
-              nickname: data.nickname,
+              id: data.id,
               target: channel.channelname,
               flag: "broad",
               msg: chat,
@@ -235,7 +239,7 @@ export default function Chat(props) {
           });
         addMessage(
           {
-            name: data.nickname,
+            name: data.id,
             profile: null,
             id: data.id,
             isChecked: false,
@@ -280,9 +284,12 @@ export default function Chat(props) {
       for (let i: number = 0; i < users.length; i++) {
         if (users[i].isChecked)
           socket.emit("kick", {
-            nickname: data.nickname,
+            id: data.id,
             target: users[i].name,
           });
+          socket.on('kick', flag => {
+            if (flag) users.splice(i, 1);
+          })
       }
     } catch (error) {
       console.log(error);
@@ -292,7 +299,7 @@ export default function Chat(props) {
   const goHome = async () => {
     try {
       const data = await whoami();
-      socket.emit("home", data.nickname);
+      socket.emit("home", data.id);
       setMessages([]);
       addMessage(
         {
@@ -314,7 +321,7 @@ export default function Chat(props) {
       const data = await whoami();
       for (let i: number = 0; i < users.length; i++) {
         if (users[i].isChecked)
-          socket.emit("op", { nickname: data.nickname, target: users[i].name });
+          socket.emit("op", { id: data.id, target: users[i].name });
       }
     } catch (error) {
       console.log(error);
@@ -324,13 +331,13 @@ export default function Chat(props) {
   const updateUsers = async() => {
     // try {
     //   const data = await whoami();
-    //   where(socket, data.nickname)
+    //   where(socket, data.id)
     //     .then(channel => {
     //       console.log(channel.users);
     //       for (let i = 0; i < channel.users.length; i++) {
     //         axios.get('http://localhost:3001/users/' + channel.users[i], { withCredentials:true })
     //           .then(response => {
-    //             addUsers(response.data.nickname, null, response.data.id);
+    //             addUsers(response.data.id, null, response.data.id);
     //           })
     //       }
     //     })
@@ -346,7 +353,7 @@ export default function Chat(props) {
     setMessages([]);
     try {
       const data = await whoami();
-      where(socket, data.nickname)
+      where(socket, data.id)
           .then(channel => {
             addMessage(
               {
@@ -390,7 +397,7 @@ export default function Chat(props) {
         const data = await whoami();
         socket
           .emit("modify", {
-            nickname: data.nickname,
+            id: data.id,
             maxmember: 10,
             option: isChecked,
             password: password,
@@ -496,13 +503,13 @@ export default function Chat(props) {
     const createChatSock = async () => {
       try {
         const data = await whoami();
-        where(socket, data.nickname)
+        where(socket, data.id)
           .then(channel => {
             console.log(channel.channelname);
             if (channel.channelname === '$home') {
               socket
               .emit("create", {
-                nickname: data.nickname,
+                id: data.id,
                 maxmember: 10,
                 option: "public",
                 password: password,
