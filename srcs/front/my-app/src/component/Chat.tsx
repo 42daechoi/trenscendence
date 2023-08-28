@@ -46,7 +46,7 @@ const initTmpMessages: IMessage[] = [
 
 
 export default function Chat(props) {
-  const [users, setUsers] = useState<IUsers[]>(initTmpUsers);
+  const [users, setUsers] = useState<IUsers[]>([]);
   const [messages, setMessages] = useState<IMessage[]>(initTmpMessages);
   const socket = useSocket();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -89,11 +89,11 @@ export default function Chat(props) {
         const newUsers = users.filter(value => value !== data.id);
         setUsers(newUsers);
       }
-    })
+    });
     socket.on('join', channel => {
       if (channel.flag)
         initMessages();
-    })
+    });
     return () => {
       socket.off('chat');
       socket.off('kick');
@@ -102,6 +102,7 @@ export default function Chat(props) {
   },[]);
 
   useEffect(() => {
+    setUsers([]);
     for (let i = 0; i < props.memberList.length; i++) {
       axios.get('http://localhost:3001/users/' + props.memberList[i], { withCredentials: true })
         .then(response => {

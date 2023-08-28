@@ -153,6 +153,7 @@ import { channel } from 'diagnostics_channel';
                 home.users.splice(removeIdx, 1);
             }
             socket.broadcast.to(home.channelname).emit('update', false);        //퇴장 메시지
+            //home = null;
         }
         
         //마지막 user 객체 지우기

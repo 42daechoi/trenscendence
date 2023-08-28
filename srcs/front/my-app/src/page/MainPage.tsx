@@ -21,11 +21,12 @@ export default function MainPage() {
 
   useEffect(() => {
     socket.on('allinfo', data => {
-      setChannelList(data.channelList);
-      setMemberList(data.memberList);
+      setChannelList(data.channelnames);
+      console.log(data.memberlist);
+      setMemberList(data.memberlist);
     });
     return () => {
-      socket.off('allchannel');
+      socket.off('allinfo');
     }
   }, []);
 

@@ -16,10 +16,11 @@ export default function ChannelsList(props) {
   let password;
 
   useEffect(() => {
+    setChannelList([]);
     for (let i = 0; i < props.channelList.length; i++) {
       addChannelList(props.channelList[i]);
     }
-  }, []);
+  }, [props.channelList]);
 
   const joinChannel = async(password) => {
     try {
