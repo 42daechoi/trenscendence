@@ -23,6 +23,7 @@ export class joinDTO {
 
 //* create & modify-req obj
 export class roomDTO {
+    nickname: string;
     id: number;
     maxmember: number;
     option: string;
