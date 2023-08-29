@@ -8,17 +8,29 @@ import { channel } from "diagnostics_channel";
 
 const initChannels: string[] = ["a", "b", "c"];
 
+interface IChannel {
+  channelname: string;
+  host?: number | null;
+  operator: number[];
+  users: number[];
+  member: number;
+  maxmember: number;
+  option: string;
+  password?: string | null;
+}
+
 export default function ChannelsList(props) {
   // 초기 채널 설정
   // const [channelList, setChannelList] = useState<string[]>(props.channelList);//props.channelList
-  const [channelList, setChannelList] = useState<string[]>([]);
+  const [channelList, setChannelList] = useState<IChannel[]>([]);
   const socket = useSocket();
   let password;
 
   useEffect(() => {
     setChannelList([]);
     for (let i = 0; i < props.channelList.length; i++) {
-      addChannelList(props.channelList[i]);
+      if (props.channelList[i].option != 'private')
+        addChannelList(props.channelList[i].channelname);
     }
   }, [props.channelList]);
 
@@ -30,13 +42,20 @@ export default function ChannelsList(props) {
       socket.emit('join', { id:data.id, channelname:channelList[index], password:password });
   }
 
-  function addChannelList(channelName: string) {
-    setChannelList((prevChannelList) => [...prevChannelList, channelName]);
+  function addChannelList(channel:IChannel) {
+    setChannelList((prevChannelList) => [...prevChannelList, channel]);
   }
   const [isModalOpen, setModalOpen] = useState(false);
   const openModal = (index): void => {
     joinChannel(password, index);
   };
+
+  const renderOption = (index) => {
+    if (channelList[index].option === 'public')
+      return (<>🔓</>)
+    else
+      return (<>🔐</>)
+  }
 
   const closeModal = (): void => {
     setModalOpen(false);
@@ -69,19 +88,12 @@ export default function ChannelsList(props) {
 
   return (
     <div>
-      <button
-        onClick={() => {
-          addChannelList("channel");
-        }}
-      >
-        AddChannel
-      </button>
       {channelList.map((channel, index) => (
         <li key={"channelList" + index}>
           <a className="chat_btn" onClick={() => openModal(index)}>
-            <div>🔓</div>
-            <div>{channel}</div>
-            <div className="chat_memeber_count">8/25</div>
+            {renderOption(index)}
+            <div>{channel.channelname}</div>
+            <div className="chat_memeber_count">{channel.member}/{channel.maxmember}</div>
           </a>
         </li>
       ))}
