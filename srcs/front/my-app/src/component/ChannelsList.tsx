@@ -22,28 +22,20 @@ export default function ChannelsList(props) {
     }
   }, [props.channelList]);
 
-  const joinChannel = async(password) => {
-    try {
+
+  const joinChannel = async(password, index) => {
       const data = await whoami();
 
-      where(socket, data.id).then(channel => {
-        setModalOpen(true);
-        socket.emit('join', { id:data.id, channelname:channel.channelname, password:password });
-      }) .catch (error => {
-        console.log(error);
-      })
-
-    } catch (error) {
-      console.log(error);
-    }
+      setModalOpen(true);
+      socket.emit('join', { id:data.id, channelname:channelList[index], password:password });
   }
 
   function addChannelList(channelName: string) {
     setChannelList((prevChannelList) => [...prevChannelList, channelName]);
   }
   const [isModalOpen, setModalOpen] = useState(false);
-  const openModal = (): void => {
-    joinChannel(password);
+  const openModal = (index): void => {
+    joinChannel(password, index);
   };
 
   const closeModal = (): void => {
@@ -86,7 +78,7 @@ export default function ChannelsList(props) {
       </button>
       {channelList.map((channel, index) => (
         <li key={"channelList" + index}>
-          <a className="chat_btn" onClick={openModal}>
+          <a className="chat_btn" onClick={() => openModal(index)}>
             <div>🔓</div>
             <div>{channel}</div>
             <div className="chat_memeber_count">8/25</div>
