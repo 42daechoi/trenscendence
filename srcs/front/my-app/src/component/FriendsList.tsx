@@ -3,7 +3,6 @@ import Modal from "./Modal";
 import Profile from "./Profile";
 import { getFriendList, getWhoami } from "../utils/ApiRequest";
 
-const initFriends: string[] = ["daechoi", "youhan", "gyyu"];
 type friendMap = {
   nickname: string;
   id: number;
@@ -16,13 +15,14 @@ export default function Friends_list() {
   function init() {
     getWhoami().then((myid) => {
       getFriendList(myid.data.id).then((friends) => {
+        const newFriendList = [...friendList]; // 기존 배열 복사
         for (let i = 0; i < friends.data.length; i++) {
-          const friend: friendMap = {
+          newFriendList.push({
             nickname: friends.data[i].nickname,
             id: friends.data[i].id,
-          };
-          setFriendList([...friendList, friend]);
+          });
         }
+        setFriendList(newFriendList); // 한 번만 호출
       });
     });
   }
@@ -37,6 +37,7 @@ export default function Friends_list() {
   };
   useEffect(() => {
     init();
+    const pollingInterval = setInterval(init, 5000);
   }, []);
 
   return (

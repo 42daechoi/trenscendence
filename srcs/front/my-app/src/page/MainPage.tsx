@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, KeyboardEvent, useEffect, useRef } from "react";
 
 import "../css/MainPage.css";
 import Profile from "../component/Profile";
@@ -51,18 +51,17 @@ export default function MainPage() {
   const [currUser, setCurrUser] = useState(null); // 현재 유저 상태
   const searchText = useRef(null);
   function searchUser() {
-    // console.log(searchText.current.value);
     getUserByNickname(searchText.current.value)
       .then((result) => {
         if (result.data) {
           setModalOpen(true);
           setCurrUser(result.data.id);
         } else {
-          // alert("해당 유저가 없습니다");
+          alert("해당 유저가 없습니다");
         }
       })
       .catch((err) => {
-        // alert("해당 유저가 없습니다");
+        alert("해당 유저가 없습니다");
       });
   }
 
@@ -72,6 +71,12 @@ export default function MainPage() {
         return <FriendsList />;
       case "channels_list":
         return <ChannelsList />;
+    }
+  };
+
+  const handleKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+    if (event.keyCode === 13 && event.key === "Enter") {
+      searchUser();
     }
   };
 
@@ -141,7 +146,11 @@ export default function MainPage() {
               <div className="list">{renderSide()}</div>
             </div>
             <div className="search-side ">
-              <input ref={searchText} type="text"></input>
+              <input
+                ref={searchText}
+                onKeyDown={handleKeyDown}
+                type="text"
+              ></input>
               <button className="search-button" onClick={searchUser}>
                 🔍
               </button>
