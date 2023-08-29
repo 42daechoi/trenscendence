@@ -250,6 +250,7 @@ export default function Profile(pn: ProfileNode) {
             return;
           }
           modifyNickname(textbox.current.value);
+          setInfo({ ...info, nickname: textbox.current.value });
           textbox.current.value = "";
         }
       } else alert("닉네임 수정 실패");
@@ -276,6 +277,7 @@ export default function Profile(pn: ProfileNode) {
     };
     useEffect(() => {
       getWhoami().then((response) => {
+        console.log(response);
         if (pn.currUser === response.data.id) {
           if (!response.data.twoFA) setTwoFA("false");
           else setTwoFA("true");
