@@ -1,4 +1,10 @@
-import React, { useState, KeyboardEvent, useEffect, useRef } from "react";
+import React, {
+  useState,
+  KeyboardEvent,
+  MouseEvent,
+  useEffect,
+  useRef,
+} from "react";
 import { useSocket } from "../component/SocketContext";
 import ProfileModal from "../component/ProfileModal";
 import Modal from "../component/Modal";
@@ -42,6 +48,7 @@ export default function Chat(props) {
   const [users, setUsers] = useState<IUsers[]>(initTmpUsers);
   const [messages, setMessages] = useState<IMessage[]>(initTmpMessages);
   const socket = useSocket();
+  const inputRef = useRef<HTMLInputElement>(null);
   // const [users, setUsers] = useState<IUsers[]>([]);
   // const [messages, setMessages] = useState<IMessage[]>([]);
   const lastMessageRef = useRef<HTMLDivElement>(null);
@@ -70,159 +77,165 @@ export default function Chat(props) {
     lastMessageRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
+  const chatEnter = async (target: HTMLInputElement) => {
+    try {
+      const data = await whoami();
+      if (target && target.value.substring(0, 6) === "/mute ") {
+        console.log(target.value.substring(0, 6));
+        const target_name: string = target.value.substring(
+          6,
+          target.value.length
+        );
+        console.log(target_name);
+        axios
+          .get("http://localhost:3001/users/nickname/" + target_name, {
+            withCredentials: true,
+          })
+          .then((response) => {
+            axios
+              .patch(
+                "http://localhost:3001/users/blocks/add/" + response.data.id,
+                null,
+                { withCredentials: true }
+              )
+              .catch((error) => {
+                console.log(error);
+              });
+          })
+          .catch((error) => {
+            console.log(error);
+          });
+        target.value = "";
+        return;
+      } else if (target && target.value.substring(0, 8) === "/unmute ") {
+        const target_name: string = target.value.substring(
+          8,
+          target.value.length
+        );
+        axios
+          .get("http://localhost:3001/users/nickname/" + target_name, {
+            withCredentials: true,
+          })
+          .then((response) => {
+            axios
+              .patch(
+                "http://localhost:3001/users/blocks/remove/" + response.data.id,
+                null,
+                { withCredentials: true }
+              )
+              .catch((error) => {
+                console.log(error);
+              });
+          })
+          .catch((error) => {
+            console.log(error);
+          });
+        target.value = "";
+        return;
+      } else if (target && target.value.substring(0, 9) === "/mutelist") {
+        axios
+          .get("http://localhost:3001/users/blocks/list", {
+            withCredentials: true,
+          })
+          .then((response) => {
+            if (!response.data.length) {
+              console.log("null response");
+              return;
+            }
+            let msg: string = "[";
+            let i: number;
+            for (i = 0; i < response.data.length - 1; i++) {
+              msg += response.data[i].nickname + ", ";
+            }
+            msg += response.data[i].nickname + "]";
+            addMessage(
+              {
+                name: data.nickname,
+                profile: null,
+                id: data.id,
+                isChecked: false,
+              },
+              msg,
+              "chat chat-end"
+            );
+          })
+          .catch((error) => {
+            console.log(error);
+          });
+        target.value = "";
+        return;
+      } else if (target && target.value[0] === "/" && target.value[1] === "/") {
+        const firstSpaceIdx = target.value.indexOf(" ");
+        const target_name: string = target.value.substring(2, firstSpaceIdx);
+        const msg: string = target.value.substring(
+          firstSpaceIdx,
+          target.value.length - 1
+        );
+
+        socket.emit("chat", {
+          nickname: data.nickname,
+          target: target_name,
+          flag: "dm",
+          msg: msg,
+        });
+        addMessage(
+          {
+            name: data.nickname,
+            profile: null,
+            id: data.id,
+            isChecked: false,
+          },
+          target.value,
+          "chat chat-end"
+        );
+        target.value = "";
+        return;
+      } else if (target && target.value.length) {
+        addMessage(
+          {
+            name: data.nickname,
+            profile: null,
+            id: data.id,
+            isChecked: false,
+          },
+          target.value,
+          "chat chat-end"
+        );
+        const channel = where(socket, data.nickname);
+        channel
+          .then((channel) => {
+            console.log(channel);
+            socket.emit("chat", {
+              nickname: data.nickname,
+              target: "channel",
+              flag: "broad",
+              msg: target.value,
+            });
+          })
+          .catch((error) => {
+            console.log(error);
+          });
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const handleButtonClick = async (event: MouseEvent<HTMLButtonElement>) => {
+    const target = inputRef.current as HTMLInputElement;
+    console.log(target.value);
+    event.preventDefault();
+    chatEnter(target);
+    target.value = "";
+  };
+
   const handleKeyPress = async (event: KeyboardEvent<HTMLInputElement>) => {
     // keyCode는 잘 사용되지 않는다고한다. 추후 리팩토링 예정
     if (event.keyCode === 13 && event.key === "Enter" && !event.shiftKey) {
       const target = event.target as HTMLInputElement;
       console.log(target.value);
       event.preventDefault();
-      try {
-        const data = await whoami();
-        if (target && target.value.substring(0, 6) === "/mute ") {
-          console.log(target.value.substring(0, 6));
-          const target_name: string = target.value.substring(
-            6,
-            target.value.length
-          );
-          console.log(target_name);
-          axios
-            .get("http://localhost:3001/users/nickname/" + target_name, {
-              withCredentials: true,
-            })
-            .then((response) => {
-              axios
-                .patch(
-                  "http://localhost:3001/users/blocks/add/" + response.data.id,
-                  null,
-                  { withCredentials: true }
-                )
-                .catch((error) => {
-                  console.log(error);
-                });
-            })
-            .catch((error) => {
-              console.log(error);
-            });
-          target.value = "";
-          return;
-        } else if (target && target.value.substring(0, 8) === "/unmute ") {
-          const target_name: string = target.value.substring(
-            8,
-            target.value.length
-          );
-          axios
-            .get("http://localhost:3001/users/nickname/" + target_name, {
-              withCredentials: true,
-            })
-            .then((response) => {
-              axios
-                .patch(
-                  "http://localhost:3001/users/blocks/remove/" +
-                    response.data.id,
-                  null,
-                  { withCredentials: true }
-                )
-                .catch((error) => {
-                  console.log(error);
-                });
-            })
-            .catch((error) => {
-              console.log(error);
-            });
-          target.value = "";
-          return;
-        } else if (target && target.value.substring(0, 9) === "/mutelist") {
-          axios
-            .get("http://localhost:3001/users/blocks/list", {
-              withCredentials: true,
-            })
-            .then((response) => {
-              if (!response.data.length) {
-                console.log("null response");
-                return;
-              }
-              let msg: string = "[";
-              let i: number;
-              for (i = 0; i < response.data.length - 1; i++) {
-                msg += response.data[i].nickname + ", ";
-              }
-              msg += response.data[i].nickname + "]";
-              addMessage(
-                {
-                  name: data.nickname,
-                  profile: null,
-                  id: data.id,
-                  isChecked: false,
-                },
-                msg,
-                "chat chat-end"
-              );
-            })
-            .catch((error) => {
-              console.log(error);
-            });
-          target.value = "";
-          return;
-        } else if (
-          target &&
-          target.value[0] === "/" &&
-          target.value[1] === "/"
-        ) {
-          const firstSpaceIdx = target.value.indexOf(" ");
-          const target_name: string = target.value.substring(2, firstSpaceIdx);
-          const msg: string = target.value.substring(
-            firstSpaceIdx,
-            target.value.length - 1
-          );
-
-          socket.emit("chat", {
-            nickname: data.nickname,
-            target: target_name,
-            flag: "dm",
-            msg: msg,
-          });
-          addMessage(
-            {
-              name: data.nickname,
-              profile: null,
-              id: data.id,
-              isChecked: false,
-            },
-            target.value,
-            "chat chat-end"
-          );
-          target.value = "";
-          return;
-        } else if (target && target.value.length) {
-          const channel = where(socket, data.nickname);
-
-          channel
-            .then((channel) => {
-              console.log(channel);
-              socket.emit("chat", {
-                nickname: data.nickname,
-                target: "channel",
-                flag: "broad",
-                msg: target.value,
-              });
-            })
-            .catch((error) => {
-              console.log(error);
-            });
-          addMessage(
-            {
-              name: data.nickname,
-              profile: null,
-              id: data.id,
-              isChecked: false,
-            },
-            target.value,
-            "chat chat-end"
-          );
-        }
-      } catch (error) {
-        console.log(error);
-      }
+      chatEnter(target);
       target.value = "";
     }
   };
@@ -269,20 +282,28 @@ export default function Chat(props) {
     }
   };
 
-  const setChannel = async () => {
-    try {
-      const data = await whoami();
-    } catch (error) {
-      console.log(error);
-    }
-  };
+  const receiveMessage = () => {
+    let receiveData;
 
-  const receiveMessage = (msg) => {
-    addMessage(
-      { name: "daechoi", profile: null, id: 1, isChecked: false },
-      msg,
-      "chat chat-start"
-    );
+    socket.on("chat", receiveData);
+    if (!receiveData) return;
+    axios
+      .get("http://localhost:3001/users/nickname/" + receiveData.nickname, {
+        withCredentials: true,
+      })
+      .then((response) => {
+        if (!response.data) return;
+        addMessage(
+          {
+            name: receiveData.nickname,
+            profile: receiveData.avatar,
+            id: receiveData.id,
+            isChecked: false,
+          },
+          receiveData.msg,
+          "chat chat-start"
+        );
+      });
   };
 
   const [isModalOpen, setModalOpen] = useState(false);
@@ -297,6 +318,30 @@ export default function Chat(props) {
 
   function ChatSetting() {
     const [isChecked, setChecked] = useState("public");
+    const [password, setPassword] = useState("");
+
+    const passwordChange = (event) => {
+      setPassword(event.target.value);
+    };
+
+    const modifyChatSock = async () => {
+      try {
+        const data = await whoami();
+        socket
+          .emit("modify", {
+            nickname: data.nickname,
+            maxmember: 10,
+            option: isChecked,
+            password: password,
+          })
+          .catch((error) => {
+            console.log(error);
+          });
+      } catch (error) {
+        console.log(error);
+      }
+    };
+
     return (
       <div id="ChatSetting">
         <h1
@@ -365,19 +410,48 @@ export default function Chat(props) {
               {isChecked === "protected" && (
                 <div style={{ padding: "10px" }}>
                   password
-                  <input type="text" style={{ marginLeft: "10px" }} />
+                  <input
+                    onChange={passwordChange}
+                    type="text"
+                    style={{ marginLeft: "10px" }}
+                  />
                 </div>
               )}
             </div>
           </div>
         </div>
-        <button className="setting-button">수정</button>
+        <button onClick={modifyChatSock} className="setting-button">
+          수정
+        </button>
       </div>
     );
   }
 
   function CreateChat() {
     const [isChecked, setChecked] = useState("public");
+    const [password, setPassword] = useState("");
+
+    const passwordChange = (event) => {
+      setPassword(event.target.value);
+    };
+
+    const createChatSock = async () => {
+      try {
+        const data = await whoami();
+        socket
+          .emit("create", {
+            nickname: data.nickname,
+            maxmember: 10,
+            option: "public",
+            password: password,
+          })
+          .catch((error) => {
+            console.log(error);
+          });
+      } catch (error) {
+        console.log(error);
+      }
+    };
 
     return (
       <div id="ChatSetting">
@@ -447,13 +521,19 @@ export default function Chat(props) {
               {isChecked === "protected" && (
                 <div style={{ padding: "10px" }}>
                   password
-                  <input type="text" style={{ marginLeft: "10px" }} />
+                  <input
+                    onChange={passwordChange}
+                    type="text"
+                    style={{ marginLeft: "10px" }}
+                  />
                 </div>
               )}
             </div>
           </div>
         </div>
-        <button className="setting-button">생성</button>
+        <button onClick={createChatSock} className="setting-button">
+          생성
+        </button>
       </div>
     );
   }
@@ -486,12 +566,18 @@ export default function Chat(props) {
       </div>
       <div className="chat-input">
         <input
+          ref={inputRef}
           type="text"
           placeholder="채팅을 입력하세요."
           className="input input-bordered input-accent w-full max-w-xs"
           onKeyDown={handleKeyPress}
         />
-        <button className="btn btn-active btn-primary">↵</button>
+        <button
+          className="btn btn-active btn-primary"
+          onClick={handleButtonClick}
+        >
+          ↵
+        </button>
       </div>
       <div className="chat-member-list">
         <ul>
@@ -517,7 +603,8 @@ export default function Chat(props) {
           <button
             style={{ width: "70%", marginTop: "5%" }}
             onClick={() => {
-              setChatConfigure("setting");
+              setChatConfigure("create");
+
               openModal();
             }}
           >
@@ -526,7 +613,7 @@ export default function Chat(props) {
           <button
             style={{ width: "70%", marginTop: "5%" }}
             onClick={() => {
-              setChatConfigure("create");
+              setChatConfigure("setting");
               openModal();
             }}
           >
