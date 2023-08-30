@@ -2,9 +2,21 @@ import React, { useRef, useEffect } from "react";
 import "../css/GamePage.css";
 import { useSocket } from '../component/SocketContext';
 import { useNavigate } from "react-router-dom";
-
+import { ballItem, padItem, htmlItem, game} from "../utils/Game.Class"
 
 export default function GamePage() {
+  function socketEventoff(){
+    socket.off('hostScore');
+    socket.off('client');
+    socket.off('gameset');
+    socket.off("hostWin");
+    socket.off("guestWin");
+    socket.off('guestScore');
+    socket.off('pad1');
+    socket.off('ball');
+    socket.off('draw');
+    socket.off('pad2');
+  }
   const navigate = useNavigate();
   function host_win() {
     let score_1 = document.getElementById("score_2");
@@ -21,77 +33,6 @@ export default function GamePage() {
     score_2.innerText = score;
   }
   let client = -1;
-  class htmlItem {
-    constructor(x, y, width, height) {
-      this.x = x;
-      this.y = y;
-      this.width = width;
-      this.height = height;
-    }
-    isEqual(other) {
-      this.x = other.x;
-      this.y = other.y;
-      this.width = other.width;
-      this.height = other.height;
-    }
-  }
-
-  class ballItem {
-    constructor(){
-      this.x = 0;
-      this.y = 0;
-      this.dx = 0;
-      this.dy = 0;
-      this.v = 0;
-      this.r = 0;
-      this.temp = -1;
-    }
-    isEqual(other){
-      this.x = other.x;
-      this.y = other.y;
-      this.dx = other.dx;
-      this.dy = other.dy;
-      this.v = other.v;
-      this.r = other.r;
-      this.temp = other.temp;
-    }
-    init(x, y, dx ,dy, v,r,temp){
-      this.x = x;
-      this.y = y;
-      this.dx = dx;
-      this.dy = dy;
-      this.v = v;
-      this.r = r;
-      this.temp = temp;
-    }
-  }
-  class padItem {
-    constructor(x, y, width, height, color, radi) {
-      this.x = x;
-      this.y = y;
-      this.width = width;
-      this.height = height;
-      this.color = color;
-      this.radi = parseInt(radi);
-    }
-    isEqual(other) {
-      this.x = other.x;
-      this.y = other.y;
-      this.width = other.width;
-      this.height = other.height;
-      this.color = other.color;
-      this.radi = other.radi;
-    }
-  }
-  class game {
-    constructor(pad, board_x, board_y, ball, obs){
-      this.pad = pad;
-      this.board_x = board_x;
-      this.board_y = board_y;
-      this.ball = ball;
-      this.obs = obs;
-    }
-  }
   let gameset = new game();
   let ball = new ballItem();
   const canvasRef = useRef(null);
@@ -214,6 +155,9 @@ useEffect(() => {
         }
       };
     }
+    return ( ()=> {
+      socketEventoff();
+    })
   },[socket])
   useEffect(() => {
     const handlKeyup = (e) => {
@@ -283,6 +227,7 @@ useEffect(() => {
         gameRef.current.removeEventListener("keyup", handlKeyup);
         console.log("asd");
       }
+      socketEventoff();
     };
   }, []);
   return (

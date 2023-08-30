@@ -24,34 +24,47 @@
 }
 
 #obstacle1 {
-  height: 132px;
-  width: 9px;
-  top: 39%;
-  left: 40%;
+  height: 14%;
+  width: 1%;
+  top: 60%;
+  left: 50%;
   position: absolute;
+
 }
 
 #obstacle2 {
-  height: 132px;
-  width: 9px;
-  top: 61%;
+  height: 14%;
+  width: 1%;
+  top: 40%;
+  left: 40%;
+  position: absolute;
+
+}
+
+#obstacle3 {
+  height: 14%;
+  width: 1%;
+  top: 40%;
   left: 60%;
   position: absolute;
+
+
 }
 
 .pad2 {
-  height: 234px;
-  width: 15px;
+  height: 25%;
+  width: 1%;
   border-radius: 20px;
-  top: 10%;
+  top: 32%;
   left: 5%;
   position: absolute;
+
 }
 .pad1 {
-  height: 234px;
-  width: 15px;
+  height: 25%;
+  width: 1%;
   border-radius: 20px;
-  top: 10%;
+  top: 32%;
   right: 5%;
   position: absolute;
 }
@@ -59,6 +72,7 @@
 .canvas {
   height: 100%;
   width: 100%;
+  position: absolute;
 }
 .info {
   width: 100%;
