@@ -45,8 +45,15 @@ const MyInfo: profileInfo = {
   isMyProfile: false,
   isFriendly: false,
 };
+const initLog: string[] = [
+  "daechoi vs king 2:1 win",
+  "eunji vs hello 1:2 lose",
+  "gyyu vs test 2:3 lose",
+];
 
 export default function Profile(pn: ProfileNode) {
+  const [gameLog, setGameLog] = useState<string[]>(initLog);
+  // const [gameLog, setGameLog] = useState<string[]>([]);
   const [info, setInfo] = useState<profileInfo>({
     id: -1,
     nickname: "unknown",
@@ -140,7 +147,10 @@ export default function Profile(pn: ProfileNode) {
       return (
         <dialog id={props.modalType === aFM ? aFM : dFM} className="modal">
           <form method="dialog" className="modal-box">
-            <FriendButtonSetting targetId={1} modalType={props.modalType} />
+            <FriendButtonSetting
+              targetId={pn.currUser}
+              modalType={props.modalType}
+            />
           </form>
           <form method="dialog" className="modal-backdrop">
             {/* close의 용도? */}
@@ -152,7 +162,7 @@ export default function Profile(pn: ProfileNode) {
       return (
         <dialog id={iGM} className="modal">
           <form method="dialog" className="modal-box">
-            <InviteGameSetting num={1} />
+            <InviteGameSetting num={pn.currUser} />
           </form>
           <form method="dialog" className="modal-backdrop">
             <button>close</button>
@@ -168,10 +178,11 @@ export default function Profile(pn: ProfileNode) {
           onClick={() => {
             patchAddFriend(props.targetId)
               .then((result) => {
-                if (result.data) {
-                  setInfo({ ...info, isFriendly: true });
-                  alert("친구 추가 성공!");
-                } else alert("친구 추가 실패");
+                // if (result.data) {
+                console.log(result);
+                setInfo({ ...info, isFriendly: true });
+                alert("친구 추가 성공!");
+                // } else alert("친구 추가 실패");
               })
               .catch((err) => {
                 alert("친구 추가 실패");
@@ -297,8 +308,9 @@ export default function Profile(pn: ProfileNode) {
               info.isMyProfile = false;
               getFriendList(pn.currUser).then((res) => {
                 res.data.forEach((element) => {
+                  console.log(element.id + ", " + pn.currUser);
                   if (element.id === pn.currUser) newInfo.isFriendly = true;
-                  else newInfo.isFriendly = false;
+                  // else newInfo.isFriendly = false;
                 });
                 setInfo(newInfo);
               });
@@ -362,8 +374,9 @@ export default function Profile(pn: ProfileNode) {
       <div className="nickname-history-div">
         <div className="history">
           <ul>
-            <li style={{ userSelect: "auto" }}>daechoi vs king 2:1 win</li>
-            <li style={{ userSelect: "auto" }}>eunji vs hello 1:2 lose</li>
+            {gameLog.map((log, index) => (
+              <li key={"gameLog " + index}>{log}</li>
+            ))}
           </ul>
         </div>
       </div>

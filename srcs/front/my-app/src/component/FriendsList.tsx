@@ -43,7 +43,7 @@ export default function Friends_list() {
   return (
     <div>
       {friendList.map((friend) => (
-        <li key={"friendList"}>
+        <li key={"friendList" + friend.id}>
           <a className="chat_btn" onClick={() => openModal(friend.id)}>
             {/* 온라인 오프라인지 아직 db에 없기때문에 임의로 지정 */}
             <div>{friend.id / 2 ? "🔴" : "🟢"}</div>
