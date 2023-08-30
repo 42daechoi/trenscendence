@@ -73,7 +73,7 @@ export class AuthController {
 			this.authService.updateUserStatusOnline(user);
 			//if no avata data
 			if (user.currentAvatarData == false){
-				const smallProfilePictureUrl : string = res.req.user.image.link.vesrions.small;
+				const smallProfilePictureUrl : string = res.req.user.image.versions.small;
 				await this.usersService.update(user.id, { ft_pictureUrl: smallProfilePictureUrl });
 				return res.redirect('http://localhost:3000/create-account');
 			}
