@@ -16,8 +16,18 @@ import { useSocket } from '../component/SocketContext';
 export default function MainPage() {
   const [curPage, setCurPage] = useState("my_profile");
   const [channelList, setChannelList] = useState([]);
+  const [memberList, setMemberList] = useState([]);
   const socket = useSocket();
 
+  useEffect(() => {
+    socket.on('allinfo', data => {
+      setChannelList(data.channelnames);
+      setMemberList(data.memberlist);
+    });
+    return () => {
+      socket.off('allinfo');
+    }
+  }, []);
 
   const renderPage = () => {
     switch (curPage) {
@@ -47,20 +57,12 @@ export default function MainPage() {
     }
   };
 
-  const updateChannel = () => {
-    socket.emit('allchannel', null);
-    socket.on('allchannel', data => {
-      console.log('data:' + data);
-      return channelList;
-    });
-  }
-
   const renderSide = () => {
     switch (curSide) {
       case "friends_list":
         return <FriendsList />;
       case "channels_list":
-        return <ChannelsList channelList={updateChannel()} />;
+        return <ChannelsList channelList={channelList} />;
     }
   };
 
@@ -91,13 +93,12 @@ export default function MainPage() {
             </button>
           </section>
           <section className="chat-container">
-            <Chat /*socket={socket}*/ />
+            <Chat memberList={memberList} />
           </section>
           <section className="swap-container">{renderPage()}</section>
           <label
             htmlFor="my-drawer-4"
             className="drawer-button btn btn-primary"
-            // 컴포넌트를 항상 오른쪽에 위치시킴
             style={{ position: "fixed", right: "0" }}
           >
             COMM<br></br>◀︎

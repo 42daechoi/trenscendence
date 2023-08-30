@@ -46,7 +46,7 @@ const initTmpMessages: IMessage[] = [
 
 
 export default function Chat(props) {
-  const [users, setUsers] = useState<IUsers[]>(initTmpUsers);
+  const [users, setUsers] = useState<IUsers[]>([]);
   const [messages, setMessages] = useState<IMessage[]>(initTmpMessages);
   const socket = useSocket();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -58,7 +58,6 @@ export default function Chat(props) {
     const data = await whoami();
     socket.emit('bind', data.id);
     receiveMessage();
-    updateUsers();
   }
   
   const receiveMessage = () => {
@@ -84,15 +83,69 @@ export default function Chat(props) {
 
   useEffect(()=>{
     init();
+    socket.on('kick', data => {
+      if (data.flag){
+        const newUsers = users.filter(value => value !== data.id);
+        setUsers(newUsers);
+      }
+    });
+    socket.on('join', channel => {
+      if (channel.flag)
+        initMessages();
+    });
     return () => {
-      socket.off('chat', receiveMessage);
+      socket.off('chat');
+      socket.off('kick');
+      socket.off('join')
     };
   },[]);
 
-  function addUsers(name: string, profile:string, id:number) {
+  const isSameList = () => {
+    if (props.memberList.length != users.length)
+      return false;
+    for (let i = 0; i < props.memberList.length; i++) {
+      if (props.memberList[i] != users[i].id){
+        return false;
+      }
+    }
+    return true;
+  } 
+
+  useEffect(() => {
+    const fetchData = async (prevUsers) => {
+      for (let i = 0; i < props.memberList.length; i++) {
+        try {
+          const response = await axios.get('http://localhost:3001/users/' + props.memberList[i], { withCredentials: true });
+          const data = response.data;
+          let isAdd = false;
+          for (let j = 0; j < prevUsers.length; j++) {
+            console.log(prevUsers[j].name, prevUsers[j].isChecked);
+            if (prevUsers[j].id === data.id && prevUsers[j].isChecked) {
+              addUsers(data.nickname, data.avatar, data.id, true);
+              isAdd = true;
+              break;
+            }
+          }
+          if (!isAdd)
+            addUsers(data.nickname, data.avatar, data.id, false);
+        } catch (error) {
+          console.log(error);
+        }
+      }
+    };
+
+    if (isSameList()){
+      return ;
+    }
+    const prevUsers = JSON.parse(JSON.stringify(users));
+    setUsers([]);
+    fetchData(prevUsers);
+  }, [props.memberList]);
+
+  function addUsers(name: string, profile:string, id:number, isChecked:boolean) {
     setUsers((prevUsers) =>[
       ...prevUsers,
-      { name: name, profile: null, id: 1, isChecked: false },
+      { name: name, profile: profile, id: id, isChecked: isChecked },
     ]);
   }
 
@@ -283,9 +336,6 @@ export default function Chat(props) {
             id: data.id,
             target: users[i].name,
           });
-          socket.on('kick', flag => {
-            if (flag) users.splice(i, 1);
-          })
       }
     } catch (error) {
       console.log(error);
@@ -323,27 +373,6 @@ export default function Chat(props) {
       console.log(error);
     }
   };
-
-  const updateUsers = async() => {
-    try {
-      const data = await whoami();
-      where(socket, data.id)
-        .then(channel => {
-          console.log(channel.users);
-          for (let i = 0; i < channel.users.length; i++) {
-            axios.get('http://localhost:3001/users/' + channel.users[i], { withCredentials:true })
-              .then(response => {
-                addUsers(response.data.nickname, null, response.data.id);
-              })
-          }
-        })
-        .catch(error => {
-          console.log(error);
-        })
-    } catch (error) {
-      console.log(error);
-    };
-  }
 
   const initMessages = async() => {
     setMessages([]);
@@ -654,6 +683,7 @@ export default function Chat(props) {
             <li key={"chat" + index}>
               <input
                 type="checkbox"
+                checked={users[index].isChecked}
                 onChange={() =>
                   (users[index].isChecked = users[index].isChecked
                     ? false
