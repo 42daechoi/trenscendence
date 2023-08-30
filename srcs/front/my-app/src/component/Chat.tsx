@@ -285,6 +285,7 @@ export default function Chat(props) {
       } else if (chat.length) {
         where(socket, data.id)
           .then((channel) => {
+            console.log(channel);
             socket.emit("chat", {
               id: data.id,
               target: channel.channelname,

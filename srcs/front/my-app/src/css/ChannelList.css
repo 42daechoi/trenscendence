@@ -8,3 +8,10 @@
 .join-button {
   background-color: rgb(50, 185, 230);
 }
+
+.channels-list .profile-modal {
+  width: 400px;
+  min-width: 400px;
+  height: 400px;
+  min-height: 400px;
+}
