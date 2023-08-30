@@ -21,6 +21,7 @@ import { Inject } from '@nestjs/common';
 import { User } from 'src/typeorm';
 import { use } from 'passport';
 import { channel } from 'diagnostics_channel';
+import { before } from 'node:test';
 
   @WebSocketGateway({
     cors: {
@@ -34,7 +35,7 @@ import { channel } from 'diagnostics_channel';
     @WebSocketServer() server: Server;
     private users: userDTO[] = [];
     private channels: channelDTO[] = [];
-    public channelnames: string[] = [];
+    //public channelnames: string[] = [];
     private connectedSockets: Map<number, Socket> = new Map();
 
     sendDataToSocket(socket: Socket, data : any)
@@ -46,8 +47,10 @@ import { channel } from 'diagnostics_channel';
       setInterval(() => {
         this.connectedSockets.forEach(socket => {
           const user = this.users.find(u => u.socketid === socket.id );
-          const channel = this.channels.find(u => u.channelname === user.channelname);
-          this.sendDataToSocket(socket, {channelnames: this.channelnames, memberlist: channel.users});
+          if (user)
+          {
+            this.sendDataToSocket(socket, this.channels);
+          }
         });
       }, 2000);
     }
@@ -155,7 +158,8 @@ import { channel } from 'diagnostics_channel';
             socket.broadcast.to(home.channelname).emit('update', false);        //퇴장 메시지
         }
         
-        //마지막 user 객체 지우기
+        //마지막 user 객체 정리
+        user.blocklist = null;
         user = null;
       }
     }
@@ -338,7 +342,7 @@ import { channel } from 'diagnostics_channel';
         newChannel.password = null;
       }
       this.channels.push(newChannel);
-      this.channelnames.push(newChannel.channelname);
+      //this.channelnames.push(newChannel.channelname);
 
       // 이전 채널 객체 정보 업데이트
       let home = this.channels.find(c => c.channelname === '$home');
@@ -347,7 +351,11 @@ import { channel } from 'diagnostics_channel';
       if (removeIdx !== -1) {
         home.users.splice(removeIdx, 1);
       }
-          
+      if (home.member === 0)
+      {
+        home.users = [];
+      }
+  
       socket.leave('$home');
       user.channelname = newChannel.channelname;
       socket.join(user.channelname);
@@ -478,11 +486,6 @@ import { channel } from 'diagnostics_channel';
               if (removeChannelIdx !== -1) {
                 this.channels.splice(removeChannelIdx, 1);
               }
-              //channelnames에서 삭제
-              const removeChannelnameIdx = this.channelnames.findIndex(c => c === beforeChannel.channelname);
-              if (removeChannelnameIdx !== -1) {
-                this.channelnames.splice(removeChannelnameIdx, 1);
-              }
             }
             
             socket.leave(user.channelname);
@@ -517,12 +520,31 @@ import { channel } from 'diagnostics_channel';
             //이전 채널에서 유저가 host였을 경우
             if (beforeChannel.host === user.id)
             {
+
+              //채널 목록에서 삭제
+              const removeChannelIdx = this.channels.findIndex(c => c.channelname === beforeChannel.channelname);
+              if (removeChannelIdx !== -1) {
+                this.channels.splice(removeChannelIdx, 1);
+              }
+
+
               beforeChannel.host = beforeChannel.users[0];
               let newhost = this.users.find(u => u.id === beforeChannel.users[0])
               const newhost_user : User = await this.usersService.findUserById(newhost.id);
               beforeChannel.channelname = newhost_user.nickname;
               socket.broadcast.to(beforeChannel.channelname).emit('update', false);   //퇴장 메시지
+              
+              //채널 목록에 다시 추가
+              this.channels.push(beforeChannel);
+              
+              //방에 남은 유저들 전부에게 user.channelname 바꿔줘야함
+              for(const checkid of beforeChannel.users)
+              {
+                let user = this.users.find(u => u.id === checkid);
+                user.channelname = beforeChannel.channelname;
+              }
             }
+            
 
             socket.leave(user.channelname);
             user.channelname = joinobj.channelname;
@@ -542,6 +564,12 @@ import { channel } from 'diagnostics_channel';
         console.log('----------------------------------------'); 
         socket.emit('join', { flag: false, list: null, channelname: null });
       }
+
+      //전체 채널 객체 뽑아서 확인하기
+      console.log('----------------------------------------');
+      console.log('---------------ALL CHANNELS-------------');
+      console.log(this.channels); //  마지막에 채널들 다 잘 수정되었는지 확인
+      console.log('----------------------------------------');
     }
 
   
@@ -614,7 +642,7 @@ import { channel } from 'diagnostics_channel';
       console.log('--------------ALLCHANNEL----------------');  
       console.log('----------------------------------------');
       
-      socket.emit('allchannel', this.channelnames);
+      socket.emit('allchannel', this.channels);
     }
 
 
@@ -714,95 +742,100 @@ import { channel } from 'diagnostics_channel';
     //*********************************************************************//
     @SubscribeMessage('home')
     async handlehome(@MessageBody() id: number, @ConnectedSocket() socket: Socket) {
+
       console.log('----------------------------------------');
       console.log('-----------------HOME-------------------');  
       console.log('userId: ', id);
       console.log('----------------------------------------');
-
-      let user = this.users.find(u => u.id === id);
+      
+      // 유저 확인
+      let user = this.users.find(u => u.socketid === socket.id)
       if (!user) return;
-      if (user.channelname === '$home')
-      {
-        console.log('----------------------------------------');
-        console.log('              already home              ');
-        console.log('----------------------------------------'); 
-        return;
-      }
 
-      let home = this.channels.find(c => c.channelname === "$home");
+
+      // 이전 채널 정보 업데이트
       let beforeChannel = this.channels.find(c => c.channelname === user.channelname);
-      if (!beforeChannel) return;
-
-      //이전 채널 객체 수정
+      
       beforeChannel.member--;
       if (beforeChannel.member === 0)
       {
-        console.log("------------------here 1-----------------------");
-        if (beforeChannel.channelname !== '$home')
-        {
-          //channels에서 삭제
-          const removeChannelIdx = this.channels.findIndex(c => c.channelname === beforeChannel.channelname);
-          if (removeChannelIdx !== -1) {
-            this.channels.splice(removeChannelIdx, 1);
-          }
-          //channelnames에서 삭제
-          const removeChannelnameIdx = this.channelnames.findIndex(c => c === beforeChannel.channelname);
-          if (removeChannelnameIdx !== -1) {
-            this.channelnames.splice(removeChannelnameIdx, 1);
-          }
+        const removeIdx = this.channels.indexOf(beforeChannel);
+        if (removeIdx !== -1) {
+          this.channels.splice(removeIdx, 1);
         }
-
+        console.log(this.channels);
         socket.leave(user.channelname);
-        user.channelname = home.channelname;
-        socket.join(user.channelname);
-          
-        //이전 channel 객체 삭제
         beforeChannel = null;
-
-        home.member++;                    //이동한 채널 명수 늘리기.
-        home.users.push(user.id);         //이동한 채널 유저 목록에 추가.
-        socket.emit('home', { flag: true, list: home.users });
-        socket.broadcast.to(user.channelname).emit('update', true);
       }
       else
       {
-        console.log("------------------here 2-----------------------");
-        console.log(beforeChannel.users[0]);
-
+        //유저 목록에서 삭제.
         const removeIdx = beforeChannel.users.indexOf(user.id);
-        if (removeIdx !== -1) {
-          beforeChannel.users.splice(removeIdx, 1);
+            if (removeIdx !== -1) {
+              beforeChannel.users.splice(removeIdx, 1);
+            }
+            // console.log('----------------------------------------');
+            // console.log('---------------------1------------------');  
+            // console.log(beforeChannel);
+            // console.log('----------------------------------------');
+
+            //이전 채널에서 유저가 operator였을 경우
+            if (beforeChannel.operator.includes(user.id))
+            {
+              const removeIdx = beforeChannel.operator.indexOf(user.id);
+              if (removeIdx !== -1) beforeChannel.operator.splice(removeIdx, 1);
+            }
+
+            //이전 채널에서 유저가 host였을 경우
+            if (beforeChannel.host === user.id)
+            {
+
+              //채널 목록에서 삭제
+              const removeChannelIdx = this.channels.findIndex(c => c.channelname === beforeChannel.channelname);
+              if (removeChannelIdx !== -1) {
+                this.channels.splice(removeChannelIdx, 1);
+              }
+
+
+              beforeChannel.host = beforeChannel.users[0];
+              let newhost = this.users.find(u => u.id === beforeChannel.users[0])
+              const newhost_user : User = await this.usersService.findUserById(newhost.id);
+              beforeChannel.channelname = newhost_user.nickname;
+              socket.broadcast.to(beforeChannel.channelname).emit('update', false);   //퇴장 메시지
+              
+              //채널 목록에 다시 추가
+              this.channels.push(beforeChannel);
+              
+              //방에 남은 유저들 전부에게 user.channelname 바꿔줘야함
+              for(const checkid of beforeChannel.users)
+              {
+                let user = this.users.find(u => u.id === checkid);
+                user.channelname = beforeChannel.channelname;
+              }
+            }
+            // console.log('----------------------------------------');
+            // console.log('---------------------2------------------');  
+            // console.log(beforeChannel);
+            // console.log('----------------------------------------');
+
+            socket.leave(user.channelname);
         }
-          
-        //이전 채널에서 유저가 operator였을 경우
-        if (beforeChannel.operator.includes(user.id))
-        {
-          const removeIdx = beforeChannel.operator.indexOf(user.id);
-          if (removeIdx !== -1) beforeChannel.operator.splice(removeIdx, 1);
-        }
+        
+        let channel = this.channels.find(c => c.channelname === '$home');
 
-        //이전 채널에서 유저가 host였을 경우
-        if (beforeChannel.host === user.id)
-        {
-          console.log("------------------here 3-----------------------");
-          console.log(beforeChannel.users[0]);
+        user.channelname = channel.channelname;
+        socket.join(user.channelname);
 
-          beforeChannel.host = beforeChannel.users[0];
-          let newhost = this.users.find(u => u.id === beforeChannel.users[0])
-          const newhost_user : User = await this.usersService.findUserById(newhost.id);
-          beforeChannel.channelname = newhost_user.nickname;
-        }
+        channel.member++;             //이동한 채널 명수 늘리기.
+        channel.users.push(user.id);  //이동한 채널 유저 목록에 추가.
+        socket.emit('join', { flag: true, list: channel.users, channelname: user.channelname });
 
-          socket.leave(user.channelname);
-          user.channelname = home.channelname;
-          socket.join(user.channelname);
+        socket.broadcast.to(user.channelname).emit('update', true);             //입장 메시지
 
-          home.member++;             //이동한 채널 명수 늘리기.
-          home.users.push(user.id);  //이동한 채널 유저 목록에 추가.
-          socket.emit('join', { flag: true, list: home.users });
+        console.log('----------------------------------------');
+        console.log('---------------ALL CHANNELS-------------');
+        console.log(this.channels); //  마지막에 채널들 다 잘 수정되었는지 확인
+        console.log('----------------------------------------');
 
-          socket.broadcast.to(beforeChannel.channelname).emit('update', false);   //퇴장 메시지
-          socket.broadcast.to(user.channelname).emit('update', true);             //입장 메시지
-      }
-    }
-  }
+   }
+}
