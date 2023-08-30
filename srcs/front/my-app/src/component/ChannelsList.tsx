@@ -101,7 +101,7 @@ export default function ChannelsList(props) {
   }
 
   return (
-    <div className="channels-list">
+    <div className="channel-list">
       {channelList.map((channel, index) => (
         <li key={"channelList" + index}>
           <a className="chat_btn" onClick={() => openModal(index)}>

@@ -9,9 +9,13 @@
   background-color: rgb(50, 185, 230);
 }
 
-.channels-list .profile-modal {
-  width: 400px;
-  min-width: 400px;
-  height: 400px;
-  min-height: 400px;
+.channel-list .profile-modal {
+  height: 300px;
+  min-height: 300px;
+  width: 300px;
+  min-width: 300px;
+}
+.channel-list .close {
+  height: 40px;
+  width: 40px;
 }
