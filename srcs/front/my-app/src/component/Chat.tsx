@@ -44,7 +44,6 @@ const initTmpMessages: IMessage[] = [
   },
 ];
 
-
 export default function Chat(props) {
   const [users, setUsers] = useState<IUsers[]>([]);
   const [messages, setMessages] = useState<IMessage[]>(initTmpMessages);
@@ -54,17 +53,19 @@ export default function Chat(props) {
   // const [messages, setMessages] = useState<IMessage[]>([]);
   const lastMessageRef = useRef<HTMLDivElement>(null);
 
-  const init = async() => {
+  const init = async () => {
     const data = await whoami();
-    socket.emit('bind', data.id);
+    socket.emit("bind", data.id);
     receiveMessage();
-  }
-  
+  };
+
   const receiveMessage = () => {
-    socket.on("chat", receiveData => {
+    socket.on("chat", (receiveData) => {
       if (!receiveData) return;
       axios
-        .get("http://localhost:3001/users/" + receiveData.id, { withCredentials: true })
+        .get("http://localhost:3001/users/" + receiveData.id, {
+          withCredentials: true,
+        })
         .then((response) => {
           if (!response.data) return;
           addMessage(
@@ -78,44 +79,45 @@ export default function Chat(props) {
             "chat chat-start"
           );
         });
-      });
+    });
   };
 
-  useEffect(()=>{
+  useEffect(() => {
     init();
-    socket.on('kick', data => {
-      if (data.flag){
-        const newUsers = users.filter(value => value !== data.id);
+    socket.on("kick", (data) => {
+      if (data.flag) {
+        const newUsers = users.filter((value) => value !== data.id);
         setUsers(newUsers);
       }
     });
-    socket.on('join', channel => {
-      if (channel.flag)
-        initMessages();
+    socket.on("join", (channel) => {
+      if (channel.flag) initMessages();
     });
     return () => {
-      socket.off('chat');
-      socket.off('kick');
-      socket.off('join')
+      socket.off("chat");
+      socket.off("kick");
+      socket.off("join");
     };
-  },[]);
+  }, []);
 
   const isSameList = () => {
-    if (props.memberList.length != users.length)
-      return false;
+    if (props.memberList.length != users.length) return false;
     for (let i = 0; i < props.memberList.length; i++) {
-      if (props.memberList[i] != users[i].id){
+      if (props.memberList[i] != users[i].id) {
         return false;
       }
     }
     return true;
-  } 
+  };
 
   useEffect(() => {
     const fetchData = async (prevUsers) => {
       for (let i = 0; i < props.memberList.length; i++) {
         try {
-          const response = await axios.get('http://localhost:3001/users/' + props.memberList[i], { withCredentials: true });
+          const response = await axios.get(
+            "http://localhost:3001/users/" + props.memberList[i],
+            { withCredentials: true }
+          );
           const data = response.data;
           let isAdd = false;
           for (let j = 0; j < prevUsers.length; j++) {
@@ -126,24 +128,28 @@ export default function Chat(props) {
               break;
             }
           }
-          if (!isAdd)
-            addUsers(data.nickname, data.avatar, data.id, false);
+          if (!isAdd) addUsers(data.nickname, data.avatar, data.id, false);
         } catch (error) {
           console.log(error);
         }
       }
     };
 
-    if (isSameList()){
-      return ;
+    if (isSameList()) {
+      return;
     }
     const prevUsers = JSON.parse(JSON.stringify(users));
     setUsers([]);
     fetchData(prevUsers);
   }, [props.memberList]);
 
-  function addUsers(name: string, profile:string, id:number, isChecked:boolean) {
-    setUsers((prevUsers) =>[
+  function addUsers(
+    name: string,
+    profile: string,
+    id: number,
+    isChecked: boolean
+  ) {
+    setUsers((prevUsers) => [
       ...prevUsers,
       { name: name, profile: profile, id: id, isChecked: isChecked },
     ]);
@@ -252,15 +258,18 @@ export default function Chat(props) {
         const target_name: string = chat.substring(2, firstSpaceIdx);
         const msg: string = chat.substring(firstSpaceIdx + 1, chat.length);
 
-        axios.get('http://localhost:3001/users/nickname/' + target_name, { withCredentials: true })
-        .then(response => {
-          socket.emit("chat", {
-            id: data.id,
-            target: response.data.id,
-            flag: "dm",
-            msg: msg,
+        axios
+          .get("http://localhost:3001/users/nickname/" + target_name, {
+            withCredentials: true,
+          })
+          .then((response) => {
+            socket.emit("chat", {
+              id: data.id,
+              target: response.data.id,
+              flag: "dm",
+              msg: msg,
+            });
           });
-        })
         addMessage(
           {
             name: data.nickname,
@@ -374,30 +383,30 @@ export default function Chat(props) {
     }
   };
 
-  const initMessages = async() => {
+  const initMessages = async () => {
     setMessages([]);
     try {
       const data = await whoami();
       where(socket, data.id)
-          .then(channel => {
-            addMessage(
-              {
-                name: "SERVER",
-                profile: null,
-                id: 0,
-                isChecked: false,
-              },
-              channel.channelname + " 채널에 참가하셨습니다.",
-              "chat chat-start"
-            );
-          })
-          .catch (error => {
-            console.log(error);
-          });
+        .then((channel) => {
+          addMessage(
+            {
+              name: "SERVER",
+              profile: null,
+              id: 0,
+              isChecked: false,
+            },
+            channel.channelname + " 채널에 참가하셨습니다.",
+            "chat chat-start"
+          );
+        })
+        .catch((error) => {
+          console.log(error);
+        });
     } catch (error) {
       console.log(error);
     }
-  }
+  };
 
   const [isModalOpen, setModalOpen] = useState(false);
   const openModal = (): void => {
@@ -420,13 +429,12 @@ export default function Chat(props) {
     const modifyChatSock = async () => {
       try {
         const data = await whoami();
-        socket
-          .emit("modify", {
-            id: data.id,
-            maxmember: 10,
-            option: isChecked,
-            password: password,
-          })
+        socket.emit("modify", {
+          id: data.id,
+          maxmember: 10,
+          option: isChecked,
+          password: password,
+        });
       } catch (error) {
         console.log(error);
       }
@@ -529,11 +537,10 @@ export default function Chat(props) {
       try {
         const data = await whoami();
         where(socket, data.id)
-          .then(channel => {
+          .then((channel) => {
             console.log(channel.channelname);
-            if (channel.channelname === '$home') {
-              socket
-              .emit("create", {
+            if (channel.channelname === "$home") {
+              socket.emit("create", {
                 id: data.id,
                 maxmember: 10,
                 option: "public",
@@ -542,9 +549,9 @@ export default function Chat(props) {
               props.entryChannel();
             }
           })
-          .catch(error => {
+          .catch((error) => {
             console.log(error);
-          })
+          });
       } catch (error) {
         console.log(error);
       }
@@ -723,7 +730,11 @@ export default function Chat(props) {
             <Modal
               closeModal={closeModal}
               ConfigureModal={() =>
-                chatConfigure === "setting" ? <ChatSetting/> : <CreateChat entryChannel={initMessages}/>
+                chatConfigure === "setting" ? (
+                  <ChatSetting />
+                ) : (
+                  <CreateChat entryChannel={initMessages} />
+                )
               }
             />
           </div>
