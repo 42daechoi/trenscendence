@@ -241,5 +241,17 @@ export class UsersService {
 //		}
 		return (user);
 	}
-	
+
+	//##################
+	//##     GAME     ##
+	//##################
+	async getTopRankers(limit: number = 20): Promise<User[]> {
+	  const rankers = await this.userRepository.find({
+		order: {
+		  xp: 'DESC',
+		},
+		take: limit,
+	  });
+	  return rankers;
+	}
 }
