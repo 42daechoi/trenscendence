@@ -66,7 +66,7 @@ export class GameService {
 		}
 	}
 
-	async setUpGame(client1: Socket, client2: Socket, server: Server){
+	async setUpGame(client1: Socket, client2: Socket, nsp: Namespace){
 		const user1 : User = await this.usersService.findUserBySocketId(client1.id);
 		const user2 : User = await this.usersService.findUserBySocketId(client2.id);
 		const player1 : Player1 = new Player1(user1.socketId, user1.id, user1.nickname);
@@ -77,7 +77,7 @@ export class GameService {
 		gameInfo.gameService = this;
 		client1.join(gameInfo.gameID);
 		client2.join(gameInfo.gameID);
-		server.to(gameInfo.gameID).emit('matchInfo', {gameId: gameInfo.gameID, host : user1, guest: user2});
+		nsp.to(gameInfo.gameID).emit('matchInfo', {gameId: gameInfo.gameID, host : user1, guest: user2});
 
 		/* add that game info to the gameSessions */
 		this.gameSessions.set(gameInfo.gameID, gameInfo);
@@ -93,21 +93,21 @@ export class GameService {
 	
 	}
 
-	async monitorQueue(server: Server) {
+	async monitorQueue(nsp: Namespace) {
 		if (this.queue.size === 2) {
 			await this.matchUp(
 				this.queue.get(Array.from(this.queue.keys())[0]),
 				this.queue.get(Array.from(this.queue.keys())[1]),
-				server
+				nsp
 			);
 		}
 	}
 
-	async matchUp(player1 : Socket, player2 : Socket, server: Server){
+	async matchUp(player1 : Socket, player2 : Socket, nsp: Namespace){
 		await this.setUpGame(
 			this.queue.get(Array.from(this.queue.keys())[0]),
 			this.queue.get(Array.from(this.queue.keys())[1]),
-			server,
+			nsp,
 		);
 		this.queue.delete(player1.id);
 		this.queue.delete(player2.id);
@@ -430,6 +430,40 @@ export class GameService {
 		// nsp.to(cur_game_id).emit("draw", cur_game.ball);
 	}
 
+	async OneOnOneNoti(srcUserId : number, targetUserId: number, nsp: Namespace){
+		const targetUser : User = await this.usersService.findUserById(targetUserId);
+		const srcUser : User = await this.usersService.findUserById(srcUserId)
+		//cannot find user`
+		if (!targetUser || !srcUser){
+			this.logger.log("cannot find target user of id : " + targetUserId);
+		}
+		//Not ONLINE
+		if (targetUser.status === UserStatus.OFFLINE)
+		{
+			this.logger.log("Target User is OFFLINE. id: " + targetUserId);
+		}
+		//In Game
+		if (targetUser.status === UserStatus.GAME)
+		{
+			this.logger.log("Target User is in Game. id: " + targetUserId);
+		}
+		//cannot find socket
+		const targetSocket : Socket = this.usersSockets.get(targetUser.socketId);
+		if (targetSocket)
+			targetSocket.emit('OneOnOneNoti', {srcUser, targetUser});
+	}
+
+	async acceptOneOnOne(srcUser : User, targetUser : User, nsp : Namespace){
+		const hostSocket : Socket = this.usersSockets.get(srcUser.socketId);
+		const guestSocket : Socket = this.usersSockets.get(targetUser.socketId);
+		await this.setUpGame(hostSocket, guestSocket, nsp);
+	}
+
+	async denyOneOnOne(srcUser : User, targetUser : User, nsp : Namespace){
+		const srcSocket : Socket = this.usersSockets.get(srcUser.socketId);
+		srcSocket.emit("denyNoti", targetUser);
+	}
+
 	async winnerUpdate(winner : Player1 | Player2){
 		const winner_user : User = await this.usersService.findUserBySocketId(winner.socketID);
 		const wins_update: number = winner_user.wins + 1;
@@ -442,4 +476,11 @@ export class GameService {
 		const loses_update: number = loser_user.loses + 1;
 		await this.usersService.update(loser_user.id, {loses : loses_update});
 	}
+	//#############################################################
+	// ##########           AFTER MATCH UP            #############
+	//#############################################################
+	
+	//#############################################################
+	// ##########          AFTER GAME START           #############
+	//#############################################################
 }

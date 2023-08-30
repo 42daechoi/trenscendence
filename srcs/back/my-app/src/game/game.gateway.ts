@@ -158,18 +158,33 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
 		const clientSocket: Socket = socket;
 		this.logger.log("event : match");
 		await this.gameService.pushQueue(clientSocket);
-		await this.gameService.monitorQueue(this.server);
+		await this.gameService.monitorQueue(this.nsp);
 		socket.emit('matching waiting', { socketId: socket.id, userId: user.id});
 		return { socketId: socket.id, userId: user.id };
 	}
-//	@SubscribeMessage('allReady') async allReady(
-//		@ConnectedSocket() socket: Socket) {
-//		const user : User = await this.usersService.findUserBySocketId(socket.id);
-//		const clientSocket: Socket = socket;
-//
-//		return { socketId: socket.id, userId: user.id };
-//	}
-//	
+	
+	@SubscribeMessage('OneOnOne')
+	async OneOnOne(
+		@ConnectedSocket() socket: Socket, body : any) {
+		const src : User = await this.usersService.findUserBySocketId(socket.id);
+		await this.gameService.OneOnOneNoti(src.id, parseInt(body.targetId), this.nsp);
+	}
+
+	@SubscribeMessage('acceptOneOnOne')
+	async acceptOneOnOne(
+		@ConnectedSocket() socket: Socket, body : any) {
+		await this.gameService.acceptOneOnOne(body.srcUser, body.targetUser, this.nsp);
+	}
+
+	@SubscribeMessage('denyOneOnOne')
+	async denyOneOnOne(
+		@ConnectedSocket() socket: Socket, body : any) {
+		await this.gameService.denyOneOnOne(body.srcUser, body.targetUser, this.nsp);
+	}
+
+	//#############################################################
+	// ##########          AFTER QUEUE COME           #############
+	//#############################################################
 	@SubscribeMessage('matchQueueOut')
 	async popQueue(
 		@ConnectedSocket() socket: Socket) {
