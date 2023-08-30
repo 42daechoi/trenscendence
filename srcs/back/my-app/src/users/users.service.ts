@@ -76,10 +76,11 @@ export class UsersService {
 		if (!user) {
 		  throw new NotFoundException('user not found');
 		}
-		if (attrs.profilePicture){
+		if (attrs.ft_pictureUrl){
 			const url = attrs.ft_pictureUrl;
 			const response = await this.httpService.get(url, { responseType: 'arraybuffer' }).toPromise();
 			    user.profilePicture = Buffer.from(response.data, 'binary');
+				user.ft_pictureUrl = attrs.ft_pictureUrl;
 			delete attrs.profilePicture;
 		}
 		// ######## IMPORTANT ########
