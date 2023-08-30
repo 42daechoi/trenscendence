@@ -19,11 +19,6 @@ export default function MainPage() {
   const socket = useSocket();
 
   useEffect(() => {
-<<<<<<< HEAD
-    socket.on('allinfo', data => {
-      setChannelList(data[0].channelnames);
-      setMemberList(data[0].users);
-=======
     socket.on("allinfo", (data) => {
       getWhoami()
         .then((response) => {
@@ -40,7 +35,6 @@ export default function MainPage() {
         .catch((err) => {
           console.log(err);
         });
->>>>>>> a2be99943e3cb9e320d616ce4a038a7a324bd384
     });
     return () => {
       socket.off("allinfo");
