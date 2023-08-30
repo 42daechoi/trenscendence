@@ -215,6 +215,7 @@ export class Game {
 				this.gameStatus = GameStatus.Waiting;
 				const loser : Socket = nsp.sockets.get(this.host.socketID);
 				this.gameService.destroyGame(loser);
+				this.gameService.recordGame(this);
 				return ;
 			}
 		  nsp.to(this.gameID).emit("guestScore", ball);
@@ -230,6 +231,7 @@ export class Game {
 				this.gameStatus = GameStatus.Waiting;
 				const loser : Socket = nsp.sockets.get(this.guest.socketID);
 				this.gameService.destroyGame(loser);
+				this.gameService.recordGame(this);
 				return ;
 			}
 		  nsp.to(this.gameID).emit("hostScore", ball);

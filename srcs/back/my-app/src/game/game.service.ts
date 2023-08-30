@@ -116,30 +116,6 @@ export class GameService {
 		//match Info emit to player2
 	}
 
-	createGame(): Promise<Games> {
-		const newGame = this.gamesRepository.create();
-		return this.gamesRepository.save(newGame);
-	}
-
-	createGamePlayer(gamePlayer: CreateGamePlayerDto): Promise<GamePlayer> {
-		const newGamePlayer = this.gamePlayerRepository.create(gamePlayer);
-		return this.gamePlayerRepository.save(newGamePlayer);
-	}
-
-	async echoRoom(client: Socket, server: Server, body: any){
-		const cur_game_id = await this.getCurGameRoomId(client);
-		server.to(cur_game_id).emit("setupReply", body);
-//		client.emit('setupReply', body);
-	}
-
-	async echoRoomByGameHost(client: Socket, server: Server, body: any){
-		const room = Array.from(client.rooms);
-		console.log(room);
-		const gameRoom = this.gameSessions.get(client.id);
-		if (gameRoom && gameRoom.gameID === client.id)
-			server.to(client.id).emit("setupReply", body);
-//		client.emit('setupReply', body);
-	}
 
 	async updateGameSettingInfo(body : any){
 		const cur_game : Game = this.gameSessions.get(body.gameId);
@@ -161,6 +137,126 @@ export class GameService {
 		const cur_game = this.gameSessions.get(cur_game_id);
 		let cur_player = cur_game_id === client.id ? cur_game.host : cur_game.guest;
 		this.logger.log("update game info of player" + cur_player.socketID);
+	}
+
+
+	async userComeNsp(client: Socket){
+		this.usersSockets.set(client.id, client);
+	}
+
+	async userOutNsp(client: Socket){
+		this.logger.log("user has out of game " + client.id);
+		this.usersSockets.delete(client.id);
+		await this.updateUserStatusOnline(client);
+	}
+
+	async updateGameRoomInfo(client: Socket, body: any){
+
+	}
+
+	async updateUserStatusInGame(client: Socket){
+		const user : User = await this.usersService.findUserBySocketId(client.id);
+		if (!user)
+			return ;
+		this.usersService.update(user.id, {status: UserStatus.GAME})
+	}
+
+	async updateUserStatusOnline(client: Socket){
+		const user : User = await this.usersService.findUserBySocketId(client.id);
+		if (!user)
+			return ;
+		this.authService.updateUserStatusOnline(user);
+	}
+
+	  async getGameStatForPlayer(userID: number): Promise<Result[]> {
+    const gameStats: GamePlayer[] = await this.gamePlayerRepository
+      .createQueryBuilder('gamePlayer')
+      .leftJoinAndSelect('gamePlayer.user', 'user')
+      .leftJoinAndSelect('gamePlayer.game', 'game')
+      .select(['gamePlayer.id', 'gamePlayer.score', 'gamePlayer.winner', 'user.name', 'game.id', 'game.date'])
+      .orderBy('game.date', 'ASC')
+      .where((qb) => {
+        const subQuery = qb
+          .subQuery()
+          .from(Games, 'game')
+          .leftJoin('game.gamePlayer', 'gamePlayer')
+          .leftJoin('gamePlayer.user', 'user')
+          .select(['game.id'])
+          .where('user.id = :id', { id: userID })
+          .getQuery();
+        return 'game.id IN ' + subQuery;
+      })
+      .getMany();
+
+    let results: Result[] = [];
+
+    for (let i: number = 0; i < gameStats.length - 1; i++) {
+      if (gameStats[i].game.id == gameStats[i + 1].game.id) {
+        let result = {
+          key: i,
+          date: gameStats[i].game.date.toDateString(),
+          winner: gameStats[i].winner ? gameStats[i].user.name : gameStats[i + 1].user.name,
+          loser: gameStats[i].winner ? gameStats[i + 1].user.name : gameStats[i].user.name,
+          scoreWinner: gameStats[i].winner ? gameStats[i].score : gameStats[i + 1].score,
+          scoreLoser: gameStats[i].winner ? gameStats[i + 1].score : gameStats[i].score,
+        };
+        results.push(result);
+      }
+    }
+    return results;
+  }
+
+
+	async OneOnOneNoti(srcUserId : number, targetUserId: number, nsp: Namespace){
+		const targetUser : User = await this.usersService.findUserById(targetUserId);
+		const srcUser : User = await this.usersService.findUserById(srcUserId)
+		//cannot find user`
+		if (!targetUser || !srcUser){
+			this.logger.log("cannot find target user of id : " + targetUserId);
+		}
+		//Not ONLINE
+		if (targetUser.status === UserStatus.OFFLINE)
+		{
+			this.logger.log("Target User is OFFLINE. id: " + targetUserId);
+		}
+		//In Game
+		if (targetUser.status === UserStatus.GAME)
+		{
+			this.logger.log("Target User is in Game. id: " + targetUserId);
+		}
+		//cannot find socket
+		const targetSocket : Socket = this.usersSockets.get(targetUser.socketId);
+		if (targetSocket)
+			targetSocket.emit('OneOnOneNoti', {srcUser, targetUser});
+	}
+
+	async acceptOneOnOne(srcUser : User, targetUser : User, nsp : Namespace){
+		const hostSocket : Socket = this.usersSockets.get(srcUser.socketId);
+		const guestSocket : Socket = this.usersSockets.get(targetUser.socketId);
+		await this.setUpGame(hostSocket, guestSocket, nsp);
+	}
+
+	async denyOneOnOne(srcUser : User, targetUser : User, nsp : Namespace){
+		const srcSocket : Socket = this.usersSockets.get(srcUser.socketId);
+		srcSocket.emit("denyNoti", targetUser);
+	}
+
+	//#############################################################
+	// ##########           AFTER MATCH UP            #############
+	//#############################################################
+	async echoRoom(client: Socket, server: Server, body: any){
+		const cur_game_id = await this.getCurGameRoomId(client);
+		server.to(cur_game_id).emit("setupReply", body);
+//		client.emit('setupReply', body);
+	}
+
+	async echoRoomByGameHost(client: Socket, server: Server, body: any){
+		const room = Array.from(client.rooms);
+		console.log(room);
+		const gameRoom = this.gameSessions.get(client.id);
+		if (gameRoom && gameRoom.gameID === client.id)
+			server.to(client.id).emit("setupReply", body);
+//		client.emit('setupReply', body);
 	}
 
 	async playerReady(client: Socket, nsp : Namespace){
@@ -201,34 +297,6 @@ export class GameService {
 			cur_game.readyNum--;
 		}
 		cur_player.playerStatus = PlayerStatus.Waiting;
-	}
-
-	async userComeNsp(client: Socket){
-		this.usersSockets.set(client.id, client);
-	}
-
-	async userOutNsp(client: Socket){
-		this.logger.log("user has out of game " + client.id);
-		this.usersSockets.delete(client.id);
-		await this.updateUserStatusOnline(client);
-	}
-
-	async updateGameRoomInfo(client: Socket, body: any){
-
-	}
-
-	async updateUserStatusInGame(client: Socket){
-		const user : User = await this.usersService.findUserBySocketId(client.id);
-		if (!user)
-			return ;
-		this.usersService.update(user.id, {status: UserStatus.GAME})
-	}
-
-	async updateUserStatusOnline(client: Socket){
-		const user : User = await this.usersService.findUserBySocketId(client.id);
-		if (!user)
-			return ;
-		this.authService.updateUserStatusOnline(user);
 	}
 
 	async gameStart(client: Socket, nsp: Namespace, game_info : any){
@@ -279,78 +347,32 @@ export class GameService {
 		}, 20);
 	}
 
-	async recordGame(gameSession: Game){
-		const cur_game : Game = gameSession;
-		const loserPlayer = cur_game.gameLoser;
-		const winnerPlayer = cur_game.gameWinner;
-      this.createGame().then(async (game) => {
-        const player1Dto: CreateGamePlayerDto = {
-          user: await this.userRepository.findOneBy({
-            id: gameSession.player1.userID,
-          }),
-          game: game,
-          score: gameSession.player1.score,
-          winner: gameSession.player1.score > gameSession.player2.score,
-        };
 
-        const player2Dto: CreateGamePlayerDto = {
-          user: await this.userRepository.findOneBy({
-            id: gameSession.player2.userID,
-          }),
-          game: game,
-          score: gameSession.player2.score,
-          winner: gameSession.player2.score > gameSession.player1.score,
-        };
-
-        await this.createGamePlayer(player1Dto);
-        await this.createGamePlayer(player2Dto);
-      });
-
-	  	//update user DB
-		await this.loserUpdate(loserPlayer);
-		await this.winnerUpdate(winnerPlayer);
+	
+	//#############################################################
+	// ##########          AFTER GAME START           #############
+	//#############################################################
+	
+	async movePad1(client: Socket, pad_info : any, nsp: Namespace){
+		const cur_game_id = await this.getCurGameRoomId(client);
+		const cur_game : Game = this.gameSessions.get(cur_game_id);
+		if (!cur_game)
+			return;
+		cur_game.pad[0].isEqual(pad_info);
+		nsp.to(cur_game_id).emit("pad1", pad_info);
+		// nsp.to(cur_game_id).emit("draw", cur_game.ball);
 	}
 
-
-	  async getGameStatForPlayer(userID: number): Promise<Result[]> {
-    const gameStats: GamePlayer[] = await this.gamePlayerRepository
-      .createQueryBuilder('gamePlayer')
-      .leftJoinAndSelect('gamePlayer.user', 'user')
-      .leftJoinAndSelect('gamePlayer.game', 'game')
-      .select(['gamePlayer.id', 'gamePlayer.score', 'gamePlayer.winner', 'user.name', 'game.id', 'game.date'])
-      .orderBy('game.date', 'ASC')
-      .where((qb) => {
-        const subQuery = qb
-          .subQuery()
-          .from(Games, 'game')
-          .leftJoin('game.gamePlayer', 'gamePlayer')
-          .leftJoin('gamePlayer.user', 'user')
-          .select(['game.id'])
-          .where('user.id = :id', { id: userID })
-          .getQuery();
-        return 'game.id IN ' + subQuery;
-      })
-      .getMany();
-
-    let results: Result[] = [];
-
-    for (let i: number = 0; i < gameStats.length - 1; i++) {
-      if (gameStats[i].game.id == gameStats[i + 1].game.id) {
-        let result = {
-          key: i,
-          date: gameStats[i].game.date.toDateString(),
-          winner: gameStats[i].winner ? gameStats[i].user.name : gameStats[i + 1].user.name,
-          loser: gameStats[i].winner ? gameStats[i + 1].user.name : gameStats[i].user.name,
-          scoreWinner: gameStats[i].winner ? gameStats[i].score : gameStats[i + 1].score,
-          scoreLoser: gameStats[i].winner ? gameStats[i + 1].score : gameStats[i].score,
-        };
-        results.push(result);
-      }
-    }
-    return results;
-  }
-
-
+	async movePad2(client: Socket, pad_info : any, nsp: Namespace){
+		const cur_game_id = await this.getCurGameRoomId(client);
+		const cur_game : Game = this.gameSessions.get(cur_game_id);
+		if (!cur_game)
+			return;
+		cur_game.pad[1].isEqual(pad_info);
+		nsp.to(cur_game_id).emit("pad2", pad_info);
+		// nsp.to(cur_game_id).emit("draw", cur_game.ball);
+	}
+	
 	async destroyGame(client: Socket){
 		const cur_game_id = await this.getCurGameRoomId(client);
 		const cur_game : Game = this.gameSessions.get(cur_game_id);
@@ -410,59 +432,52 @@ export class GameService {
 		await this.userOutNsp(client);
 	}
 
-	async movePad1(client: Socket, pad_info : any, nsp: Namespace){
-		const cur_game_id = await this.getCurGameRoomId(client);
-		const cur_game : Game = this.gameSessions.get(cur_game_id);
-		if (!cur_game)
-			return;
-		cur_game.pad[0].isEqual(pad_info);
-		nsp.to(cur_game_id).emit("pad1", pad_info);
-		// nsp.to(cur_game_id).emit("draw", cur_game.ball);
+
+	//#############################################################
+	//##########          MAKING GAME RECORD           ############
+	//#############################################################
+	createGame(): Promise<Games> {
+		const newGame = this.gamesRepository.create();
+		return this.gamesRepository.save(newGame);
 	}
 
-	async movePad2(client: Socket, pad_info : any, nsp: Namespace){
-		const cur_game_id = await this.getCurGameRoomId(client);
-		const cur_game : Game = this.gameSessions.get(cur_game_id);
-		if (!cur_game)
-			return;
-		cur_game.pad[1].isEqual(pad_info);
-		nsp.to(cur_game_id).emit("pad2", pad_info);
-		// nsp.to(cur_game_id).emit("draw", cur_game.ball);
+	createGamePlayer(gamePlayer: CreateGamePlayerDto): Promise<GamePlayer> {
+		const newGamePlayer = this.gamePlayerRepository.create(gamePlayer);
+		return this.gamePlayerRepository.save(newGamePlayer);
 	}
 
-	async OneOnOneNoti(srcUserId : number, targetUserId: number, nsp: Namespace){
-		const targetUser : User = await this.usersService.findUserById(targetUserId);
-		const srcUser : User = await this.usersService.findUserById(srcUserId)
-		//cannot find user`
-		if (!targetUser || !srcUser){
-			this.logger.log("cannot find target user of id : " + targetUserId);
-		}
-		//Not ONLINE
-		if (targetUser.status === UserStatus.OFFLINE)
-		{
-			this.logger.log("Target User is OFFLINE. id: " + targetUserId);
-		}
-		//In Game
-		if (targetUser.status === UserStatus.GAME)
-		{
-			this.logger.log("Target User is in Game. id: " + targetUserId);
-		}
-		//cannot find socket
-		const targetSocket : Socket = this.usersSockets.get(targetUser.socketId);
-		if (targetSocket)
-			targetSocket.emit('OneOnOneNoti', {srcUser, targetUser});
+	async recordGame(gameSession: Game){
+		const cur_game : Game = gameSession;
+		const loserPlayer = cur_game.gameLoser;
+		const winnerPlayer = cur_game.gameWinner;
+      this.createGame().then(async (game) => {
+        const player1Dto: CreateGamePlayerDto = {
+          user: await this.userRepository.findOneBy({
+            id: gameSession.player1.userID,
+          }),
+          game: game,
+          score: gameSession.player1.score,
+          winner: gameSession.player1.score > gameSession.player2.score,
+        };
+
+        const player2Dto: CreateGamePlayerDto = {
+          user: await this.userRepository.findOneBy({
+            id: gameSession.player2.userID,
+          }),
+          game: game,
+          score: gameSession.player2.score,
+          winner: gameSession.player2.score > gameSession.player1.score,
+        };
+
+        await this.createGamePlayer(player1Dto);
+        await this.createGamePlayer(player2Dto);
+      });
+
+	  	//update user DB
+		await this.loserUpdate(loserPlayer);
+		await this.winnerUpdate(winnerPlayer);
 	}
 
-	async acceptOneOnOne(srcUser : User, targetUser : User, nsp : Namespace){
-		const hostSocket : Socket = this.usersSockets.get(srcUser.socketId);
-		const guestSocket : Socket = this.usersSockets.get(targetUser.socketId);
-		await this.setUpGame(hostSocket, guestSocket, nsp);
-	}
-
-	async denyOneOnOne(srcUser : User, targetUser : User, nsp : Namespace){
-		const srcSocket : Socket = this.usersSockets.get(srcUser.socketId);
-		srcSocket.emit("denyNoti", targetUser);
-	}
 
 	async winnerUpdate(winner : Player1 | Player2){
 		const winner_user : User = await this.usersService.findUserBySocketId(winner.socketID);
@@ -476,11 +491,5 @@ export class GameService {
 		const loses_update: number = loser_user.loses + 1;
 		await this.usersService.update(loser_user.id, {loses : loses_update});
 	}
-	//#############################################################
-	// ##########           AFTER MATCH UP            #############
-	//#############################################################
-	
-	//#############################################################
-	// ##########          AFTER GAME START           #############
-	//#############################################################
+
 }
