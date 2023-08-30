@@ -21,8 +21,8 @@ export default function MainPage() {
 
   useEffect(() => {
     socket.on('allinfo', data => {
-      setChannelList(data.channelnames);
-      setMemberList(data.memberlist);
+      setChannelList(data[0].channelnames);
+      setMemberList(data[0].users);
     });
     return () => {
       socket.off('allinfo');

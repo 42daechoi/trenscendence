@@ -101,6 +101,8 @@ export default function Chat(props) {
   },[]);
 
   const isSameList = () => {
+    if (props.memberList === null)
+      return false;
     if (props.memberList.length != users.length)
       return false;
     for (let i = 0; i < props.memberList.length; i++) {

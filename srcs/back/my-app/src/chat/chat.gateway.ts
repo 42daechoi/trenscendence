@@ -750,12 +750,20 @@ import { before } from 'node:test';
       console.log('----------------------------------------');
       
       // 유저 확인
-      let user = this.users.find(u => u.socketid === socket.id)
+      let user = this.users.find(u => u.id === id)
       if (!user) return;
 
 
       // 이전 채널 정보 업데이트
       let beforeChannel = this.channels.find(c => c.channelname === user.channelname);
+      
+      if (beforeChannel.channelname === '$home')
+      {
+        console.log('----------------------------------------');
+        console.log('         you are alread home            ');
+        console.log('----------------------------------------');
+        return;
+      }
       
       beforeChannel.member--;
       if (beforeChannel.member === 0)
@@ -839,4 +847,28 @@ import { before } from 'node:test';
         console.log('----------------------------------------');
 
    }
+
+   
+    //*********************************************************************//
+    //********************* mute list update  *****************************//
+    //*********************************************************************//
+    @SubscribeMessage('mutelistupdate')
+    async handlemutelist(@MessageBody() id: number, @ConnectedSocket() Socket:Socket) {
+      console.log('----------------------------------------');
+      console.log('---------MUTE LIST UPDATE---------------');
+      console.log('----------------------------------------');
+
+      let user = this.users.find(u => u.id === id);
+      if (!user) return;
+      const block_users : User[] = await this.usersService.getUserBlocks(id);
+      let   block_list : Map<number, string> = new Map();
+
+      for (const blockuser of block_users) {
+        block_list.set(blockuser.id, blockuser.nickname);
+      }
+
+      user.blocklist = null;
+      user.blocklist = block_list;
+    }
 }
+
