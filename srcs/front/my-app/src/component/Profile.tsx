@@ -168,9 +168,10 @@ export default function Profile(pn: ProfileNode) {
           onClick={() => {
             patchAddFriend(props.targetId)
               .then((result) => {
-                // setInfo();
-                setInfo({ ...info, isFriendly: true });
-                alert("친구 추가 성공!");
+                if (result.data) {
+                  setInfo({ ...info, isFriendly: true });
+                  alert("친구 추가 성공!");
+                } else alert("친구 추가 실패");
               })
               .catch((err) => {
                 alert("친구 추가 실패");
@@ -277,7 +278,6 @@ export default function Profile(pn: ProfileNode) {
     };
     useEffect(() => {
       getWhoami().then((response) => {
-        console.log(response);
         if (pn.currUser === response.data.id) {
           if (!response.data.twoFA) setTwoFA("false");
           else setTwoFA("true");
@@ -288,22 +288,23 @@ export default function Profile(pn: ProfileNode) {
           newInfo.isMyProfile = true;
           setInfo(newInfo);
         } else {
-          getId(String(pn.currUser)).then((response) => {
-            if (info.nickname !== response.data.nickname)
-              newInfo.nickname = response.data.nickname;
-            if (info.rank !== response.data.rank)
-              newInfo.rank = response.data.rank;
-            info.isMyProfile = false;
-            getFriendList(pn.currUser)
-              .then((res) => {
+          getId(String(pn.currUser))
+            .then((response) => {
+              if (info.nickname !== response.data.nickname)
+                newInfo.nickname = response.data.nickname;
+              if (info.rank !== response.data.rank)
+                newInfo.rank = response.data.rank;
+              info.isMyProfile = false;
+              getFriendList(pn.currUser).then((res) => {
                 res.data.forEach((element) => {
                   if (element.id === pn.currUser) newInfo.isFriendly = true;
                   else newInfo.isFriendly = false;
                 });
                 setInfo(newInfo);
-              })
-              .catch((err) => {});
-          });
+              });
+            })
+            .catch((err) => {})
+            .catch((err) => {});
         }
       });
     }, []);
