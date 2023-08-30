@@ -9,9 +9,8 @@ import ChannelsList from "../component/ChannelsList";
 import Chat from "../component/Chat";
 import io from "socket.io-client";
 import axios from "axios";
-import { useSocket } from '../component/SocketContext';
-
-
+import { useSocket } from "../component/SocketContext";
+import { getWhoami } from "../utils/ApiRequest";
 
 export default function MainPage() {
   const [curPage, setCurPage] = useState("my_profile");
@@ -20,13 +19,32 @@ export default function MainPage() {
   const socket = useSocket();
 
   useEffect(() => {
+<<<<<<< HEAD
     socket.on('allinfo', data => {
       setChannelList(data[0].channelnames);
       setMemberList(data[0].users);
+=======
+    socket.on("allinfo", (data) => {
+      getWhoami()
+        .then((response) => {
+          for (let i = 0; i < data.length; i++) {
+            for (let j = 0; j < data[i].users.length; j++) {
+              if (data[i].users[j] === response.data.id) {
+                setChannelList(data);
+                setMemberList(data[i].users);
+                return;
+              }
+            }
+          }
+        })
+        .catch((err) => {
+          console.log(err);
+        });
+>>>>>>> a2be99943e3cb9e320d616ce4a038a7a324bd384
     });
     return () => {
-      socket.off('allinfo');
-    }
+      socket.off("allinfo");
+    };
   }, []);
 
   const renderPage = () => {
@@ -65,7 +83,6 @@ export default function MainPage() {
         return <ChannelsList channelList={channelList} />;
     }
   };
-
 
   return (
     <div className="background">
