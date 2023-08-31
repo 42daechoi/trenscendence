@@ -8,7 +8,7 @@ import { ConnectedSocket, MessageBody } from '@nestjs/websockets';
 
 @Injectable()
 export class ChatService {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(private readonly usersService: UsersService){}
 
     async getUserBlocklist(@MessageBody() id: number)
     {
@@ -22,6 +22,7 @@ export class ChatService {
         return block_list;
     }
 
+    
     
 
 }

@@ -180,7 +180,7 @@ import { ChatService } from './chat.service';
 
       this.connectedSockets.set(id, socket);
 
-      let block_list = this.chatService.getUserBlocklist(id);
+      let block_list = await this.chatService.getUserBlocklist(id);
 
       const user: userDTO = {
         socketid: socket.id,
