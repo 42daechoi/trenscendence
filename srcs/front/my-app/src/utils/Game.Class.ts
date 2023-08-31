@@ -45,7 +45,7 @@ export class ballItem {
       this.v = other.v;
       this.r = other.r;
       this.temp = other.temp;
-    }
+    } 
     init(x, y, dx ,dy, v,r,temp){
       this.x = x;
       this.y = y;
@@ -80,6 +80,7 @@ export class padItem {
       this.radi = other.radi;
     }
 }
+
 export class game {
     pad :padItem[];
     board_x :number;

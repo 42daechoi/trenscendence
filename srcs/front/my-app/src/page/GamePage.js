@@ -33,7 +33,6 @@ export default function GamePage() {
     score_2.innerText = score;
   }
   let client = -1;
-  let gameset = new game();
   let ball = new ballItem();
   const canvasRef = useRef(null);
   const gameRef = useRef(null);
@@ -140,6 +139,7 @@ useEffect(() => {
         pad[1].isEqual(data.pad[1]);
         ball.isEqual(data.ball);
         obstacle = data.obs;
+
         for (let i =0; data.obs.length; i++)
         {
           obstacle.push(
@@ -159,10 +159,10 @@ useEffect(() => {
       });
       socket.emit("amiHost", "", response => {
         client = response;
-        if (response === 0)
-          socket.emit('pad1', pad[client]);
-        else
-         socket.emit('pad2', pad[client]);
+        if (client === 0)
+        {
+          socket.emit("wait", "",);
+        }
       });
       if (gameRef.current) {
         gameRef.current.addEventListener("keydown", handlKeyDown);
@@ -219,11 +219,7 @@ useEffect(() => {
     );
     canvas.width = board_x;
     canvas.height = board_y;
-    gameset.pad = pad;
-    gameset.ball = ball;
-    gameset.board_x = board_x;
-    gameset.board_y = board_y;
-    gameset.obs = obstacle;
+
     if (gameRef.current) {
       gameRef.current.addEventListener("keyup", handlKeyup);
     }

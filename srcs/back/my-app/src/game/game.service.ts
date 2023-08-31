@@ -109,6 +109,7 @@ export class GameService {
 			this.queue.get(Array.from(this.queue.keys())[0]),
 			this.queue.get(Array.from(this.queue.keys())[1]),
 			nsp,
+
 		);
 		this.queue.delete(player1.id);
 		this.queue.delete(player2.id);
@@ -121,6 +122,7 @@ export class GameService {
 	async updateGameSettingInfo(body : any){
 		const cur_game : Game = this.gameSessions.get(body.gameId);
 		//update gameInfo
+
 
 		//emit to two players
 	}
@@ -147,8 +149,11 @@ export class GameService {
 
 	async userOutNsp(client: Socket){
 		this.logger.log("user has out of game " + client.id);
-		this.usersSockets.delete(client.id);
-		await this.updateUserStatusOnline(client);
+		const cur_game_id = await this.getCurGameRoomId(client);
+		const cur_game = this.gameSessions.get(cur_game_id);
+			this.usersSockets.delete(client.id);
+			await this.updateUserStatusOnline(client);
+
 	}
 
 	async updateGameRoomInfo(client: Socket, body: any){
@@ -156,7 +161,10 @@ export class GameService {
 	}
 
 	async updateUserStatusInGame(client: Socket){
+		console.log("client",client);
+		console.log("id",client.id);
 		const user : User = await this.usersService.findUserBySocketId(client.id);
+		console.log("user", user);
 		if (!user)
 			return ;
 		this.usersService.update(user.id, {status: UserStatus.GAME})
@@ -304,6 +312,10 @@ export class GameService {
 		}
 		cur_player.playerStatus = PlayerStatus.Waiting;
 	}
+	async socketGetter(socketId: string){
+		const returnSocket : Socket = this.usersSockets.get(socketId);
+		return (returnSocket);
+	}
 
 	async gameSetting(client: Socket, nsp: Namespace, game_info : any){
 		const cur_game_id = await this.getCurGameRoomId(client);
@@ -316,9 +328,12 @@ export class GameService {
 		guest.playerStatus = PlayerStatus.Playing;
 		host.playerStatus = PlayerStatus.Playing;
 
-		const guestSocket : Socket = this.usersSockets.get(guest.socketID); 
-		const hostSocket : Socket = this.usersSockets.get(host.socketID); 
-
+		//const guestSocket : Socket = await this.socketGetter(guest.socketID); 
+		//const hostSocket : Socket = await this.socketGetter(host.socketID);
+		const guestSocket : Socket = nsp.sockets.get(guest.socketID); 
+		const hostSocket : Socket = nsp.sockets.get(host.socketID);  
+		console.log("guest",guestSocket);
+		console.log("host",hostSocket);
 		//flag as in game
 		await this.updateUserStatusInGame(guestSocket);
 		await this.updateUserStatusInGame(hostSocket);
@@ -347,10 +362,20 @@ export class GameService {
 		updatedirection(cur_game.ball);
 		console.log("setting");
 		//draw game elements by 20ms
-		nsp.to(cur_game_id).emit('gameSetting', game_info);
 	}
+
+	async gameWait(client: Socket, nsp: Namespace){
+		const cur_game_id = await this.getCurGameRoomId(client);
+		const cur_game = this.gameSessions.get(cur_game_id);
+
+
+		nsp.to(cur_game_id).emit('gameSetting', { pad : cur_game.pad, ball : cur_game.ball, obs : cur_game.obstacles});
+		//draw game elements by 20ms
+	}
+
 	async gameStart(client: Socket, nsp: Namespace){
 		console.log("start");
+		
 		const cur_game_id = await this.getCurGameRoomId(client);
 		const cur_game = this.gameSessions.get(cur_game_id);
 		cur_game.intervalId = setInterval(() => {
@@ -417,18 +442,21 @@ export class GameService {
 		const guest : Player2 = cur_game.guest;
 		const host : Player1  = cur_game.host;
 		const guestSocket : Socket = this.usersSockets.get(guest.socketID); 
-		const hostSocket : Socket = this.usersSockets.get(host.socketID);
+		const hostSocket : Socket = this.usersSockets.get(host.socketID);		
+		//const guestSocket : Socket = this.usersSockets.get(guest.socketID); 
+		//const hostSocket : Socket = this.usersSockets.get(host.socketID);
 
-		await this.updateUserStatusOnline(guestSocket);
-		await this.updateUserStatusOnline(hostSocket);
+		//await this.updateUserStatusOnline(guestSocket);
+		//await this.updateUserStatusOnline(hostSocket);
 
 		//disjoin guest socket
 		guestSocket.leave(cur_game_id);
 
-		this.logger.log("destoyed game : " + JSON.stringify(this.gameSessions.get(cur_game_id)));
+		//this.logger.log("destoyed game : " + JSON.stringify(this.gameSessions.get(cur_game_id)));
 
+		await this.recordGame(cur_game);
 		//destory gameSession
-		this.gameSessions.delete(cur_game_id);
+
 	}
 
 
@@ -440,8 +468,6 @@ export class GameService {
 		//if in game, destroy game
 		await this.destroyGame(client);
 
-		//leave namespace
-		await this.userOutNsp(client);
 	}
 
 
@@ -462,6 +488,7 @@ export class GameService {
 		const cur_game : Game = gameSession;
 		const loserPlayer = cur_game.gameLoser;
 		const winnerPlayer = cur_game.gameWinner;
+		console.log(cur_game);
       this.createGame().then(async (game) => {
         const player1Dto: CreateGamePlayerDto = {
           user: await this.userRepository.findOneBy({
@@ -488,6 +515,9 @@ export class GameService {
 	  	//update user DB
 		await this.loserUpdate(loserPlayer);
 		await this.winnerUpdate(winnerPlayer);
+
+		//this.gameSessions.delete(cur_game.gameID);
+		
 	}
 
 

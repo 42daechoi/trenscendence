@@ -44,7 +44,7 @@ export class PadItem {
     this.radi = radi;
   }
 
-  isEqual(other: PadItem) {
+  isEqual(other: any) {
     this.x = other.x;
     this.y = other.y;
     this.width = other.width;
@@ -73,7 +73,7 @@ export class Ball {
 		this.temp = -1;
 	}
 	
-	isEqual(other: Ball) {
+	isEqual(other: any) {
 		this.x = other.x;
 		this.y = other.y;
 		this.dx = other.dx;
@@ -207,6 +207,7 @@ export class Game {
 		if (ball.x + ball.r > this.board_x) {
 			ball.x = this.board_x / 2;
 			ball.y = this.board_y / 2;
+			
 			updatedirection(this.ball);
 			this.player2.score++;
 			if (this.player2.score >= 3){
@@ -216,7 +217,8 @@ export class Game {
 				this.gameStatus = GameStatus.Waiting;
 				const loser : Socket = nsp.sockets.get(this.host.socketID);
 				this.gameService.destroyGame(loser);
-				this.gameService.recordGame(this);
+				// this.gameService.recordGame(this);
+				
 				return ;
 			}
 		  nsp.to(this.gameID).emit("guestScore", ball);
@@ -234,7 +236,7 @@ export class Game {
 				console.log(this.player1.score);
 				const loser : Socket = nsp.sockets.get(this.guest.socketID);
 				this.gameService.destroyGame(loser);
-				this.gameService.recordGame(this);
+				// this.gameService.recordGame(this);
 				return ;
 			}
 

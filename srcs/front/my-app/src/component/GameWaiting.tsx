@@ -204,26 +204,6 @@ export default function GameWaiting() {
       );
       obj = obj.nextElementSibling;
     }
-    // gameset.ball.isEqual(ball);
-    // gameset.board_x = board_x;
-    // gameset.board_y = board_y;
-    // for (let i = 0; i < obstacle.length; i++)
-    // {
-    //   gameset.obs.push(obstacle[i].x,
-    //     obstacle[i].y,
-    //     obstacle[i].width,
-    //     obstacle[i].height
-    //   )
-    // }
-    // for (let i = 0; i < pad.length; i++)
-    // {
-    //   gameset.obs.push(pad[i].x,
-    //     pad[i].y,
-    //     pad[i].width,
-    //     pad[i].height,
-    //     pad[i].radi
-    //   )
-    // }
     pad[0].height = 20 * (PadNum - 1) + 116;
     pad[1].height = 20 * (PadNum - 1) + 116;
     ball.v = 4 * (SpeedNum - 1) + 2;
@@ -276,16 +256,33 @@ export default function GameWaiting() {
           setState(true);
           console.log("State",State);
         });
+        socket.on("goodtogo", ()=>{
+          navigate("/game");
+        });
         socket.on("allReady",() => {
           socket.emit('amiHost', "", (response) =>{
             console.log(response)
-            if (response === 1)
+            if (response === 0)
             {
-              gameset.ball = ball;
-              gameset.board_x = 1.6 * board_x;
-              gameset.board_y = 1.6 * board_y;
-              gameset.obs = obstacle;
-              gameset.pad = pad;
+              gameset.ball.isEqual(ball);
+              for (let i = 0; i < obstacle.length; i++)
+              {
+                gameset.obs.push(obstacle[i].x,
+                  obstacle[i].y,
+                  obstacle[i].width,
+                  obstacle[i].height
+                )
+              }
+              for (let i = 0; i < pad.length; i++)
+              {
+                gameset.pad.push(pad[i].x,
+                  pad[i].y,
+                  pad[i].width,
+                  pad[i].height,
+                  pad[i].color,
+                  pad[i].radi
+                )
+              }
               gameset.ball.r *= 1.6;
               gameset.ball.v *= 1.6;
               for (let i = 0; i < gameset.obs.length; i++)
@@ -305,7 +302,7 @@ export default function GameWaiting() {
               socket.emit('gameSetting', gameset);
 
             }
-            navigate("/game");
+
           });
         });
         socket.emit("match", "");

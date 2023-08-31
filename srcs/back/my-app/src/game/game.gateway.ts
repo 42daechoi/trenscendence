@@ -73,8 +73,7 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
 	
     this.nsp.adapter.on('delete-room', (roomName, id) => {
       this.logger.log(`"Room:${roomName}"is deleted.`);
-//	  const clientSocket = this.nsp.sockets.get(id);
-//	  this.gameService.destroySession(clientSocket);
+
     });
 
     this.logger.log('WebSocketServer init ✅');
@@ -108,7 +107,7 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
 		if (!out_user)
 			return;
 		this.logger.log(JSON.stringify(socket.rooms));
-		await this.gameService.destroySession(socket);
+		this.gameService.userOutNsp(socket);
 		await this.usersService.update(out_user.id, {socketId: null});
 	}
 
@@ -232,6 +231,12 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
 		await this.gameService.playerUnready(socket, this.nsp);
 	}
 
+	@SubscribeMessage('wait')
+	async wait(
+		@ConnectedSocket() socket: Socket) {
+		await this.gameService.gameWait(socket, this.nsp);
+	}
+
 	@SubscribeMessage('gameRoomOut')
 	async gameRoomOut(
 		@ConnectedSocket() socket: Socket) {
@@ -243,6 +248,7 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
 		return { socketId: socket.id, userId: user.id };
 	}
 
+
 	@SubscribeMessage('gameSetting')
 	async gameSetting(
 		@ConnectedSocket() socket: Socket,
@@ -250,6 +256,8 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
 		game_info : any
 	) {
 		await this.gameService.gameSetting(socket, this.nsp, game_info);
+		this.logger.log("game setting completed. Game is really good to go");
+		socket.emit("goodtogo", "");
 	}
 	@SubscribeMessage('gameStart')
 	async gameStart(
