@@ -20,12 +20,10 @@ function App() {
     .then((result) => {
       setIsSet(true);
       setIsLogin(true);
-      console.log("ok");
     })
     .catch((err) => {
       setIsSet(true);
       setIsLogin(false);
-      console.log("no");
     });
 
   return (

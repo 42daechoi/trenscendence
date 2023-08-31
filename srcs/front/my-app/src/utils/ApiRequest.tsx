@@ -39,7 +39,7 @@ export function getUserByNickname<T = any>(
 
 export function patchId<T = any>(
   id: number,
-  body: { nickname: string }
+  body: { nickname?: string; profilePicture?: Buffer | string | ArrayBuffer }
 ): Promise<AxiosResponse<T>> {
   return apiRequest("patch", `${serverUrl}/${tagUser}/${String(id)}`, body);
 }
@@ -73,6 +73,36 @@ export function modifyNickname(name: string) {
         })
         .catch((error) => {
           if (error.response.data.statusCode) alert("닉네임 수정 실패");
+        });
+    })
+    .catch((error) => {
+      console.log(error);
+    });
+}
+
+export function modifyAvatar(img: ArrayBuffer) {
+  // getWhoami()
+  //   .then((res) => {
+  //     axios.patch(
+  //       `http://localhost:3001/users/${res.data.id}`,
+  //       { profilePicture: img },
+  //       {
+  //         headers: {
+  //           "Content-Type": "application/octet-stream",
+  //         },
+  //       }
+  //     );
+  //   })
+  //   .catch((err) => {});
+  getWhoami()
+    .then((res) => {
+      patchId(res.data.id, { profilePicture: img })
+        .then((response) => {
+          console.log(response);
+          alert("아바타 수정 성공");
+        })
+        .catch((error) => {
+          if (error.response.data.statusCode) alert("아바타 수정 실패");
         });
     })
     .catch((error) => {

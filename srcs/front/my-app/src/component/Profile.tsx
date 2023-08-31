@@ -5,6 +5,7 @@ import "../css/Profile.css";
 import { useNavigate } from "react-router-dom";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { Buffer } from "buffer";
 import {
   apiRequest,
   getWhoami,
@@ -15,6 +16,7 @@ import {
   modifyNickname,
   getFriendList,
   getId,
+  modifyAvatar,
 } from "../utils/ApiRequest";
 
 interface ProfileNode {
@@ -37,7 +39,7 @@ type profileInfo = {
   isFriendly: boolean;
 };
 
-const MyInfo: profileInfo = {
+let myInfo: profileInfo = {
   id: -1,
   nickname: "unknown",
   avatar: "unknown",
@@ -62,21 +64,28 @@ export default function Profile(pn: ProfileNode) {
     isMyProfile: false,
     isFriendly: false,
   });
-
-  apiRequest("get", "http://localhost:3001/game/gameStats/my")
-    .then((result) => {
-      console.log(result);
-    })
-    .catch((err) => {});
-
-  getWhoami()
-    .then((result) => {
-      MyInfo.id = result.data.id;
-      MyInfo.avatar = result.data.avatar;
-      MyInfo.rank = result.data.rank;
-    })
-    .catch((err) => {});
-
+  useEffect(() => {
+    getWhoami()
+      .then((result) => {
+        let newInfo: profileInfo = {
+          id: result.data.id,
+          nickname: result.data.nickname,
+          avatar: "unknown",
+          rank: result.data.rank,
+          isMyProfile: true,
+          isFriendly: false,
+        };
+        newInfo.id = result.data.id;
+        newInfo.nickname = result.data.nickname;
+        newInfo.rank = result.data.rank;
+        const bufferData: number[] = result.data.profilePicture.data;
+        const buffer: Buffer = Buffer.from(bufferData);
+        newInfo.avatar = buffer.toString("base64");
+        myInfo = newInfo;
+        setInfo(myInfo);
+      })
+      .catch((err) => {});
+  }, []);
   function ModifyModalButton(props: { modalType: string; callback }) {
     const navigate = useNavigate();
     const typeRef = useRef(null);
@@ -222,25 +231,30 @@ export default function Profile(pn: ProfileNode) {
   }
 
   function ModifyAvatarSetting() {
-    const [selectedFile, setSelectedFile] = useState(null);
-    const image = useRef(null);
-    const handleFileChange = (event) => {
-      setSelectedFile(event.target.files[0]);
-    };
-    const handleFileUpload = () => {
-      if (image.current.value) {
-        {
-          /*파일 전송*/
-          apiRequest<any>(
-            "post",
-            "http://localhost:3001/users/modifyAvatar/" + image.current.value
-            // 이미지를 어떻게 받을지에 따라 수정
-          )
-            .then((response) => {})
-            .catch((error) => {});
-        }
+    const [selectedFile, setSelectedFile] = useState<File | null>(null);
+    const image = useRef<HTMLInputElement>(null);
+    const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+      const files = event.target.files;
+      if (files && files.length > 0) {
+        setSelectedFile(files[0]);
       }
     };
+
+    const handleFileUpload = () => {
+      if (selectedFile) {
+        const reader = new FileReader();
+        reader.onload = function (event) {
+          const result = event.target?.result;
+          if (result) {
+            const arrayBuffer = new Uint8Array(result as ArrayBuffer);
+            console.log(arrayBuffer);
+            modifyAvatar(arrayBuffer);
+          }
+        };
+        reader.readAsArrayBuffer(selectedFile);
+      }
+    };
+
     return (
       <>
         <h3 className="font-bold text-lg">아바타 수정</h3>
@@ -295,30 +309,43 @@ export default function Profile(pn: ProfileNode) {
     useEffect(() => {
       getWhoami()
         .then((response) => {
+          console.log(response.data.profilePicture);
           if (pn.currUser === response.data.id) {
             if (!response.data.twoFA) setTwoFA("false");
             else setTwoFA("true");
-            if (info.nickname !== response.data.nickname)
-              newInfo.nickname = response.data.nickname;
-            if (info.rank !== response.data.rank)
-              newInfo.rank = response.data.rank;
-            newInfo.isMyProfile = true;
-            setInfo(newInfo);
+            setInfo(myInfo);
+            // if (info.nickname !== response.data.nickname)
+            //   newInfo.nickname = response.data.nickname;
+            // if (info.rank !== response.data.rank)
+            //   newInfo.rank = response.data.rank;
+            // newInfo.isMyProfile = true;
+            // const bufferData: number[] = response.data.profilePicture.data;
+            // const buffer: Buffer = Buffer.from(bufferData);
+            // newInfo.avatar = buffer.toString("base64");
+            // setInfo(newInfo);
           } else {
             getId(String(pn.currUser))
               .then((response) => {
-                // if (info.nickname !== response.data.nickname)
-                newInfo.nickname = response.data.nickname;
-                // if (info.rank !== response.data.rank)
-                newInfo.rank = response.data.rank;
-                info.isMyProfile = false;
-                getFriendList(pn.currUser).then((res) => {
-                  res.data.forEach((element) => {
-                    if (element.id === pn.currUser) newInfo.isFriendly = true;
-                    // else newInfo.isFriendly = false;
+                if (info.nickname !== response.data.nickname)
+                  newInfo.nickname = response.data.nickname;
+                if (info.rank !== response.data.rank)
+                  newInfo.rank = response.data.rank;
+                newInfo.isMyProfile = false;
+                const bufferData: number[] = response.data.profilePicture.data;
+                const buffer: Buffer = Buffer.from(bufferData);
+                newInfo.avatar = buffer.toString("base64");
+                setInfo(newInfo);
+                getFriendList(pn.currUser)
+                  .then((res) => {
+                    res.data.forEach((element) => {
+                      if (element.id === pn.currUser) newInfo.isFriendly = true;
+                      // else newInfo.isFriendly = false;
+                    });
+                    setInfo(newInfo);
+                  })
+                  .catch((err) => {
+                    console.log(err);
                   });
-                  setInfo(newInfo);
-                });
               })
               .catch((err) => {
                 console.log(err);
@@ -340,7 +367,11 @@ export default function Profile(pn: ProfileNode) {
     <div className="my-profile-container">
       <div className="avatar-button-div">
         <div className="avatar-wrapper">
-          <img src="/img/img.jpg" alt="" className="avatar-img"></img>
+          <img
+            src={`data:image/jpeg;base64,${info.avatar}`}
+            alt="profile"
+            className="avatar-img"
+          ></img>
         </div>
         <div className="my-nickname">
           {info.nickname}
@@ -349,7 +380,7 @@ export default function Profile(pn: ProfileNode) {
           </h1>
         </div>
         <div className="fix-profile">
-          {(pn.isMe || pn.currUser !== MyInfo.id) && (
+          {(pn.isMe || pn.currUser !== info.id) && (
             <>
               <div className="modal-avatar">
                 <ModifyModalButton

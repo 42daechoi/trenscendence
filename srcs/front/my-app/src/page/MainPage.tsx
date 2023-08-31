@@ -16,17 +16,20 @@ import { apiRequest } from "../utils/ApiRequest";
 export default function MainPage() {
   const socket = useSocket();
   const [curPage, setCurPage] = useState("my_profile");
+  const [myId, setMyId] = useState(0);
 
   useEffect(() => {
     apiRequest<any>("get", "http://localhost:3001/users/whoami").then(
-      (response) => {}
+      (response) => {
+        setMyId(response.data.id);
+      }
     );
   }, [socket]);
 
   const renderPage = () => {
     switch (curPage) {
       case "my_profile":
-        return <Profile currUser={2} isMe={true} />;
+        return <Profile currUser={myId} isMe={true} />;
       case "game_waiting":
         return <GameWaiting />;
       case "leaderboard":
