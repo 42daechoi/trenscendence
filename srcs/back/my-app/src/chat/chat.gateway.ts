@@ -7,8 +7,8 @@ import { WebSocketGateway,
     ConnectedSocket,
     OnGatewayInit
   } from '@nestjs/websockets';
-  import { Server, Socket } from 'socket.io';
-  import { userDTO,
+import { Server, Socket } from 'socket.io';
+import { userDTO,
     channelDTO,
     chatDTO, 
     kickDTO, 
@@ -850,4 +850,3 @@ import { ChatService } from './chat.service';
       user.blocklist = await this.chatService.getUserBlocklist(id);
     }
 }
-

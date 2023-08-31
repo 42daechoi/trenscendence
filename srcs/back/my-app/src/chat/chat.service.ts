@@ -10,15 +10,20 @@ import { MessageBody } from '@nestjs/websockets';
 export class ChatService {
   constructor(private readonly usersService: UsersService) {}
 
-  async getUserBlocklist(@MessageBody() id: number)
-  {
-    const block_users : User[] = await this.usersService.getUserBlocks(id);
-      let   block_list : Map<number, string> = new Map();
+    async getUserBlocklist(@MessageBody() id: number)
+    {
+        const block_users : User[] = await this.usersService.getUserBlocks(id);
+        let   block_list : Map<number, string> = new Map();
 
-      for (const blockuser of block_users) {
-        block_list.set(blockuser.id, blockuser.nickname);
-      }
+        for (const blockuser of block_users) {
+            block_list.set(blockuser.id, blockuser.nickname);
+        }
+        
+        return block_list;
+    }
+
     
-      return block_list;
-  }
+
+    
+
 }
