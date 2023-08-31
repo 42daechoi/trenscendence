@@ -63,6 +63,12 @@ export default function Profile(pn: ProfileNode) {
     isFriendly: false,
   });
 
+  apiRequest("get", "http://localhost:3001/game/gameStats/my")
+    .then((result) => {
+      console.log(result);
+    })
+    .catch((err) => {});
+
   getWhoami()
     .then((result) => {
       MyInfo.id = result.data.id;
@@ -179,7 +185,6 @@ export default function Profile(pn: ProfileNode) {
             patchAddFriend(props.targetId)
               .then((result) => {
                 // if (result.data) {
-                console.log(result);
                 setInfo({ ...info, isFriendly: true });
                 alert("친구 추가 성공!");
                 // } else alert("친구 추가 실패");
@@ -288,37 +293,41 @@ export default function Profile(pn: ProfileNode) {
       isFriendly: false,
     };
     useEffect(() => {
-      getWhoami().then((response) => {
-        if (pn.currUser === response.data.id) {
-          if (!response.data.twoFA) setTwoFA("false");
-          else setTwoFA("true");
-          if (info.nickname !== response.data.nickname)
-            newInfo.nickname = response.data.nickname;
-          if (info.rank !== response.data.rank)
-            newInfo.rank = response.data.rank;
-          newInfo.isMyProfile = true;
-          setInfo(newInfo);
-        } else {
-          getId(String(pn.currUser))
-            .then((response) => {
-              if (info.nickname !== response.data.nickname)
+      getWhoami()
+        .then((response) => {
+          if (pn.currUser === response.data.id) {
+            if (!response.data.twoFA) setTwoFA("false");
+            else setTwoFA("true");
+            if (info.nickname !== response.data.nickname)
+              newInfo.nickname = response.data.nickname;
+            if (info.rank !== response.data.rank)
+              newInfo.rank = response.data.rank;
+            newInfo.isMyProfile = true;
+            setInfo(newInfo);
+          } else {
+            getId(String(pn.currUser))
+              .then((response) => {
+                // if (info.nickname !== response.data.nickname)
                 newInfo.nickname = response.data.nickname;
-              if (info.rank !== response.data.rank)
+                // if (info.rank !== response.data.rank)
                 newInfo.rank = response.data.rank;
-              info.isMyProfile = false;
-              getFriendList(pn.currUser).then((res) => {
-                res.data.forEach((element) => {
-                  console.log(element.id + ", " + pn.currUser);
-                  if (element.id === pn.currUser) newInfo.isFriendly = true;
-                  // else newInfo.isFriendly = false;
+                info.isMyProfile = false;
+                getFriendList(pn.currUser).then((res) => {
+                  res.data.forEach((element) => {
+                    if (element.id === pn.currUser) newInfo.isFriendly = true;
+                    // else newInfo.isFriendly = false;
+                  });
+                  setInfo(newInfo);
                 });
-                setInfo(newInfo);
+              })
+              .catch((err) => {
+                console.log(err);
               });
-            })
-            .catch((err) => {})
-            .catch((err) => {});
-        }
-      });
+          }
+        })
+        .catch((err) => {
+          console.log(err);
+        });
     }, []);
   }
 

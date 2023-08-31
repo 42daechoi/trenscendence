@@ -28,6 +28,7 @@ import {LocalAuthGuard} from './guards/auth-local.guard';
 import {AuthGuard} from '@nestjs/passport';
 import {JwtAuthGuard} from './guards/auth-jwt.guard';
 import { TokenType } from './interfaces/token-payload.interface';
+import {UserStatus} from 'src/typeorm/user.entity';
 
 @Controller('auth')
 export class AuthController {
@@ -41,9 +42,11 @@ export class AuthController {
 		console.log("auth/loginfortytwo/callback")
 		const intraId :string = res.req.user.login;
 		const nickname :string = res.req.user.login;
+		console.log(res.req.user);
 		let find_user : User = await this.usersService.findUserByIntraId(intraId);
 		if (!find_user)
 		{
+			//default image
 			console.log("new user logged in!");
 			//this gonna be create user dto soon.
 			find_user = await this.usersService.createUser({intraId, nickname});
@@ -58,6 +61,7 @@ export class AuthController {
 		const user_token = await this.authService.validateUser(user.intraId, tokenType);
 		//bake cookie
 		this.authService.setJwtCookie(res, user_token.accessToken);
+		this.authService.setJwtHeader(res, user_token.accessToken)
 		//redirect to 2FA
 		//#################################
 		//#########     2FA     ###########
@@ -65,22 +69,29 @@ export class AuthController {
 		if (user.twoFA == true){
 			return res.redirect('http://localhost:3000/partial-tfa');
 		}
-		if (user.currentAvatarData == false){
-			return res.redirect('http://localhost:3000/create-account');
-		}
 		else{
-			return res.redirect('http://localhost:3000/main');
+			this.authService.updateUserStatusOnline(user);
+			//if no avata data
+			if (user.currentAvatarData == false){
+				const smallProfilePictureUrl : string = res.req.user.image.versions.small;
+				await this.usersService.update(user.id, { ft_pictureUrl: smallProfilePictureUrl });
+				return res.redirect('http://localhost:3000/create-account');
+			}
+				//else redirect to main page
+			else{
+				return res.redirect('http://localhost:3000/main');
+			}
 		}
-		//else redirect to main page
 	}
 
 	@Post('/signup')
 	@Serialize(CreateUserDto)
-	async createUser(@Body() body: CreateUserDto) {
+	async createUser(@Body() body: any) {
 		const user_intraId = body.intraId;
+		const user_nickname = body.intraId;
 		console.log("In auth controller finding userid: " + user_intraId);
 		//create new user
-		const new_user = await this.authService.signup(body);
+		const new_user = await this.authService.signup({intraId: user_intraId, nickname: user_nickname});
 			//jwt response attachment
 		return (new_user)
 	}
@@ -105,6 +116,7 @@ export class AuthController {
 		const user_token = await this.authService.validateUser(user.intraId, tokenType);
 		//bake cookie
 		this.authService.setJwtCookie(res, user_token.accessToken);
+		this.authService.setJwtHeader(res, user_token.accessToken)
 		//redirect to 2FA
 		//#################################
 		//#########     2FA     ###########
@@ -119,7 +131,9 @@ export class AuthController {
 //			return res.redirect('http://localhost:3000/main');
 //		}
 		//else redirect to main page
-		return res.json(user_token);
+		await this.authService.updateUserStatusOnline(user);
+		res.json(user_token);
+		return user;
 	}
 
 	@Get('/authentication')
@@ -139,7 +153,8 @@ export class AuthController {
 
 	@Post('/signout')
 	@UseGuards(JwtAuthGuard)
-	async signOut(@Req() req : Request, @Res() res : Response) : Promise<any> {
+	async signOut(@Req() req : Request, @Res() res : Response, @currentAuthUser() user: User) : Promise<any> {
+		this.authService.updateUserStatusOffline(user);
 		return (await this.authService.destoryJwtCookie(res));
 	}
 }

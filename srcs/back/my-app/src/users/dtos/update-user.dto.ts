@@ -1,6 +1,7 @@
-import { IsString, IsOptional, IsNumber, IsBoolean } from 'class-validator';
+import { IsString, IsOptional, IsNumber, IsBoolean, IsEnum } from 'class-validator';
 import { User } from 'src/typeorm';
 import {UserStatus} from 'src/typeorm/user.entity';
+import { GamePlayer } from 'src/typeorm';
 
 export class UpdateUserDto {
 
@@ -10,6 +11,9 @@ export class UpdateUserDto {
 
 	@IsOptional()
 	friends: User[];
+
+	@IsOptional()
+	blocks: User[];
 
 	@IsOptional()
 	@IsNumber()
@@ -38,4 +42,16 @@ export class UpdateUserDto {
 	@IsString()
 	@IsOptional()
 	twoFASecret: string;
+
+	@IsOptional()
+	@IsEnum(UserStatus)
+	status: UserStatus;
+
+	@IsString()
+	@IsOptional()
+	socketId: string;
+
+	@IsOptional()
+	gamePlayer: GamePlayer;
+
 }

@@ -29,7 +29,7 @@ export function getIntraId<T = any>(
 }
 
 export function getId<T = any>(Id: string): Promise<AxiosResponse<T>> {
-  return apiRequest("get", `${serverUrl}/${tagUser}/${Id}`);
+  return apiRequest("get", `${serverUrl}/${tagUser}/id/${Id}`);
 }
 export function getUserByNickname<T = any>(
   nickname: string

@@ -6,6 +6,7 @@ import { getFriendList, getWhoami } from "../utils/ApiRequest";
 type friendMap = {
   nickname: string;
   id: number;
+  status: number;
 };
 
 export default function Friends_list() {
@@ -20,6 +21,7 @@ export default function Friends_list() {
           newFriendList.push({
             nickname: friends.data[i].nickname,
             id: friends.data[i].id,
+            status: friends.data[i].status,
           });
         }
         setFriendList(newFriendList); // 한 번만 호출
@@ -37,7 +39,7 @@ export default function Friends_list() {
   };
   useEffect(() => {
     init();
-    const pollingInterval = setInterval(init, 5000);
+    const pollingInterval = setInterval(init, 10000);
   }, []);
 
   return (
@@ -46,7 +48,7 @@ export default function Friends_list() {
         <li key={"friendList" + friend.id}>
           <a className="chat_btn" onClick={() => openModal(friend.id)}>
             {/* 온라인 오프라인지 아직 db에 없기때문에 임의로 지정 */}
-            <div>{friend.id / 2 ? "🔴" : "🟢"}</div>
+            <div>{friend.status ? "🟢" : "🔴"}</div>
             <div>{friend.nickname}</div>
           </a>
         </li>

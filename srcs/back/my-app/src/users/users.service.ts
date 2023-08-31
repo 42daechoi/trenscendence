@@ -8,11 +8,12 @@ import { UpdateUserDto } from './dtos/update-user.dto';
 import {UserDto} from './dtos/users.dto';
 import { randomBytes, scrypt as _scrypt } from 'crypto';
 import { promisify } from "util";
+import { HttpService } from '@nestjs/axios';
 const scrypt = promisify(_scrypt);
 
 @Injectable()
 export class UsersService {
-	constructor(@InjectRepository(User) private userRepository: Repository<User>) {}
+	constructor(@InjectRepository(User) private userRepository: Repository<User>, private httpService: HttpService) {}
 
 	async createUser(createUserDto: CreateUserDto) {
 		//creating has type checking with dto
@@ -22,7 +23,7 @@ export class UsersService {
 
 		// Hash the salt and the password together
 		// async crypto
-		const hash = (await scrypt(tempNick, salt, 16)) as Buffer;
+		const hash = (await scrypt(tempNick, salt, 4)) as Buffer;
 		tempNick = 'USER@' + hash.toString('hex');
 		createUserDto.nickname = tempNick;
 		// Join the hashed result and the salt together
@@ -75,6 +76,13 @@ export class UsersService {
 		if (!user) {
 		  throw new NotFoundException('user not found');
 		}
+		if (attrs.ft_pictureUrl){
+			const url = attrs.ft_pictureUrl;
+			const response = await this.httpService.get(url, { responseType: 'arraybuffer' }).toPromise();
+			    user.profilePicture = Buffer.from(response.data, 'binary');
+				user.ft_pictureUrl = attrs.ft_pictureUrl;
+			delete attrs.profilePicture;
+		}
 		// ######## IMPORTANT ########
 		Object.assign(user, attrs);
 		return this.userRepository.save(user);
@@ -125,6 +133,7 @@ export class UsersService {
 		if (cur_id === fri_id)
 			return;
 
+		//find cur user
 		const user: User = await this.userRepository.findOne({ 
 		  where: {id: cur_id},
 		  relations:{blocks: true, friends: true}
@@ -143,11 +152,13 @@ export class UsersService {
 		await this.userRepository.save(user);
 	}
 
-	async getUserFriends(id: number): Promise<User[] | null> {
+	async getUserFriends(cur_id: number): Promise<User[] | null> {
+		//find cur user
 		const user: User = await this.userRepository.findOne({ 
-		  where: {id: id},
+		  where: {id: cur_id},
 		  relations:{blocks: true, friends: true}
 		})
+
 		if (!user) {
 			throw new NotFoundException('User not found');
 		}
@@ -217,5 +228,31 @@ export class UsersService {
 		const blocks : User[] = user.blocks;
 		console.log(blocks);
 		return (blocks);
+	}
+
+	//##################
+	//##    SOCKET    ##
+	//##################
+	async findUserBySocketId(socket_id: string): Promise<User | null>{
+		const user: User | null = await this.userRepository.findOne({
+			where : {socketId: socket_id}
+		});
+//		if (!user) {
+//			throw new NotFoundException('User not found');
+//		}
+		return (user);
+	}
+
+	//##################
+	//##     GAME     ##
+	//##################
+	async getTopRankers(limit: number = 20): Promise<User[]> {
+	  const rankers = await this.userRepository.find({
+		order: {
+		  xp: 'DESC',
+		},
+		take: limit,
+	  });
+	  return rankers;
 	}
 }

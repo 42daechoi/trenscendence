@@ -10,16 +10,18 @@ import Chat from "../component/Chat";
 import { getUserByNickname } from "../utils/ApiRequest";
 import Modal from "../component/Modal";
 
-// const socket = io('http://localhost:3002');
+import { useSocket } from "../component/SocketContext";
+import { apiRequest } from "../utils/ApiRequest";
 
 export default function MainPage() {
+  const socket = useSocket();
   const [curPage, setCurPage] = useState("my_profile");
 
-  // useEffect(() => {
-  //   return () => {
-  //     socket.disconnect();
-  //   }
-  // },[socket]);
+  useEffect(() => {
+    apiRequest<any>("get", "http://localhost:3001/users/whoami").then(
+      (response) => {}
+    );
+  }, [socket]);
 
   const renderPage = () => {
     switch (curPage) {
