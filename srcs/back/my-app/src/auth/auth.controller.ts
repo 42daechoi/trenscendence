@@ -42,9 +42,11 @@ export class AuthController {
 		console.log("auth/loginfortytwo/callback")
 		const intraId :string = res.req.user.login;
 		const nickname :string = res.req.user.login;
+		console.log(res.req.user);
 		let find_user : User = await this.usersService.findUserByIntraId(intraId);
 		if (!find_user)
 		{
+			//default image
 			console.log("new user logged in!");
 			//this gonna be create user dto soon.
 			find_user = await this.usersService.createUser({intraId, nickname});
@@ -71,12 +73,12 @@ export class AuthController {
 			this.authService.updateUserStatusOnline(user);
 			//if no avata data
 			if (user.currentAvatarData == false){
-				this.usersService.update(user.id, {status: UserStatus.ONLINE})
+				const smallProfilePictureUrl : string = res.req.user.image.versions.small;
+				await this.usersService.update(user.id, { ft_pictureUrl: smallProfilePictureUrl });
 				return res.redirect('http://localhost:3000/create-account');
 			}
 				//else redirect to main page
 			else{
-				this.usersService.update(user.id, {status: UserStatus.ONLINE})
 				return res.redirect('http://localhost:3000/main');
 			}
 		}

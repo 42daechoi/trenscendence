@@ -67,11 +67,14 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
 
     this.nsp.adapter.on('leave-room', (room, id) => {
       this.logger.log(`"Socket:${id}" has left "Room:${room}".`);
-	  this.gameService.destroysession(room);
+	  const clientSocket = this.nsp.sockets.get(id);
+	  this.gameService.destroySession(clientSocket);
     });
 
-    this.nsp.adapter.on('delete-room', (roomName) => {
+    this.nsp.adapter.on('delete-room', (roomName, id) => {
       this.logger.log(`"Room:${roomName}"is deleted.`);
+//	  const clientSocket = this.nsp.sockets.get(id);
+//	  this.gameService.destroySession(clientSocket);
     });
 
     this.logger.log('WebSocketServer init ✅');
@@ -105,9 +108,8 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
 		if (!out_user)
 			return;
 		this.logger.log(JSON.stringify(socket.rooms));
-		await this.gameService.popQueue(socket);
+		await this.gameService.destroySession(socket);
 		await this.usersService.update(out_user.id, {socketId: null});
-		await this.gameService.userOutNsp(socket);
 	}
 
 //	@UseGuards(WsJwtGuard)
@@ -156,18 +158,33 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
 		const clientSocket: Socket = socket;
 		this.logger.log("event : match");
 		await this.gameService.pushQueue(clientSocket);
-		await this.gameService.monitorQueue(this.server);
+		await this.gameService.monitorQueue(this.nsp);
 		socket.emit('matching waiting', { socketId: socket.id, userId: user.id});
 		return { socketId: socket.id, userId: user.id };
 	}
-//	@SubscribeMessage('allReady') async allReady(
-//		@ConnectedSocket() socket: Socket) {
-//		const user : User = await this.usersService.findUserBySocketId(socket.id);
-//		const clientSocket: Socket = socket;
-//
-//		return { socketId: socket.id, userId: user.id };
-//	}
-//	
+	
+	@SubscribeMessage('OneOnOne')
+	async OneOnOne(
+		@ConnectedSocket() socket: Socket, body : any) {
+		const src : User = await this.usersService.findUserBySocketId(socket.id);
+		await this.gameService.OneOnOneNoti(src.id, parseInt(body.targetId), this.nsp);
+	}
+
+	@SubscribeMessage('acceptOneOnOne')
+	async acceptOneOnOne(
+		@ConnectedSocket() socket: Socket, body : any) {
+		await this.gameService.acceptOneOnOne(body.srcUser, body.targetUser, this.nsp);
+	}
+
+	@SubscribeMessage('denyOneOnOne')
+	async denyOneOnOne(
+		@ConnectedSocket() socket: Socket, body : any) {
+		await this.gameService.denyOneOnOne(body.srcUser, body.targetUser, this.nsp);
+	}
+
+	//#############################################################
+	// ##########          AFTER QUEUE COME           #############
+	//#############################################################
 	@SubscribeMessage('matchQueueOut')
 	async popQueue(
 		@ConnectedSocket() socket: Socket) {
@@ -176,14 +193,6 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
 		await this.gameService.popQueue(client);
 		socket.emit('matchQueueOut', { socketId: socket.id, userId: user.id});
 		return { socketId: socket.id, userId: user.id };
-	}
-
-	@SubscribeMessage('testnsp')
-	async testnsp(
-		@ConnectedSocket() socket: Socket,
-		@MessageBody() gameSetting: any 
-	){
-		this.gameService.testnsp(this.nsp, socket, gameSetting);
 	}
 
 	//#############################################################
@@ -206,8 +215,8 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
 
 	@SubscribeMessage('unReady')
 	async unready(
-		@ConnectedSocket() socket: Socket) {
-		await this.gameService.playerUnready(socket);
+		@ConnectedSocket() socket: Socket, nsp: Namespace) {
+		await this.gameService.playerUnready(socket, this.nsp);
 	}
 
 	@SubscribeMessage('gameRoomOut')
@@ -225,17 +234,22 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
 	async gameStart(
 		@ConnectedSocket() socket: Socket,
 		@MessageBody()
-		game_info
+		game_info : any
 	) {
 		await this.gameService.gameStart(socket, this.nsp, game_info);
 	}
+
+
+	//#############################################################
+	// ##########          AFTER GAME START           #############
+	//#############################################################
 
 	@SubscribeMessage('pad1')
 	async pad1(
 		@ConnectedSocket() socket: Socket,
 	
 		@MessageBody()
-		pad_info
+		pad_info : any
 	) {
 		await this.gameService.movePad1(socket, pad_info, this.nsp);
 	}
@@ -244,15 +258,8 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
 	async pad2(
 		@ConnectedSocket() socket: Socket,
 		@MessageBody()
-		pad_info
+		pad_info : any
 	) {
 		await this.gameService.movePad2(socket, pad_info, this.nsp);
 	}
-
-
-
-	//#############################################################
-	// ##########          AFTER GAME START           #############
-	//#############################################################
-
 }

@@ -8,11 +8,12 @@ import { UpdateUserDto } from './dtos/update-user.dto';
 import {UserDto} from './dtos/users.dto';
 import { randomBytes, scrypt as _scrypt } from 'crypto';
 import { promisify } from "util";
+import { HttpService } from '@nestjs/axios';
 const scrypt = promisify(_scrypt);
 
 @Injectable()
 export class UsersService {
-	constructor(@InjectRepository(User) private userRepository: Repository<User>) {}
+	constructor(@InjectRepository(User) private userRepository: Repository<User>, private httpService: HttpService) {}
 
 	async createUser(createUserDto: CreateUserDto) {
 		//creating has type checking with dto
@@ -74,6 +75,13 @@ export class UsersService {
 		const user = await this.findUserById(id);
 		if (!user) {
 		  throw new NotFoundException('user not found');
+		}
+		if (attrs.ft_pictureUrl){
+			const url = attrs.ft_pictureUrl;
+			const response = await this.httpService.get(url, { responseType: 'arraybuffer' }).toPromise();
+			    user.profilePicture = Buffer.from(response.data, 'binary');
+				user.ft_pictureUrl = attrs.ft_pictureUrl;
+			delete attrs.profilePicture;
 		}
 		// ######## IMPORTANT ########
 		Object.assign(user, attrs);
@@ -234,5 +242,17 @@ export class UsersService {
 //		}
 		return (user);
 	}
-	
+
+	//##################
+	//##     GAME     ##
+	//##################
+	async getTopRankers(limit: number = 20): Promise<User[]> {
+	  const rankers = await this.userRepository.find({
+		order: {
+		  xp: 'DESC',
+		},
+		take: limit,
+	  });
+	  return rankers;
+	}
 }

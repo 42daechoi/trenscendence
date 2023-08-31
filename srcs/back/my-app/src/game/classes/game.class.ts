@@ -1,7 +1,15 @@
 import { Namespace } from 'socket.io';
+import {GameService} from '../game.service';
+import { Socket } from 'socket.io';
 export enum PlayerStatus {
   Waiting = 0,
   Ready = 1,
+  Playing = 2,
+}
+
+export enum GameStatus{
+  Waiting = 0,
+  AllReady = 1,
   Playing = 2,
 }
 
@@ -163,17 +171,14 @@ export class Obstacle {
 	}
 }
 
-
-
-
 export class Game {
 	player1: Player1;
 	player2: Player2;
 	ball: Ball;
 	gameID: string;
-	gameStatus: string;
-	gameWinner: string;
-	gameLoser: string;
+	gameStatus: GameStatus;
+	gameWinner: Player1 | Player2;
+	gameLoser: Player1 | Player2;
 	host: Player1;
 	guest: Player2;
 	obstacles : Obstacle[];
@@ -182,6 +187,9 @@ export class Game {
 	board_x : number;
 	board_y : number;
 	intervalId : NodeJS.Timeout;
+	gameService: GameService;
+	
+
 	constructor(player1 : Player1, player2 : Player2){
 		this.ball = new Ball();
 		this.player1 = player1;
@@ -191,6 +199,7 @@ export class Game {
 		this.readyNum = 0;
 		this.pad = [];
 		this.obstacles = [];
+		this.gameStatus = GameStatus.Waiting;
 	}
 
 	bounce(nsp : Namespace) {
@@ -203,6 +212,10 @@ export class Game {
 			if (this.player2.score >= 3){
 				clearInterval(this.intervalId);
 				nsp.to(this.gameID).emit('guestWin',"");
+				this.gameStatus = GameStatus.Waiting;
+				const loser : Socket = nsp.sockets.get(this.host.socketID);
+				this.gameService.destroyGame(loser);
+				this.gameService.recordGame(this);
 				return ;
 			}
 		  nsp.to(this.gameID).emit("guestScore", ball);
@@ -215,6 +228,10 @@ export class Game {
 			if (this.player1.score >= 3){
 				clearInterval(this.intervalId);
 				nsp.to(this.gameID).emit('hostWin',"");
+				this.gameStatus = GameStatus.Waiting;
+				const loser : Socket = nsp.sockets.get(this.guest.socketID);
+				this.gameService.destroyGame(loser);
+				this.gameService.recordGame(this);
 				return ;
 			}
 		  nsp.to(this.gameID).emit("hostScore", ball);
@@ -225,9 +242,6 @@ export class Game {
 		  ball.temp = -1;
     	}
   	}
-
-	move(){
-	}
 
 	pong(nsp: Namespace) {
 		let ball : Ball = this.ball;
