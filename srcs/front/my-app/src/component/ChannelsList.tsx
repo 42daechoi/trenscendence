@@ -78,9 +78,14 @@ export default function ChannelsList(props) {
       <>
         <div className="channel-access" style={{ padding: "10px" }}>
           <h1 style={{ fontSize: "20px" }}>
-            {channelList[currChannel].channelname}
+            {channelList[currChannel].channelname + " 의 채팅방"}
           </h1>
           <h1>방 설정</h1>
+          <div>{channelList[currChannel].option}</div>
+          <div>
+            {channelList[currChannel].member} /{" "}
+            {channelList[currChannel].maxmember}
+          </div>
           {isPasswordDisplay && (
             <h1 style={{ padding: "10px" }}>
               password
