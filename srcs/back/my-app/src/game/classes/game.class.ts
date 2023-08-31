@@ -210,6 +210,7 @@ export class Game {
 			updatedirection(this.ball);
 			this.player2.score++;
 			if (this.player2.score >= 3){
+				console.log(this.player2.score);
 				clearInterval(this.intervalId);
 				nsp.to(this.gameID).emit('guestWin',"");
 				this.gameStatus = GameStatus.Waiting;
@@ -224,16 +225,19 @@ export class Game {
 			ball.x = this.board_x / 2;
 			ball.y = this.board_y / 2;
 			updatedirection(this.ball);
+			
 			this.player1.score++;
 			if (this.player1.score >= 3){
 				clearInterval(this.intervalId);
 				nsp.to(this.gameID).emit('hostWin',"");
 				this.gameStatus = GameStatus.Waiting;
+				console.log(this.player1.score);
 				const loser : Socket = nsp.sockets.get(this.guest.socketID);
 				this.gameService.destroyGame(loser);
 				this.gameService.recordGame(this);
 				return ;
 			}
+
 		  nsp.to(this.gameID).emit("hostScore", ball);
 		  // player2_win();
 		} else if (ball.y + ball.r > this.board_y|| ball.y - ball.r < 0) {

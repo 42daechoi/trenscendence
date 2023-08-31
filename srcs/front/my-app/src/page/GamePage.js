@@ -51,7 +51,6 @@ export default function GamePage() {
   let move_px = 2;
   
   function draw() {
-    console.log("asdasdasd");
     ctx.clearRect(0, 0, board_x, board_y);
     ctx.beginPath();
     ctx.arc(ball.x, ball.y, ball.r, 0, Math.PI * 2);
@@ -84,6 +83,7 @@ useEffect(() => {
       if (e.key == "ArrowUp") {
         e.preventDefault();
         a += 1;
+        console.log("client hand ", client)
         pad[client].y -= move_px + Math.log(a) / Math.log(1.05);
         if (pad[client].y < 0) pad[client].y = 0;
         if (client === 0)
@@ -106,10 +106,6 @@ useEffect(() => {
       socket.on('client', data => {
         console.log("client", data);
         client = data;
-      });
-      socket.on('gameset', ()=>{
-        if (client === 0)
-          socket.emit('gameStart', gameset);
       });
       socket.on('hostScore', (data)=>{
         host_win();
@@ -137,14 +133,37 @@ useEffect(() => {
       socket.on('draw', data => {
         ball.isEqual(data);
         draw();
-      })
+      });
+      socket.on('gameSetting', data => {
+        console.log("setting", data);
+        pad[0].isEqual(data.pad[0]);
+        pad[1].isEqual(data.pad[1]);
+        ball.isEqual(data.ball);
+        obstacle = data.obs;
+        for (let i =0; data.obs.length; i++)
+        {
+          obstacle.push(
+            new htmlItem(
+              data.obs[i].x,
+              data.obs[i].y,
+              data.obs[i].width,
+              data.obs[i].height));
+        }
+        });
+        socket.emit("amiHost", "", response => {
+          if (response === 0)
+            socket.emit("gameStart", "");
+        });
       socket.on('pad2', (data) => {
         pad[1] = data;
       });
-      if (client === 0)
-        socket.emit('pad1', pad[client]);
-      else if (client === 1)
-        socket.emit('pad2', pad[client]);
+      socket.emit("amiHost", "", response => {
+        client = response;
+        if (response === 0)
+          socket.emit('pad1', pad[client]);
+        else
+         socket.emit('pad2', pad[client]);
+      });
       if (gameRef.current) {
         gameRef.current.addEventListener("keydown", handlKeyDown);
       }
@@ -200,19 +219,6 @@ useEffect(() => {
     );
     canvas.width = board_x;
     canvas.height = board_y;
-    let obstacles = obsRef.current;
-    let obj = obstacles.firstElementChild;
-    while (obj != null) {
-      obstacle.push(
-        new htmlItem(
-          obj.offsetLeft,
-          obj.offsetTop,
-          obj.clientWidth,
-          obj.clientHeight
-        )
-      );
-      obj = obj.nextElementSibling;
-    }
     gameset.pad = pad;
     gameset.ball = ball;
     gameset.board_x = board_x;

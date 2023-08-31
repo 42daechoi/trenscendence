@@ -19,6 +19,7 @@ export default function GameWaiting() {
   const [BallNum, setBallNum] = useState(2);
   const [SpeedNum, setSpeedNum] = useState(2);
   const [PadNum, setPadNum] = useState(2);
+  const [client, setclient] = useState(-1);
   const gameset = new game([], 0, 0, new ballItem(0,0,0,0,0,0), []);
   const pad = [];
   const obstacle = [];
@@ -161,7 +162,6 @@ export default function GameWaiting() {
     )
   };
   function init(){
-    clearInterval(gameset.intervalId);
     const canvas = canvasRef.current;
     ctx = canvas.getContext("2d");
     board_x = gameRef.current.clientWidth;
@@ -204,71 +204,120 @@ export default function GameWaiting() {
       );
       obj = obj.nextElementSibling;
     }
-    gameset.ball.isEqual(ball);
-    gameset.board_x = board_x;
-    gameset.board_y = board_y;
-    for (let i = 0; i < obstacle.length; i++)
-    {
-      gameset.obs.push(obstacle[i].x,
-        obstacle[i].y,
-        obstacle[i].width,
-        obstacle[i].height
-      )
-    }
-    for (let i = 0; i < pad.length; i++)
-    {
-      gameset.obs.push(pad[i].x,
-        pad[i].y,
-        pad[i].width,
-        pad[i].height,
-        pad[i].radi
-      )
-    }
+    // gameset.ball.isEqual(ball);
+    // gameset.board_x = board_x;
+    // gameset.board_y = board_y;
+    // for (let i = 0; i < obstacle.length; i++)
+    // {
+    //   gameset.obs.push(obstacle[i].x,
+    //     obstacle[i].y,
+    //     obstacle[i].width,
+    //     obstacle[i].height
+    //   )
+    // }
+    // for (let i = 0; i < pad.length; i++)
+    // {
+    //   gameset.obs.push(pad[i].x,
+    //     pad[i].y,
+    //     pad[i].width,
+    //     pad[i].height,
+    //     pad[i].radi
+    //   )
+    // }
     pad[0].height = 20 * (PadNum - 1) + 116;
     pad[1].height = 20 * (PadNum - 1) + 116;
     ball.v = 4 * (SpeedNum - 1) + 2;
     obstacle.splice(MapNum - 1, 4 - MapNum);
     ball.r = 5 * (BallNum - 1) + 7;
-    gameset.intervalId = setInterval(()=>{
-      pong();
-    }, 20);
+    console.log("a");
+    if (client != -1)
+    {
+      console.log("b");
+      gameset.intervalId = setInterval(()=>{
+        pong();
+      }, 20);
+    }
   }
-
+  useEffect(() => {
+    return () => {
+      socket.off('matching waiting');
+      socket.off('matchInfo');
+      socket.off('allReady');
+      socket.off('client');
+      socket.off('client');
+    }
+  },[])
   useEffect(() => {
     init();
+    socket.emit("setUp",{Pad: PadNum, Speed : SpeedNum, Ball : BallNum, Map : MapNum});
     return () => {
       clearInterval(gameset.intervalId);
-      socket.off("matching waiting");
-      socket.off("matchInfo");
-      socket.off("allReady");
     }
-  },[PadNum, SpeedNum, BallNum, MapNum]);
+  },[PadNum, SpeedNum, BallNum, MapNum, client]);
 
 
   useEffect(() => {
       if (socket)
       {
+        socket.on('setupReply', data => {
+          setBallNum(data.Ball);
+          setPadNum(data.Pad);
+          setSpeedNum(data.Speed);
+          setMapNum(data.Map);
+        });
+        socket.on('client', data => {
+          setclient(data);
+          console.log(data);
+        });
         socket.on("matching waiting", data => {
           console.log(data);
         });
         socket.on("matchInfo", data => {
           setState(true);
-          if (Ready)
-            socket.emit("ready", "");
+          console.log("State",State);
         });
         socket.on("allReady",() => {
-          navigate("/game");
-        })
+          socket.emit('amiHost', "", (response) =>{
+            console.log(response)
+            if (response === 1)
+            {
+              gameset.ball = ball;
+              gameset.board_x = 1.6 * board_x;
+              gameset.board_y = 1.6 * board_y;
+              gameset.obs = obstacle;
+              gameset.pad = pad;
+              gameset.ball.r *= 1.6;
+              gameset.ball.v *= 1.6;
+              for (let i = 0; i < gameset.obs.length; i++)
+              {
+                gameset.obs[i].height *= 1.6;
+                gameset.obs[i].width *= 1.6;
+                gameset.obs[i].x *= 1.6;
+                gameset.obs[i].y *= 1.6;
+              }
+              for (let i = 0; i < 2; i++)
+              {
+                gameset.pad[i].x *= 1.6;
+                gameset.pad[i].y *= 1.6;
+                gameset.pad[i].height *= 1.6;
+                gameset.pad[i].width *= 1.6;
+              }
+              socket.emit('gameSetting', gameset);
+
+            }
+            navigate("/game");
+          });
+        });
         socket.emit("match", "");
       };
   }, [socket]);
   useEffect(() => {
-      console.log(Ready);
+      console.log(State,Ready);
       if (Ready && State)
         socket.emit("ready", Ready);
       else if (!Ready && State)
         socket.emit("unReady", Ready);
-  }, [Ready]);
+  }, [Ready, State]);
   return (
     <div className="game-waiting-container">
       <div className="player">
@@ -282,7 +331,7 @@ export default function GameWaiting() {
       </div>
       <div className="game-setting">
         <div className="mini-map" ref={gameRef}>
-          <canvas id="canvas" ref={canvasRef}></canvas>
+          <canvas id="canvas" ref={canvasRef}/>
           <div className="pad1" ref={padRef1}></div>
           <div className="pad2" ref={padRef2}></div>
           <div className="obstacle" ref={obsRef}>

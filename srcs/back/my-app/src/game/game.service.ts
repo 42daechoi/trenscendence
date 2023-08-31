@@ -77,8 +77,9 @@ export class GameService {
 		gameInfo.gameService = this;
 		client1.join(gameInfo.gameID);
 		client2.join(gameInfo.gameID);
+		nsp.to(user1.socketId).emit('client', 0);
+		nsp.to(user2.socketId).emit('client', 1);
 		nsp.to(gameInfo.gameID).emit('matchInfo', {gameId: gameInfo.gameID, host : user1, guest: user2});
-
 		/* add that game info to the gameSessions */
 		this.gameSessions.set(gameInfo.gameID, gameInfo);
 		this.logger.log("created game session, size : " + this.gameSessions.size);
@@ -244,6 +245,16 @@ export class GameService {
 	//#############################################################
 	// ##########           AFTER MATCH UP            #############
 	//#############################################################
+
+	async amIhost(client: Socket){
+		const cur_game_id = await this.getCurGameRoomId(client);
+		if (cur_game_id === null)
+			return (-1);
+		if (client.id === cur_game_id)
+		return (0);
+		return (1);
+	}
+
 	async echoRoom(client: Socket, server: Server, body: any){
 		const cur_game_id = await this.getCurGameRoomId(client);
 		server.to(cur_game_id).emit("setupReply", body);
@@ -274,11 +285,6 @@ export class GameService {
 			this.logger.log("game is good to go!");
 			cur_game.gameStatus = GameStatus.AllReady;
 			nsp.to(cur_game_id).emit("allReady");
-			const to_host : Player1 = cur_game.host;
-			const to_guest : Player2 = cur_game.guest;
-			nsp.to(to_host.socketID).emit("client", 0);
-			nsp.to(to_guest.socketID).emit("client", 1);
-			nsp.to(cur_game_id).emit("gameset");
 		}
 	}
 
@@ -299,7 +305,7 @@ export class GameService {
 		cur_player.playerStatus = PlayerStatus.Waiting;
 	}
 
-	async gameStart(client: Socket, nsp: Namespace, game_info : any){
+	async gameSetting(client: Socket, nsp: Namespace, game_info : any){
 		const cur_game_id = await this.getCurGameRoomId(client);
 		const cur_game = this.gameSessions.get(cur_game_id);
 		const host : Player2 = cur_game.host;
@@ -335,18 +341,23 @@ export class GameService {
 			cur_game.obstacles.push(new Obstacle(0,0,0,0));
 			cur_game.obstacles[i].isEqual(game_info.obs[i]);
 		}
-
+ 
 
 		//update ball direction.
 		updatedirection(cur_game.ball);
-
+		console.log("setting");
 		//draw game elements by 20ms
+		nsp.to(cur_game_id).emit('gameSetting', game_info);
+	}
+	async gameStart(client: Socket, nsp: Namespace){
+		console.log("start");
+		const cur_game_id = await this.getCurGameRoomId(client);
+		const cur_game = this.gameSessions.get(cur_game_id);
 		cur_game.intervalId = setInterval(() => {
 			cur_game.pong(nsp);
 			nsp.to(cur_game_id).emit('draw', cur_game.ball);
 		}, 20);
 	}
-
 
 	
 	//#############################################################
@@ -424,6 +435,7 @@ export class GameService {
 	async destroySession(client: Socket){
 		//if in queue, pop out queue
 		await this.popQueue(client);
+
 
 		//if in game, destroy game
 		await this.destroyGame(client);

@@ -70,7 +70,7 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
 	  const clientSocket = this.nsp.sockets.get(id);
 	  this.gameService.destroySession(clientSocket);
     });
-
+	
     this.nsp.adapter.on('delete-room', (roomName, id) => {
       this.logger.log(`"Room:${roomName}"is deleted.`);
 //	  const clientSocket = this.nsp.sockets.get(id);
@@ -134,6 +134,19 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
 		this.logger.log("userId : " + userId);
 		return (userId);
 	}
+
+
+	@SubscribeMessage('amiHost')
+	async idnetifyHost(
+		@ConnectedSocket() socket: Socket,
+		@CurrentUserWs() userId : string) {
+		this.logger.log("finding socket id : " + socket.id);
+		this.logger.log("userId : " + userId);
+		const amihost = await this.gameService.amIhost(socket);
+		return (amihost);
+	}
+
+	
 
 	@SubscribeMessage('gameRoomCreate')
 	async gameRoomCreate(
@@ -230,15 +243,19 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
 		return { socketId: socket.id, userId: user.id };
 	}
 
-	@SubscribeMessage('gameStart')
-	async gameStart(
+	@SubscribeMessage('gameSetting')
+	async gameSetting(
 		@ConnectedSocket() socket: Socket,
 		@MessageBody()
 		game_info : any
 	) {
-		await this.gameService.gameStart(socket, this.nsp, game_info);
+		await this.gameService.gameSetting(socket, this.nsp, game_info);
 	}
-
+	@SubscribeMessage('gameStart')
+	async gameStart(
+		@ConnectedSocket() socket: Socket){
+			await this.gameService.gameStart(socket, this.nsp);
+		}
 
 	//#############################################################
 	// ##########          AFTER GAME START           #############
