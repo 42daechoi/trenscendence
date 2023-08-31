@@ -79,7 +79,7 @@ import { ChatService } from './chat.service';
     //**********************************************************************//
     //**************************** connection ******************************//
     //**********************************************************************//
-    async handleConnection(socket: Socket) {
+    handleConnection(socket: Socket) {
       //connection은 그냥 체크.
       console.log('----------------------------------------');
       console.log('----------------CONNECTION--------------');  
