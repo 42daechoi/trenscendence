@@ -19,9 +19,6 @@ import { WebSocketGateway,
 import { UsersService } from 'src/users/users.service';
 import { Inject } from '@nestjs/common';
 import { User } from 'src/typeorm';
-import { use } from 'passport';
-import { channel } from 'diagnostics_channel';
-import { before } from 'node:test';
 import { ChatService } from './chat.service';
 
   @WebSocketGateway({
@@ -37,8 +34,8 @@ import { ChatService } from './chat.service';
     @WebSocketServer() server: Server;
     private users: userDTO[] = [];
     private channels: channelDTO[] = [];
-    //public channelnames: string[] = [];
     private connectedSockets: Map<number, Socket> = new Map();
+
 
     sendDataToSocket(socket: Socket, data : any)
     {
@@ -56,6 +53,7 @@ import { ChatService } from './chat.service';
         });
       }, 2000);
     }
+
 
     //**********************************************************************//
     //****************************** init **********************************//
@@ -780,11 +778,6 @@ import { ChatService } from './chat.service';
             if (removeIdx !== -1) {
               beforeChannel.users.splice(removeIdx, 1);
             }
-            // console.log('----------------------------------------');
-            // console.log('---------------------1------------------');  
-            // console.log(beforeChannel);
-            // console.log('----------------------------------------');
-
             //이전 채널에서 유저가 operator였을 경우
             if (beforeChannel.operator.includes(user.id))
             {
@@ -819,11 +812,6 @@ import { ChatService } from './chat.service';
                 user.channelname = beforeChannel.channelname;
               }
             }
-            // console.log('----------------------------------------');
-            // console.log('---------------------2------------------');  
-            // console.log(beforeChannel);
-            // console.log('----------------------------------------');
-
             socket.leave(user.channelname);
         }
         
