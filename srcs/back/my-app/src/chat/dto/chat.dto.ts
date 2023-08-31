@@ -57,3 +57,9 @@ export class userDTO {
     socket: Socket;
     blocklist: Map<number, string>;
 }
+
+//* gameDTO
+export class gameDTO {
+    host: number;
+    target: number;
+}

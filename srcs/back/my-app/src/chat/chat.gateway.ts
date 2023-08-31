@@ -15,6 +15,7 @@ import { userDTO,
     joinDTO, 
     opDTO,
     roomDTO,
+    gameDTO,
     } from './dto/chat.dto';
 import { UsersService } from 'src/users/users.service';
 import { Inject } from '@nestjs/common';
@@ -838,7 +839,7 @@ import { ChatService } from './chat.service';
     //********************* mute list update  *****************************//
     //*********************************************************************//
     @SubscribeMessage('mutelistupdate')
-    async handlemutelist(@MessageBody() id: number, @ConnectedSocket() Socket:Socket) {
+    async handlemutelist(@MessageBody() id: number) {
       console.log('----------------------------------------');
       console.log('---------MUTE LIST UPDATE---------------');
       console.log('----------------------------------------');
@@ -848,5 +849,46 @@ import { ChatService } from './chat.service';
     
       user.blocklist = null;
       user.blocklist = await this.chatService.getUserBlocklist(id);
+    }
+
+    
+    //*********************************************************************//
+    //******************************  game  *******************************//
+    //*********************************************************************//
+    @SubscribeMessage('gameset')
+    async handlegameset(@MessageBody() gamers: gameDTO, @ConnectedSocket() socket:Socket)
+    {
+      console.log('----------------------------------------');
+      console.log('-----------------GAME SET---------------');
+      console.log("hostId : ", gamers.host);
+      console.log("targetId : ", gamers.target);
+      console.log('----------------------------------------');
+
+      let host = this.users.find(u => u.id === gamers.host);
+      let target = this.users.find(u => u.id === gamers.target);
+
+      if (host.channelname !== "$home")
+      {
+        this.handlehome(host.id, host.socket);
+      }
+      if (target.channelname !== "$home")
+      {
+        this.handlehome(target.id, target.socket);
+      }
+
+      this.handlecreate({
+        id: host.id,
+        maxmember: 2,
+        option: "public",
+        password: null
+      }, host.socket);
+
+      const host_user : User = await this.usersService.findUserById(host.id);
+
+      this.handlejoin({
+        id: target.id,
+        channelname: host_user.nickname,
+        password: null
+      }, target.socket);
     }
 }

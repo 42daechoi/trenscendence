@@ -3,7 +3,7 @@ import { UsersService } from 'src/users/users.service';
 import { User } from 'src/typeorm';
 import { userDTO, channelDTO, chatDTO } from './dto/chat.dto';
 import { Socket } from 'socket.io';
-import { MessageBody } from '@nestjs/websockets';
+import { ConnectedSocket, MessageBody } from '@nestjs/websockets';
 
 
 @Injectable()
@@ -21,8 +21,6 @@ export class ChatService {
         
         return block_list;
     }
-
-    
 
     
 
