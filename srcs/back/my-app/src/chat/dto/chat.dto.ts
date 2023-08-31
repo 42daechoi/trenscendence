@@ -40,7 +40,7 @@ export class opDTO {
 //* 채널 객체
 export class channelDTO {
     channelname: string;
-    host?: number | null; //home에 경우 host 없음.
+    host?: number | null; //home의 경우 host 없음.
     operator: number[];
     users: number[];
     member: number;

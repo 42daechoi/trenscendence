@@ -32,9 +32,6 @@ import { ChatService } from './chat.service';
       @Inject(UsersService) private readonly usersService,
       @Inject(ChatService) private readonly chatService,
     ){}
-    @WebSocketServer() server: Server;
-    private users: userDTO[] = [];
-    private channels: channelDTO[] = [];
     private connectedSockets: Map<number, Socket> = new Map();
 
 
@@ -46,10 +43,10 @@ import { ChatService } from './chat.service';
     startSendingAllInfo() {
       setInterval(() => {
         this.connectedSockets.forEach(socket => {
-          const user = this.users.find(u => u.socketid === socket.id );
+          const user = this.chatService.findUserBySocketId(socket.id);
           if (user)
           {
-            this.sendDataToSocket(socket, this.channels);
+            this.sendDataToSocket(socket, this.chatService.getChannels());
           }
         });
       }, 2000);
@@ -74,7 +71,7 @@ import { ChatService } from './chat.service';
           option: "public",
           password: null,
       }
-      this.channels.push(channel);
+      this.chatService.getChannels().push(channel);
       this.startSendingAllInfo();
     }
 
@@ -101,18 +98,18 @@ import { ChatService } from './chat.service';
       console.log('----------------------------------------');
 
 
-      let user = this.users.find(u => u.socketid === socket.id);
+      let user = this.chatService.findUserBySocketId(socket.id);
       if (user) {
         //2초마다 보내는 socket에서 해제
         this.connectedSockets.delete(user.id);
 
         //users에서 지우기.
-        const userIndex = this.users.indexOf(user);
-        this.users.splice(userIndex, 1);
+        const userIndex = this.chatService.getUsers().indexOf(user);
+        this.chatService.getUsers().splice(userIndex, 1);
 
         if (user.channelname !== '$home')
         {
-          let channel = this.channels.find(c => c.channelname === user.channelname);
+          let channel = this.chatService.findChannelByChannelname(user.channelname);
           if (channel) {
             channel.member--;
             if (channel.member === 0)
@@ -140,7 +137,7 @@ import { ChatService } from './chat.service';
               {
                 //방장 위임.
                 channel.host = channel.users[0];
-                let newhost = this.users.find(u => u.id === channel.users[0])
+                let newhost = this.chatService.findUserById(channel.host);
                 const newhost_user : User = this.usersService.findUserById(newhost.id);
                 channel.channelname = newhost_user.nickname; // 방 이름 변경.
               }
@@ -150,7 +147,7 @@ import { ChatService } from './chat.service';
         }
         else
         {
-            let home = this.channels[0];
+            let home = this.chatService.getChannels()[0];
             home.member--;
             const removeIdx = home.users.indexOf(user.id);
             if (removeIdx !== -1) {
@@ -190,9 +187,9 @@ import { ChatService } from './chat.service';
         blocklist: block_list
       };
 
-      this.users.push(user);
-      this.channels[0].users.push(user.id);
-      this.channels[0].member++;
+      this.chatService.getUsers().push(user);
+      this.chatService.getChannels()[0].users.push(user.id);
+      this.chatService.getChannels()[0].member++;
       socket.join(user.channelname);
       socket.broadcast.to(user.channelname).emit('update', true); //$home 채널 입장 시 정보 업데이트
 
@@ -213,7 +210,7 @@ import { ChatService } from './chat.service';
       console.log('UserId: ', chatobj.id, ' Target: ', chatobj.target, ' Flag: ', chatobj.flag, ' Msg: ', chatobj.msg);
       console.log('----------------------------------------');
 
-      const user = this.users.find(u => u.id === chatobj.id);
+      const user = this.chatService.getUsers().find(u => u.id === chatobj.id);
       if (!user) return;
       if (chatobj.flag == "broad")
       {
@@ -222,12 +219,12 @@ import { ChatService } from './chat.service';
         console.log("             broad chat part            ");
         console.log('----------------------------------------');
         
-        const channel = this.channels.find(c => c.channelname === user.channelname);
+        const channel = this.chatService.findChannelByChannelname(user.channelname);
         for (const tmp_userid of channel.users)
         {
           if (tmp_userid === user.id) continue;
           
-          const userchecking = this.users.find(u => u.id === tmp_userid);
+          const userchecking = this.chatService.findUserById(tmp_userid);
           if (userchecking.blocklist.get(user.id) === undefined)
           {
             socket.to(userchecking.socketid).emit('chat', chatobj);
@@ -241,7 +238,7 @@ import { ChatService } from './chat.service';
         console.log("             dm chat part               ");
         console.log('----------------------------------------');
 
-        const target = this.users.find(u => u.id === chatobj.target);
+        const target = this.chatService.findUserById(chatobj.target);
         if (!target) return;
 
         console.log('----------------------------------------');
@@ -280,9 +277,9 @@ import { ChatService } from './chat.service';
       console.log('----------------------------------------');
 
       //이후 유저 어디서 체크 & 유저가 있는 위치 확인 후 리플라이 전달.
-      let user = this.users.find(u => u.id === userid);
+      let user = this.chatService.findUserById(userid);
       if (!user) return;      
-      let channel = this.channels.find(c => c.channelname === user.channelname);
+      let channel = this.chatService.findChannelByChannelname(user.channelname);
       console.log('----------------------------------------');
       console.log('-----------------WHERE------------------');     
       console.log(JSON.stringify(channel, null, 2));
@@ -302,7 +299,7 @@ import { ChatService } from './chat.service';
       console.log('----------------------------------------');
 
       // 유저 확인
-      let user = this.users.find(u => u.id === room.id)
+      let user = this.chatService.findUserById(room.id);
       if (!user) 
       {
         console.log('----------------------------------------');
@@ -311,7 +308,7 @@ import { ChatService } from './chat.service';
         return;
       }
       // home이 아닐 경우 생성 불가.(왜냐면 방 이름이 곧 닉네임이기에)
-      let checkChannel = this.channels.find(c => c.channelname === user.channelname);
+      let checkChannel = this.chatService.findChannelByChannelname(user.channelname);
       if (checkChannel.channelname !== '$home')
       {
         console.log('----------------------------------------');
@@ -338,11 +335,11 @@ import { ChatService } from './chat.service';
       {
         newChannel.password = null;
       }
-      this.channels.push(newChannel);
+      this.chatService.getChannels().push(newChannel);
       //this.channelnames.push(newChannel.channelname);
 
       // 이전 채널 객체 정보 업데이트
-      let home = this.channels.find(c => c.channelname === '$home');
+      let home = this.chatService.findChannelByChannelname('$home');
       home.member--;
       const removeIdx = home.users.indexOf(user.id);
       if (removeIdx !== -1) {
@@ -373,9 +370,9 @@ import { ChatService } from './chat.service';
       console.log(room);
       console.log('----------------------------------------');
       
-      let user = this.users.find(u => u.id === room.id)
+      let user = this.chatService.getUsers().find(u => u.id === room.id)
       if (!user) return;
-      let modifyingchannel = this.channels.find(c => c.channelname === user.channelname);
+      let modifyingchannel = this.chatService.findChannelByChannelname(user.channelname);
       if (!modifyingchannel) return;
 
       //예외처리, 채널이 홈이거나 유저가 호스트나 오퍼레이터가 아닐 경우 
@@ -421,11 +418,11 @@ import { ChatService } from './chat.service';
       console.log('----------------------------------------');
       
       // 유저 확인
-      let user = this.users.find(u => u.id === joinobj.id)
+      let user = this.chatService.findUserById(joinobj.id);
       if (!user) return;
 
       // 해당 채널이 없거나, 이미 해당 채널일 경우 못들어감.
-      const channel = this.channels.find(c => c.channelname === joinobj.channelname);
+      const channel = this.chatService.findChannelByChannelname(joinobj.channelname);
       if (!channel)
       {
         console.log('----------------------------------------');
@@ -462,7 +459,7 @@ import { ChatService } from './chat.service';
       if (channel.maxmember - channel.member >= 1) {
 
         // 이전 채널 정보 업데이트
-        let beforeChannel = this.channels.find(c => c.channelname === user.channelname);
+        let beforeChannel = this.chatService.findChannelByChannelname(user.channelname);
         if (beforeChannel) {
           beforeChannel.member--;
 
@@ -479,9 +476,9 @@ import { ChatService } from './chat.service';
             if (beforeChannel.channelname !== '$home')
             {
               //channels에서 삭제
-              const removeChannelIdx = this.channels.findIndex(c => c.channelname === beforeChannel.channelname);
+              const removeChannelIdx = this.chatService.getChannels().findIndex(c => c.channelname === beforeChannel.channelname);
               if (removeChannelIdx !== -1) {
-                this.channels.splice(removeChannelIdx, 1);
+                this.chatService.getChannels().splice(removeChannelIdx, 1);
               }
             }
             
@@ -519,25 +516,25 @@ import { ChatService } from './chat.service';
             {
 
               //채널 목록에서 삭제
-              const removeChannelIdx = this.channels.findIndex(c => c.channelname === beforeChannel.channelname);
+              const removeChannelIdx = this.chatService.getChannels().findIndex(c => c.channelname === beforeChannel.channelname);
               if (removeChannelIdx !== -1) {
-                this.channels.splice(removeChannelIdx, 1);
+                this.chatService.getChannels().splice(removeChannelIdx, 1);
               }
 
 
               beforeChannel.host = beforeChannel.users[0];
-              let newhost = this.users.find(u => u.id === beforeChannel.users[0])
+              let newhost = this.chatService.findUserById(beforeChannel.users[0]);
               const newhost_user : User = await this.usersService.findUserById(newhost.id);
               beforeChannel.channelname = newhost_user.nickname;
               socket.broadcast.to(beforeChannel.channelname).emit('update', false);   //퇴장 메시지
               
               //채널 목록에 다시 추가
-              this.channels.push(beforeChannel);
+              this.chatService.getChannels().push(beforeChannel);
               
               //방에 남은 유저들 전부에게 user.channelname 바꿔줘야함
               for(const checkid of beforeChannel.users)
               {
-                let user = this.users.find(u => u.id === checkid);
+                let user = this.chatService.findUserById(checkid);
                 user.channelname = beforeChannel.channelname;
               }
             }
@@ -565,7 +562,7 @@ import { ChatService } from './chat.service';
       //전체 채널 객체 뽑아서 확인하기
       console.log('----------------------------------------');
       console.log('---------------ALL CHANNELS-------------');
-      console.log(this.channels); //  마지막에 채널들 다 잘 수정되었는지 확인
+      console.log(this.chatService.getChannels()); //  마지막에 채널들 다 잘 수정되었는지 확인
       console.log('----------------------------------------');
     }
 
@@ -580,12 +577,12 @@ import { ChatService } from './chat.service';
       console.log('userId: ', op.id, ' targetId: ', op.target);
       console.log('----------------------------------------');
       
-      let user = this.users.find(u => u.id === op.id)
+      let user = this.chatService.findUserById(op.id);
       if (!user) return;
 
       // 호스트와 op 인지 체크.
       // 호스트 & operator가 op 권한 줄 수 있도록.
-      let channel = this.channels.find(c => c.channelname === user.channelname);
+      let channel = this.chatService.findChannelByChannelname(user.channelname);
       if (!channel) return;
       if (channel.host !== user.id)
       {
@@ -639,7 +636,7 @@ import { ChatService } from './chat.service';
       console.log('--------------ALLCHANNEL----------------');  
       console.log('----------------------------------------');
       
-      socket.emit('allchannel', this.channels);
+      socket.emit('allchannel', this.chatService.getChannels());
     }
 
 
@@ -654,10 +651,10 @@ import { ChatService } from './chat.service';
       console.log('----------------------------------------');
 
       
-      let user = this.users.find(u => u.id === kickobj.id);
+      let user = this.chatService.findUserById(kickobj.id);
       if (!user) return;
 
-      let channel = this.channels.find(c => c.channelname === user.channelname);
+      let channel = this.chatService.findChannelByChannelname(user.channelname);
       if (!channel) return;
 
       // 유저가 호스트 혹은 오퍼레이터가 아닐 경우
@@ -674,7 +671,8 @@ import { ChatService } from './chat.service';
       }
              
       // 타겟이 존재하는지, 추방 대상이 현재 채널에 존재하는지.
-      let target = this.users.find(u => u.id === kickobj.target);
+      let target = this.chatService.findUserById(kickobj.target);
+      
       if (!target) return;
       if (user.channelname !== target.channelname)
       {
@@ -723,7 +721,7 @@ import { ChatService } from './chat.service';
         target.channelname = '$home'; // 추방된 사용자는 home 채널로 이동
         target.socket.join(target.channelname);
 
-        let home = this.channels.find(c => c.channelname === target.channelname);
+        let home = this.chatService.findChannelByChannelname(target.channelname);
         home.member++;
         home.users.push(target.id);
         socket.emit("kick", {id: kickobj.id, flag: true});
@@ -746,12 +744,12 @@ import { ChatService } from './chat.service';
       console.log('----------------------------------------');
       
       // 유저 확인
-      let user = this.users.find(u => u.id === id)
+      let user = this.chatService.findUserById(id);
       if (!user) return;
 
 
       // 이전 채널 정보 업데이트
-      let beforeChannel = this.channels.find(c => c.channelname === user.channelname);
+      let beforeChannel = this.chatService.findChannelByChannelname(user.channelname);
       
       if (beforeChannel.channelname === '$home')
       {
@@ -764,11 +762,11 @@ import { ChatService } from './chat.service';
       beforeChannel.member--;
       if (beforeChannel.member === 0)
       {
-        const removeIdx = this.channels.indexOf(beforeChannel);
+        const removeIdx = this.chatService.getChannels().indexOf(beforeChannel);
         if (removeIdx !== -1) {
-          this.channels.splice(removeIdx, 1);
+          this.chatService.getChannels().splice(removeIdx, 1);
         }
-        console.log(this.channels);
+        console.log(this.chatService.getChannels());
         socket.leave(user.channelname);
         beforeChannel = null;
       }
@@ -791,32 +789,32 @@ import { ChatService } from './chat.service';
             {
 
               //채널 목록에서 삭제
-              const removeChannelIdx = this.channels.findIndex(c => c.channelname === beforeChannel.channelname);
+              const removeChannelIdx = this.chatService.getChannels().findIndex(c => c.channelname === beforeChannel.channelname);
               if (removeChannelIdx !== -1) {
-                this.channels.splice(removeChannelIdx, 1);
+                this.chatService.getChannels().splice(removeChannelIdx, 1);
               }
 
 
               beforeChannel.host = beforeChannel.users[0];
-              let newhost = this.users.find(u => u.id === beforeChannel.users[0])
+              let newhost = this.chatService.findUserById(beforeChannel.users[0]);
               const newhost_user : User = await this.usersService.findUserById(newhost.id);
               beforeChannel.channelname = newhost_user.nickname;
               socket.broadcast.to(beforeChannel.channelname).emit('update', false);   //퇴장 메시지
               
               //채널 목록에 다시 추가
-              this.channels.push(beforeChannel);
+              this.chatService.getChannels().push(beforeChannel);
               
               //방에 남은 유저들 전부에게 user.channelname 바꿔줘야함
               for(const checkid of beforeChannel.users)
               {
-                let user = this.users.find(u => u.id === checkid);
+                let user = this.chatService.findUserById(checkid);                
                 user.channelname = beforeChannel.channelname;
               }
             }
             socket.leave(user.channelname);
         }
         
-        let channel = this.channels.find(c => c.channelname === '$home');
+        let channel = this.chatService.findChannelByChannelname('$home');
 
         user.channelname = channel.channelname;
         socket.join(user.channelname);
@@ -829,7 +827,7 @@ import { ChatService } from './chat.service';
 
         console.log('----------------------------------------');
         console.log('---------------ALL CHANNELS-------------');
-        console.log(this.channels); //  마지막에 채널들 다 잘 수정되었는지 확인
+        console.log(this.chatService.getChannels()); //  마지막에 채널들 다 잘 수정되었는지 확인
         console.log('----------------------------------------');
 
    }
@@ -844,7 +842,7 @@ import { ChatService } from './chat.service';
       console.log('---------MUTE LIST UPDATE---------------');
       console.log('----------------------------------------');
 
-      let user = this.users.find(u => u.id === id);
+      let user = this.chatService.findUserById(id);      
       if (!user) return;
     
       user.blocklist = null;
@@ -855,7 +853,7 @@ import { ChatService } from './chat.service';
     //*********************************************************************//
     //******************************  game  *******************************//
     //*********************************************************************//
-    @SubscribeMessage('gameset')
+    @SubscribeMessage('gamechatroom')
     async handlegameset(@MessageBody() gamers: gameDTO, @ConnectedSocket() socket:Socket)
     {
       console.log('----------------------------------------');
@@ -864,9 +862,9 @@ import { ChatService } from './chat.service';
       console.log("targetId : ", gamers.target);
       console.log('----------------------------------------');
 
-      let host = this.users.find(u => u.id === gamers.host);
-      let target = this.users.find(u => u.id === gamers.target);
-
+      let host = this.chatService.findUserById(gamers.host);
+      let target = this.chatService.findUserById(gamers.target);
+      
       if (host.channelname !== "$home")
       {
         this.handlehome(host.id, host.socket);
