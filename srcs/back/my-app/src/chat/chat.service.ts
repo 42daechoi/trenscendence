@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { UsersService } from 'src/users/users.service';
 import { User } from 'src/typeorm';
-import { userDTO, channelDTO, chatDTO } from './dto/chat.dto';
+import { userDTO, channelDTO } from './dto/chat.dto';
 import { Socket } from 'socket.io';
 import { ConnectedSocket, MessageBody } from '@nestjs/websockets';
 

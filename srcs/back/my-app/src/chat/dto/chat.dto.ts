@@ -1,5 +1,6 @@
 import { Socket } from "socket.io";
 
+
 //* chat-req & rep obj
 export class chatDTO {
     id: number;
@@ -38,7 +39,7 @@ export class opDTO {
 
 //* where-rep obj
 //* 채널 객체
-export class channelDTO {
+export interface channelDTO {
     channelname: string;
     host?: number | null; //home의 경우 host 없음.
     operator: number[];
@@ -50,7 +51,7 @@ export class channelDTO {
 }
 
 //* userDTO (서버에서 관리)
-export class userDTO {
+export interface userDTO {
     socketid: string;
     id: number;
     channelname: string;
