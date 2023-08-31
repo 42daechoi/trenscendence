@@ -22,6 +22,7 @@ import { User } from 'src/typeorm';
 import { use } from 'passport';
 import { channel } from 'diagnostics_channel';
 import { before } from 'node:test';
+import { ChatService } from './chat.service';
 
   @WebSocketGateway({
     cors: {
@@ -31,6 +32,7 @@ import { before } from 'node:test';
   export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect, OnGatewayInit {
     constructor(
       @Inject(UsersService) private readonly usersService,
+      @Inject(ChatService) private readonly chatService,
     ){}
     @WebSocketServer() server: Server;
     private users: userDTO[] = [];
@@ -179,12 +181,7 @@ import { before } from 'node:test';
 
       this.connectedSockets.set(id, socket);
 
-      const block_users : User[] = await this.usersService.getUserBlocks(id);
-      let   block_list : Map<number, string> = new Map();
-
-      for (const blockuser of block_users) {
-        block_list.set(blockuser.id, blockuser.nickname);
-      }
+      let block_list = this.chatService.getUserBlocklist(id);
 
       const user: userDTO = {
         socketid: socket.id,
@@ -860,15 +857,9 @@ import { before } from 'node:test';
 
       let user = this.users.find(u => u.id === id);
       if (!user) return;
-      const block_users : User[] = await this.usersService.getUserBlocks(id);
-      let   block_list : Map<number, string> = new Map();
-
-      for (const blockuser of block_users) {
-        block_list.set(blockuser.id, blockuser.nickname);
-      }
-
+    
       user.blocklist = null;
-      user.blocklist = block_list;
+      user.blocklist = await this.chatService.getUserBlocklist(id);
     }
 }
 
