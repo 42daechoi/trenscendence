@@ -31,7 +31,7 @@ export default function ChannelsList(props) {
   useEffect(() => {
     setChannelList([]);
 
-    for (let i = 0; i < props.channelList.length; i++) {
+    for (let i = 1; i < props.channelList.length; i++) {
       if (props.channelList[i].option != "private") {
         addChannelList(props.channelList[i]);
       }

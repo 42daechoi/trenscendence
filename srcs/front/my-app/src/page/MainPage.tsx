@@ -6,7 +6,7 @@ import GameWaiting from "../component/GameWaiting";
 import LeaderBoard from "../component/LeaderBoard";
 import FriendsList from "../component/FriendsList";
 import ChannelsList from "../component/ChannelsList";
-import Chat from "../component/Chat";
+import MemoChat from "../component/Chat";
 import io from "socket.io-client";
 import axios from "axios";
 import { useSocket } from "../component/SocketContext";
@@ -25,8 +25,10 @@ export default function MainPage() {
           for (let i = 0; i < data.length; i++) {
             for (let j = 0; j < data[i].users.length; j++) {
               if (data[i].users[j] === response.data.id) {
-                setChannelList(data);
-                setMemberList(data[i].users);
+                if (JSON.stringify(data) === JSON.stringify(channelList))
+                  setChannelList(data);
+                if (JSON.stringify(data[i].users) != JSON.stringify(memberList))
+                  setMemberList(data[i].users);
                 return;
               }
             }
@@ -104,7 +106,7 @@ export default function MainPage() {
             </button>
           </section>
           <section className="chat-container">
-            <Chat memberList={memberList} />
+            <MemoChat memberList={memberList} />
           </section>
           <section className="swap-container">{renderPage()}</section>
           <label
