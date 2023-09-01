@@ -19,6 +19,8 @@ export default function MainPage() {
   const socket = useSocket();
 
   useEffect(() => {
+    if (!socket)
+      return ;
     socket.on("allinfo", (data) => {
       getWhoami()
         .then((response) => {
@@ -41,7 +43,7 @@ export default function MainPage() {
     return () => {
       socket.off("allinfo");
     };
-  }, []);
+  }, [socket]);
 
   const renderPage = () => {
     switch (curPage) {

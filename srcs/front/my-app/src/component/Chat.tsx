@@ -48,7 +48,6 @@ function Chat(props) {
   const [users, setUsers] = useState<IUsers[]>([]);
   const [messages, setMessages] = useState<IMessage[]>(initTmpMessages);
   const socket = useSocket();
-  console.log(socket);
   const inputRef = useRef<HTMLInputElement>(null);
   // const [users, setUsers] = useState<IUsers[]>([]);
   // const [messages, setMessages] = useState<IMessage[]>([]);
@@ -75,7 +74,7 @@ function Chat(props) {
               profile: response.data.avatar,
               id: response.data.id,
               isChecked: false,
-            },
+            },  
             receiveData.msg,
             "chat chat-start"
           );
@@ -84,8 +83,9 @@ function Chat(props) {
   };
 
   useEffect(() => {
+    if (!socket)
+      return ;
     init();
-    console.log(socket);
     socket.on("op", (data) => {
       if (data.flag) {
         setMessages([]);
@@ -134,7 +134,7 @@ function Chat(props) {
       socket.off("kick");
       socket.off("join");
     };
-  }, []);
+  }, [socket]);
 
   const isSameList = () => {
     if (props.memberList.length != users.length) return false;
