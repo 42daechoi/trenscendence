@@ -3,7 +3,7 @@ import { useSocket } from "../component/SocketContext";
 import { whoami } from "../utils/whoami";
 import { where } from "../utils/where";
 
-export default   function SettingChat() {
+export default   function SettingChat(props) {
     const socket = useSocket();
     const [isChecked, setChecked] = useState("public");
     const [selectedValue, setSelectedValue] = useState(10);
@@ -14,6 +14,7 @@ export default   function SettingChat() {
     };
 
     const modifyChatSock = async () => {
+      props.closeModal();
       try {
         const data = await whoami();
         socket.emit("modify", {

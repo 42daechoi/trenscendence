@@ -86,6 +86,7 @@ function Chat(props) {
     if (!socket)
       return ;
     init();
+    console.log(socket);
     socket.on("op", (data) => {
       if (data.flag) {
         setMessages([]);
@@ -246,8 +247,8 @@ function Chat(props) {
   const chatEnter = async (chat: string) => {
     try {
       const data = await whoami();
-      if (chat.substring(0, 6) === "/block ") {
-        const target_name: string = chat.substring(6, chat.length);
+      if (chat.substring(0, 7) === "/block ") {
+        const target_name: string = chat.substring(7, chat.length);
         socket.emit('mutelistupdate', data.id);
         axios
           .get("http://localhost:3001/users/nickname/" + target_name, {
@@ -269,9 +270,9 @@ function Chat(props) {
           });
         chat = "";
         return;
-      } else if (chat.substring(0, 8) === "/unblock ") {
+      } else if (chat.substring(0, 9) === "/unblock ") {
         socket.emit('mutelistupdate', data.id);
-        const target_name: string = chat.substring(8, chat.length);
+        const target_name: string = chat.substring(9, chat.length);
         axios
           .get("http://localhost:3001/users/nickname/" + target_name, {
             withCredentials: true,
@@ -292,7 +293,7 @@ function Chat(props) {
           });
         chat = "";
         return;
-      } else if (chat.substring(0, 9) === "/blocklist") {
+      } else if (chat.substring(0, 10) === "/blocklist") {
         axios
           .get("http://localhost:3001/users/blocks/list", {
             withCredentials: true,
@@ -316,7 +317,7 @@ function Chat(props) {
                 isChecked: false,
               },
               msg,
-              "chat chat-end"
+              "chat chat-start"
             );
           })
           .catch((error) => {
@@ -583,9 +584,9 @@ function Chat(props) {
               closeModal={closeModal}
               ConfigureModal={() =>
                 chatConfigure === "setting" ? (
-                  <SettingChat />
+                  <SettingChat closeModal={closeModal}/>
                 ) : (
-                  <CreateChat entryChannel={initMessages} />
+                  <CreateChat entryChannel={initMessages} closeModal={closeModal}/>
                 )
               }
             />

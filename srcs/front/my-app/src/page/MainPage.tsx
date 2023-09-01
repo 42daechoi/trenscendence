@@ -27,7 +27,7 @@ export default function MainPage() {
           for (let i = 0; i < data.length; i++) {
             for (let j = 0; j < data[i].users.length; j++) {
               if (data[i].users[j] === response.data.id) {
-                if (JSON.stringify(data) === JSON.stringify(channelList))
+                if (JSON.stringify(data) != JSON.stringify(channelList))
                   setChannelList(data);
                 if (JSON.stringify(data[i].users) != JSON.stringify(memberList))
                   setMemberList(data[i].users);

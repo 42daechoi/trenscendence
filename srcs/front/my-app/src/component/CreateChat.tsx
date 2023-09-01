@@ -14,6 +14,7 @@ export default function CreateChat(props) {
     };
 
     const createChatSock = async () => {
+      props.closeModal();
       try {
         const data = await whoami();
         where(socket, data.id)
