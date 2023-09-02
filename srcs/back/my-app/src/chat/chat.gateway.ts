@@ -586,7 +586,7 @@ import { ChatService } from './chat.service';
       if (!channel) return;
       if (channel.host !== user.id)
       {
-        if (!channel.operator.includes(op.target))
+        if (!channel.operator.includes(op.id))
         {
           console.log('----------------------------------------');
           console.log('                 no access              ');
@@ -622,8 +622,9 @@ import { ChatService } from './chat.service';
         return;
       }
 
+      let target = this.chatService.findUserById(op.target);
       channel.operator.push(op.target);
-      socket.emit('op', true);
+      target.socket.emit('op', true);
     }
 
 
@@ -665,7 +666,6 @@ import { ChatService } from './chat.service';
           console.log('----------------------------------------');
           console.log('                 no access              ');
           console.log('----------------------------------------'); 
-          socket.emit("kick", {id: kickobj.id, flag: false});
           return;
         }
       }
@@ -679,7 +679,6 @@ import { ChatService } from './chat.service';
         console.log('----------------------------------------');
         console.log('                 no target              ');
         console.log('----------------------------------------'); 
-        socket.emit("kick", {id: kickobj.id, flag: false});
         return;
       }
 
@@ -689,7 +688,6 @@ import { ChatService } from './chat.service';
         console.log('----------------------------------------');
         console.log('               no kick myself           ');
         console.log('----------------------------------------'); 
-        socket.emit("kick", {id: kickobj.id, flag: false});
         return;
       } 
       
@@ -699,7 +697,6 @@ import { ChatService } from './chat.service';
         console.log('----------------------------------------');
         console.log('              target is host            ');
         console.log('----------------------------------------'); 
-        socket.emit("kick", {id: kickobj.id, flag: false});
         return;
       }
 
@@ -724,7 +721,7 @@ import { ChatService } from './chat.service';
         let home = this.chatService.findChannelByChannelname(target.channelname);
         home.member++;
         home.users.push(target.id);
-        socket.emit("kick", {id: kickobj.id, flag: true});
+        target.socket.emit("kick", true);
 
         socket.broadcast.to(channel.channelname).emit('update', false);   //퇴장 메시지
         socket.broadcast.to('$home').emit('update', true);                //입장 메시지
