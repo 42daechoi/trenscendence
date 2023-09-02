@@ -375,7 +375,7 @@ export class GameService {
 
 		nsp.to(cur_game_id).emit('gameSetting', { pad : cur_game.pad, ball : cur_game.ball, obs : cur_game.obstacles, board_x : cur_game.board_x, board_y: cur_game.board_y});
 		//draw game elements by 20ms
-		let count = 3;
+		let count = 2;
 		cur_game.count_intervalId = setInterval(()=>{
 			nsp.to(cur_game_id).emit('count', count);
 			count--;	
