@@ -65,7 +65,7 @@ export default function MainPage() {
           <section className="btn-container">
             <button
               className="btn btn-outline btn-success"
-              onClick={() => setCurPage("game_waiting")}
+              onClick={() => {curPage !== "game_waiting" &&(setCurPage("game_waiting"))}}
             >
               GAME START
             </button>

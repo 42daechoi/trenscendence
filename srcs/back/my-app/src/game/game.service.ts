@@ -9,10 +9,11 @@ import { User, GamePlayer, Games } from 'src/typeorm';
 import { Server, Socket, Namespace } from 'socket.io';
 import { ConnectedSocket } from '@nestjs/websockets';
 import { Repository } from 'typeorm';
-import  {updatedirection, Game, Player1, Player2, PlayerStatus, PadItem, Ball, Obstacle, Collidable, GameStatus}  from './classes/game.class';
+import  {Game, Player1, Player2, PlayerStatus, PadItem, Ball, Obstacle, Collidable, GameStatus}  from './classes/game.class';
 import { UserStatus } from 'src/typeorm/user.entity';
 import { CreateGamePlayerDto } from './dtos/create-gamePlayer.dto';
 import { Result } from './interfaces/game.interface';
+import { response } from 'express';
 
 
 @Injectable()
@@ -161,10 +162,8 @@ export class GameService {
 	}
 
 	async updateUserStatusInGame(client: Socket){
-		console.log("client",client);
-		console.log("id",client.id);
+
 		const user : User = await this.usersService.findUserBySocketId(client.id);
-		console.log("user", user);
 		if (!user)
 			return ;
 		this.usersService.update(user.id, {status: UserStatus.GAME})
@@ -278,6 +277,7 @@ export class GameService {
 //		client.emit('setupReply', body);
 	}
 
+
 	async playerReady(client: Socket, nsp : Namespace){
 		const cur_game_id = await this.getCurGameRoomId(client);
 		const cur_game  = this.gameSessions.get(cur_game_id);
@@ -327,13 +327,11 @@ export class GameService {
 		cur_game.gameStatus = GameStatus.Playing;
 		guest.playerStatus = PlayerStatus.Playing;
 		host.playerStatus = PlayerStatus.Playing;
-
+		console.log(game_info);
 		//const guestSocket : Socket = await this.socketGetter(guest.socketID); 
 		//const hostSocket : Socket = await this.socketGetter(host.socketID);
 		const guestSocket : Socket = nsp.sockets.get(guest.socketID); 
 		const hostSocket : Socket = nsp.sockets.get(host.socketID);  
-		console.log("guest",guestSocket);
-		console.log("host",hostSocket);
 		//flag as in game
 		await this.updateUserStatusInGame(guestSocket);
 		await this.updateUserStatusInGame(hostSocket);
@@ -342,6 +340,7 @@ export class GameService {
 		//set up game resources
 		cur_game.ball.isEqual(game_info.ball);
 		cur_game.board_x = game_info.board_x;
+
 		cur_game.board_y = game_info.board_y;
 
 		//set up pad resources
@@ -356,11 +355,16 @@ export class GameService {
 			cur_game.obstacles.push(new Obstacle(0,0,0,0));
 			cur_game.obstacles[i].isEqual(game_info.obs[i]);
 		}
- 
 
+		console.log(cur_game.obstacles);
+		console.log(cur_game.ball);
+		console.log(cur_game.pad);
 		//update ball direction.
-		updatedirection(cur_game.ball);
+		cur_game.updatedirection(cur_game.ball);
 		console.log("setting");
+		nsp.to(cur_game_id).emit("goodtogo", "");
+	
+
 		//draw game elements by 20ms
 	}
 
@@ -369,8 +373,13 @@ export class GameService {
 		const cur_game = this.gameSessions.get(cur_game_id);
 
 
-		nsp.to(cur_game_id).emit('gameSetting', { pad : cur_game.pad, ball : cur_game.ball, obs : cur_game.obstacles});
+		nsp.to(cur_game_id).emit('gameSetting', { pad : cur_game.pad, ball : cur_game.ball, obs : cur_game.obstacles, board_x : cur_game.board_x, board_y: cur_game.board_y});
 		//draw game elements by 20ms
+		let count = 3;
+		cur_game.count_intervalId = setInterval(()=>{
+			nsp.to(cur_game_id).emit('count', count);
+			count--;	
+		},1000);
 	}
 
 	async gameStart(client: Socket, nsp: Namespace){
@@ -378,6 +387,7 @@ export class GameService {
 		
 		const cur_game_id = await this.getCurGameRoomId(client);
 		const cur_game = this.gameSessions.get(cur_game_id);
+		clearInterval(cur_game.count_intervalId);
 		cur_game.intervalId = setInterval(() => {
 			cur_game.pong(nsp);
 			nsp.to(cur_game_id).emit('draw', cur_game.ball);
@@ -488,7 +498,7 @@ export class GameService {
 		const cur_game : Game = gameSession;
 		const loserPlayer = cur_game.gameLoser;
 		const winnerPlayer = cur_game.gameWinner;
-		console.log(cur_game);
+
       this.createGame().then(async (game) => {
         const player1Dto: CreateGamePlayerDto = {
           user: await this.userRepository.findOneBy({
@@ -516,7 +526,7 @@ export class GameService {
 		await this.loserUpdate(loserPlayer);
 		await this.winnerUpdate(winnerPlayer);
 
-		//this.gameSessions.delete(cur_game.gameID);
+		this.gameSessions.delete(cur_game.gameID);
 		
 	}
 

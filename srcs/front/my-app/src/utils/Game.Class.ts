@@ -3,20 +3,17 @@ export class htmlItem {
     y :number;
     width :number;
     height :number;
-    len :number;
     constructor(x, y, width, height) {
       this.x = x;
       this.y = y;
       this.width = width;
       this.height = height;
-      this.len = 0;
     }
     isEqual(other) {
       this.x = other.x;
       this.y = other.y;
       this.width = other.width;
       this.height = other.height;
-      this.len = other.len;
     }
 }
 
