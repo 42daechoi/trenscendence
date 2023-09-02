@@ -23,6 +23,7 @@ export default function GameWaiting() {
   const gameset = new game([], 0, 0, new ballItem(0,0,0,0,0,0), []);
   const pad = [];
   const obstacle = [];
+  console.log("asd");
   const ball = new ballItem(0,0,0,0,0,0);
   let board_x;
   let board_y;
@@ -212,7 +213,6 @@ export default function GameWaiting() {
     console.log("a");
     if (client != -1)
     {
-      console.log("b");
       gameset.intervalId = setInterval(()=>{
         pong();
       }, 20);
@@ -220,94 +220,113 @@ export default function GameWaiting() {
   }
   useEffect(() => {
     return () => {
-      socket.off('matching waiting');
-      socket.off('matchInfo');
-      socket.off('allReady');
-      socket.off('client');
-      socket.off('client');
+      if (socket)
+      {
+        socket.off('matching waiting');
+        socket.off('matchInfo');
+        socket.off('allReady');
+        socket.off('client');
+        socket.off('client');
+      }
     }
   },[])
   useEffect(() => {
     init();
-    socket.emit("setUp",{Pad: PadNum, Speed : SpeedNum, Ball : BallNum, Map : MapNum});
-    return () => {
-      clearInterval(gameset.intervalId);
+    if (socket)
+    {
+      socket.on('setupReply', data => {
+        setBallNum(data.Ball);
+        setPadNum(data.Pad);
+        setSpeedNum(data.Speed);
+        setMapNum(data.Map);
+      });
+      socket.on('client', data => {
+        setclient(data);
+        console.log(data);
+      });
+      socket.on("matching waiting", data => {
+        console.log(data);
+      });
+      socket.on("matchInfo", data => {
+        setState(true);
+        console.log("State",State);
+      });
+      socket.on("goodtogo", ()=>{
+        navigate("/game");
+      });
+      socket.on("allReady",() => {
+        socket.emit('amiHost', "", (response) =>{
+          console.log(response)
+          if (response === 0)
+          {
+            gameset.board_x = board_x * 2;
+            gameset.board_y = board_y * 2;
+
+            gameset.ball.isEqual(ball);
+            console.log(obstacle);
+            for (let i = 0; i < obstacle.length; i++)
+            {
+              console.log(obstacle[i]);
+              gameset.obs.push(new htmlItem(obstacle[i].x,
+                obstacle[i].y,
+                obstacle[i].width,
+                obstacle[i].height));
+                
+            }
+            for (let i = 0; i < pad.length; i++)
+            {
+              gameset.pad.push(new padItem(pad[i].x,
+                pad[i].y,
+                pad[i].width,
+                pad[i].height,
+                pad[i].color,
+                pad[i].radi)
+              );
+            }
+            gameset.ball.r *= 1.6;
+            for (let i = 0; i < gameset.obs.length; i++)
+            {
+              gameset.obs[i].height *= 2;
+              gameset.obs[i].width *= 2;
+              gameset.obs[i].x *= 2;
+              gameset.obs[i].y *= 2;
+            }
+            for (let i = 0; i < 2; i++)
+            {
+              gameset.pad[i].x *= 2;
+              gameset.pad[i].y *= 2;
+              gameset.pad[i].height *= 2;
+              gameset.pad[i].width *= 2;
+            }
+            socket.emit('gameSetting', gameset);
+
+          }
+
+        });
+      });
+      socket.emit("setUp",{Pad: PadNum, Speed : SpeedNum, Ball : BallNum, Map : MapNum});
     }
-  },[PadNum, SpeedNum, BallNum, MapNum, client]);
-
-
+    return () => {
+      if (socket)
+      {
+        socket.off('setupReply');
+        socket.off('client');
+        socket.off("matching waiting");
+        socket.off("matchInfo");
+        socket.off("goodtogo");
+        socket.off("allReady");
+    
+    }
+    clearInterval(gameset.intervalId);
+    }
+  },[PadNum, SpeedNum, BallNum, MapNum, client, socket]);
   useEffect(() => {
       if (socket)
       {
-        socket.on('setupReply', data => {
-          setBallNum(data.Ball);
-          setPadNum(data.Pad);
-          setSpeedNum(data.Speed);
-          setMapNum(data.Map);
-        });
-        socket.on('client', data => {
-          setclient(data);
-          console.log(data);
-        });
-        socket.on("matching waiting", data => {
-          console.log(data);
-        });
-        socket.on("matchInfo", data => {
-          setState(true);
-          console.log("State",State);
-        });
-        socket.on("goodtogo", ()=>{
-          navigate("/game");
-        });
-        socket.on("allReady",() => {
-          socket.emit('amiHost', "", (response) =>{
-            console.log(response)
-            if (response === 0)
-            {
-              gameset.ball.isEqual(ball);
-              for (let i = 0; i < obstacle.length; i++)
-              {
-                gameset.obs.push(obstacle[i].x,
-                  obstacle[i].y,
-                  obstacle[i].width,
-                  obstacle[i].height
-                )
-              }
-              for (let i = 0; i < pad.length; i++)
-              {
-                gameset.pad.push(pad[i].x,
-                  pad[i].y,
-                  pad[i].width,
-                  pad[i].height,
-                  pad[i].color,
-                  pad[i].radi
-                )
-              }
-              gameset.ball.r *= 1.6;
-              gameset.ball.v *= 1.6;
-              for (let i = 0; i < gameset.obs.length; i++)
-              {
-                gameset.obs[i].height *= 1.6;
-                gameset.obs[i].width *= 1.6;
-                gameset.obs[i].x *= 1.6;
-                gameset.obs[i].y *= 1.6;
-              }
-              for (let i = 0; i < 2; i++)
-              {
-                gameset.pad[i].x *= 1.6;
-                gameset.pad[i].y *= 1.6;
-                gameset.pad[i].height *= 1.6;
-                gameset.pad[i].width *= 1.6;
-              }
-              socket.emit('gameSetting', gameset);
-
-            }
-
-          });
-        });
         socket.emit("match", "");
       };
   }, [socket]);
+
   useEffect(() => {
       console.log(State,Ready);
       if (Ready && State)

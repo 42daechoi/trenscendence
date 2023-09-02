@@ -245,6 +245,9 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
 
 		socket.emit('gameRoomOut', { socketId: socket.id, userId: user.id});
 		await this.gameService.destroyGame(socket);
+
+		
+		
 		return { socketId: socket.id, userId: user.id };
 	}
 
@@ -257,7 +260,6 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
 	) {
 		await this.gameService.gameSetting(socket, this.nsp, game_info);
 		this.logger.log("game setting completed. Game is really good to go");
-		socket.emit("goodtogo", "");
 	}
 	@SubscribeMessage('gameStart')
 	async gameStart(

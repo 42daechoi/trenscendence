@@ -33,10 +33,10 @@
 }
 
 .mini-map {
-	width  : 900px;
-	height : 556px;
-	min-width: 900px;
-	min-height: 556px;
+	width  : 715px;
+	height : 441px;
+	min-width: 715px;
+	min-height: 441px;
 	position: relative;
 	border: 5px white solid;
 }
