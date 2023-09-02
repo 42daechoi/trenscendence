@@ -204,8 +204,8 @@ export class GameService {
         let result = {
           key: i,
           date: gameStats[i].game.date.toDateString(),
-          winner: gameStats[i].winner ? gameStats[i].user.name : gameStats[i + 1].user.name,
-          loser: gameStats[i].winner ? gameStats[i + 1].user.name : gameStats[i].user.name,
+          winner: gameStats[i].winner ? gameStats[i].user.intraId : gameStats[i + 1].user.intraId,
+          loser: gameStats[i].winner ? gameStats[i + 1].user.intraId : gameStats[i].user.intraId,
           scoreWinner: gameStats[i].winner ? gameStats[i].score : gameStats[i + 1].score,
           scoreLoser: gameStats[i].winner ? gameStats[i + 1].score : gameStats[i].score,
         };
