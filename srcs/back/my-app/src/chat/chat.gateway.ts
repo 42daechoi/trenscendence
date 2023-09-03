@@ -49,7 +49,7 @@ import { ChatService } from './chat.service';
             this.sendDataToSocket(socket, this.chatService.getChannels());
           }
         });
-      }, 2000);
+      }, 1000);
     }
 
 
@@ -571,7 +571,7 @@ import { ChatService } from './chat.service';
     //*****************************  op  **********************************//
     //*********************************************************************//
     @SubscribeMessage('op')
-    handleop(@MessageBody() op: opDTO, @ConnectedSocket() socket: Socket) {
+    handleop(@MessageBody() op: opDTO) {
       console.log('----------------------------------------');
       console.log('----------------- OP -------------------');  
       console.log('userId: ', op.id, ' targetId: ', op.target);
@@ -586,7 +586,7 @@ import { ChatService } from './chat.service';
       if (!channel) return;
       if (channel.host !== user.id)
       {
-        if (!channel.operator.includes(op.id))
+        if (!channel.operator.includes(user.id))
         {
           console.log('----------------------------------------');
           console.log('                 no access              ');
@@ -623,8 +623,12 @@ import { ChatService } from './chat.service';
       }
 
       let target = this.chatService.findUserById(op.target);
-      channel.operator.push(op.target);
+      channel.operator.push(target.id);
       target.socket.emit('op', true);
+
+      console.log('----------------------------------------');
+      console.log(channel);
+      console.log('----------------------------------------'); 
     }
 
 
@@ -851,7 +855,7 @@ import { ChatService } from './chat.service';
     //******************************  game  *******************************//
     //*********************************************************************//
     @SubscribeMessage('gamechatroom')
-    async handlegameset(@MessageBody() gamers: gameDTO, @ConnectedSocket() socket:Socket)
+    async handlegameset(@MessageBody() gamers: gameDTO)
     {
       console.log('----------------------------------------');
       console.log('-----------------GAME SET---------------');
