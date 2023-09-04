@@ -9,14 +9,19 @@ import {
   AfterInsert,
   AfterRemove,
   AfterUpdate,
-  AfterLoad
+  AfterLoad,
+  ManyToOne,
+  OneToMany,
 } from 'typeorm';
 
 export enum UserStatus {
-  Online = 0,
-  Offline = 1,
-  InGame = 2,
+  OFFLINE,
+  ONLINE,
+  GAME,
 }
+
+import { GamePlayer } from './gamePlayer.entity';
+//import { GameHistory } from './gameHistory.entity';
 
 //  User table
 @Entity()
@@ -33,11 +38,10 @@ export class User {
 
   @Column({ unique: true, nullable: true })
   name: string;
-
-  //0 -> offline
-  //1 -> online
-  //2 -> ongame
-  @Column({ default: 0})
+  
+  @Column({
+    default: UserStatus.OFFLINE,
+  })
   status: UserStatus;
 
   @ManyToMany(() => User)
@@ -71,6 +75,19 @@ export class User {
 
   @Column({ nullable: true })
   twoFASecret: string;
+
+  @Column({unique: true, nullable : true})
+  socketId: string;
+
+  @OneToMany(() => GamePlayer, (gamePlayer) => gamePlayer.user)
+  gamePlayer: GamePlayer;
+
+  //I want to add picture column for user
+  @Column({ type: 'bytea', nullable: true })
+  profilePicture: Buffer | string;
+
+  @Column({nullable : true})
+  ft_pictureUrl : string;
 
   @AfterInsert()
   logInsert() {

@@ -9,6 +9,7 @@ import { TokenPayload, TokenType } from "./interfaces/token-payload.interface";
 import { User } from "src/typeorm";
 import {CreateUserDto} from "src/users/dtos/create-user.dto";
 import { Response, Request } from "express";
+import { UserStatus } from "src/typeorm/user.entity";
 
 @Injectable()
 export class AuthService{
@@ -89,6 +90,24 @@ export class AuthService{
 	async setJwtHeader(res: Response, token: string): Promise<void> {
 		res.setHeader('Authorization', 'Bearer ' + token);
 	}
+
+	async verifyUser(token: string): Promise<User | null>{
+		const payload : any = this.jwtService.decode(token);
+		if (!payload)
+			return ;
+		const user = this.usersService.findUserById(payload.id);
+		console.log("decoding token : " + JSON.stringify(payload));
+		return (user);
+	}
+
+	async updateUserStatusOnline(user: User){
+		await this.usersService.update(user.id, {status: UserStatus.ONLINE})
+	}
+
+	async updateUserStatusOffline(user: User){
+		await this.usersService.update(user.id, {status: UserStatus.OFFLINE})
+	}
+
 	
 	async existUser(intraId : string) : Promise<any | null>{
 		const user = await this.usersService.findUserByIntraId(intraId);

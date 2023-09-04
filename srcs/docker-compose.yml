@@ -25,6 +25,8 @@ services:
       - tran_net
     volumes:
       - back_vol:/back/my-app
+<<<<<<< HEAD
+=======
 
 
   temp_serv:
@@ -42,6 +44,7 @@ services:
       - .env
     depends_on:
       - db
+>>>>>>> 0bba6f1346086f3a7006991fc084359ce8575540
 
   # PostgreSQL service
   db:
@@ -84,11 +87,6 @@ volumes:
     driver_opts:
       type: none
       device: ${PWD}/srcs/front/my-app
-      o: bind
-  temp_vol:
-    driver_opts:
-      type: none
-      device: ${PWD}/srcs/temp_serv/server
       o: bind
   postgres_vol: # This volume will persist the PostgreSQL data
     driver_opts:

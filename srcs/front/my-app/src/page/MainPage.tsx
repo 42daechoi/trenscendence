@@ -7,18 +7,19 @@ import LeaderBoard from "../component/LeaderBoard";
 import FriendsList from "../component/FriendsList";
 import ChannelsList from "../component/ChannelsList";
 import Chat from "../component/Chat";
-import io from "socket.io-client";
-import axios from "axios";
-
-// const socket = io('http://localhost:3002');
+import { useSocket } from "../component/SocketContext";
+import { apiRequest } from "../utils/ApiRequest";
 
 export default function MainPage() {
+  const socket = useSocket();
   const [curPage, setCurPage] = useState("my_profile");
-  // useEffect(() => {
-  //   return () => {
-  //     socket.disconnect();
-  //   }
-  // },[socket]);
+  useEffect(() => {
+    apiRequest<any>(
+      "get",
+      "http://localhost:3001/users/whoami"
+    ).then((response) => {
+    });
+  },[socket]);
 
   const renderPage = () => {
     switch (curPage) {
@@ -64,7 +65,7 @@ export default function MainPage() {
           <section className="btn-container">
             <button
               className="btn btn-outline btn-success"
-              onClick={() => setCurPage("game_waiting")}
+              onClick={() => {curPage !== "game_waiting" &&(setCurPage("game_waiting"))}}
             >
               GAME START
             </button>
