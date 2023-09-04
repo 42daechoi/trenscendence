@@ -12,7 +12,8 @@ import { whoami } from "../utils/whoami";
 import "../css/Chat.css";
 import { where } from "../utils/where";
 import axios from "axios";
-import { response } from "express";
+import CreateChat from "./CreateChat";
+import SettingChat from "./SettingChat";
 
 interface IUsers {
   name: string;
@@ -36,16 +37,15 @@ const initTmpUsers: IUsers[] = [
 ];
 const initTmpMessages: IMessage[] = [
   {
-    user: { name: "Obi-Wan Kenobi", profile: null, id: 1, isChecked: false },
+    user: { name: "SERVER", profile: null, id: 1, isChecked: false },
     sender: "chat chat-start",
-    text: "You were the Chosen One!",
+    text: "Home 채팅방에 입장하셨습니다.",
     time: new Date().toLocaleTimeString(),
   },
 ];
 
-export default function Chat(props) {
-  // 임시 초기값 지정
-  const [users, setUsers] = useState<IUsers[]>(initTmpUsers);
+function Chat(props) {
+  const [users, setUsers] = useState<IUsers[]>([]);
   const [messages, setMessages] = useState<IMessage[]>(initTmpMessages);
   const socket = useSocket();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -53,22 +53,186 @@ export default function Chat(props) {
   // const [messages, setMessages] = useState<IMessage[]>([]);
   const lastMessageRef = useRef<HTMLDivElement>(null);
 
-  function addUsers(name: string) {
-    setUsers([
-      ...users,
-      { name: name, profile: null, id: 1, isChecked: false },
-    ]);
-  }
+  const init = async () => {
+    const data = await whoami();
+    socket.emit("bind", data.id);
+    receiveMessage();
+  };
+
+  const receiveMessage = () => {
+    socket.on("chat", (receiveData) => {
+      if (!receiveData) return;
+      axios
+        .get("http://localhost:3001/users/id/" + receiveData.id, {
+          withCredentials: true,
+        })
+        .then((response) => {
+          if (!response.data) return;
+          addMessage(
+            {
+              name: response.data.nickname,
+              profile: response.data.avatar,
+              id: response.data.id,
+              isChecked: false,
+            },
+            receiveData.msg,
+            "chat chat-start"
+          );
+        });
+    });
+  };
+
+  useEffect(() => {
+    if (!socket) return;
+    init();
+    socket.on("op", (data) => {
+      console.log(data);
+      if (data) {
+        setMessages([]);
+        addMessage(
+          {
+            name: "SERVER",
+            profile: null,
+            id: 0,
+            isChecked: false,
+          },
+          "채팅방 관리자 권한을 부여 받으셨습니다.",
+          "chat chat-start"
+        );
+      }
+    });
+    socket.on("kick", (data) => {
+      console.log("kick");
+      if (data) {
+        setMessages([]);
+        addMessage(
+          {
+            name: "SERVER",
+            profile: null,
+            id: 0,
+            isChecked: false,
+          },
+          "채널에서 강제 퇴장 당하셨습니다.",
+          "chat chat-start"
+        );
+        addMessage(
+          {
+            name: "SERVER",
+            profile: null,
+            id: 0,
+            isChecked: false,
+          },
+          "HOME 채널에 참가하셨습니다.",
+          "chat chat-start"
+        );
+      }
+    });
+    socket.on("join", (channel) => {
+      if (channel.flag) initMessages();
+    });
+    return () => {
+      socket.off("chat");
+      socket.off("kick");
+      socket.off("join");
+    };
+  }, [socket]);
+
+  const isSameList = () => {
+    if (props.memberList.length != users.length) return false;
+    for (let i = 0; i < props.memberList.length; i++) {
+      if (props.memberList[i] != users[i].id) {
+        return false;
+      }
+    }
+    return true;
+  };
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const prevUsers = JSON.parse(JSON.stringify(users));
+      const newUsers = [];
+
+      for (let i = 0; i < props.memberList.length; i++) {
+        try {
+          const response = await axios.get(
+            "http://localhost:3001/users/id/" + props.memberList[i],
+            { withCredentials: true }
+          );
+          const data = response.data;
+          let isAdd = false;
+
+          for (let j = 0; j < prevUsers.length; j++) {
+            if (prevUsers[j].id === data.id && prevUsers[j].isChecked) {
+              newUsers.push({
+                name: data.nickname,
+                profile: data.avatar,
+                id: data.id,
+                isChecked: true,
+              });
+              isAdd = true;
+              break;
+            }
+          }
+
+          if (!isAdd) {
+            newUsers.push({
+              name: data.nickname,
+              profile: data.avatar,
+              id: data.id,
+              isChecked: false,
+            });
+          }
+        } catch (error) {
+          console.log(error);
+        }
+      }
+
+      setUsers(newUsers);
+    };
+
+    if (isSameList()) {
+      return;
+    }
+    fetchData();
+  }, [props.memberList]);
+
+  // useEffect(() => {
+  //   const fetchData = async (prevUsers) => {
+  //     for (let i = 0; i < props.memberList.length; i++) {
+  //       try {
+  //         const response = await axios.get(
+  //           "http://localhost:3001/users/" + props.memberList[i],
+  //           { withCredentials: true }
+  //         );
+  //         const data = response.data;
+  //         let isAdd = false;
+  //         for (let j = 0; j < prevUsers.length; j++) {
+  //           console.log(prevUsers[j].name, prevUsers[j].isChecked);
+  //           if (prevUsers[j].id === data.id && prevUsers[j].isChecked) {
+  //             addUsers(data.nickname, data.avatar, data.id, true);
+  //             isAdd = true;
+  //             break;
+  //           }
+  //         }
+  //         if (!isAdd) addUsers(data.nickname, data.avatar, data.id, false);
+  //       } catch (error) {
+  //         console.log(error);
+  //       }
+  //     }
+  //   };
+
+  //   if (isSameList()) {
+  //     return;
+  //   }
+  //   const prevUsers = JSON.parse(JSON.stringify(users));
+  //   setUsers([]);
+  //   fetchData(prevUsers);
+  // }, [props.memberList]);
 
   const addMessage = (user: IUsers, text: string, className: string) => {
     const time = new Date().toLocaleTimeString();
-    // start = 상대방 end = 자신
-    // if (user.id == myid)
-    // else
-    // const className = "chat chat-start";
-
-    setMessages([
-      ...messages,
+    setMessages((prevMessages) => [
+      ...prevMessages,
       { user: user, sender: className, text: text, time: time },
     ]);
   };
@@ -77,16 +241,12 @@ export default function Chat(props) {
     lastMessageRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-  const chatEnter = async (target: HTMLInputElement) => {
+  const chatEnter = async (chat: string) => {
     try {
       const data = await whoami();
-      if (target && target.value.substring(0, 6) === "/mute ") {
-        console.log(target.value.substring(0, 6));
-        const target_name: string = target.value.substring(
-          6,
-          target.value.length
-        );
-        console.log(target_name);
+      if (chat.substring(0, 7) === "/block ") {
+        const target_name: string = chat.substring(7, chat.length);
+        socket.emit("mutelistupdate", data.id);
         axios
           .get("http://localhost:3001/users/nickname/" + target_name, {
             withCredentials: true,
@@ -105,13 +265,11 @@ export default function Chat(props) {
           .catch((error) => {
             console.log(error);
           });
-        target.value = "";
+        chat = "";
         return;
-      } else if (target && target.value.substring(0, 8) === "/unmute ") {
-        const target_name: string = target.value.substring(
-          8,
-          target.value.length
-        );
+      } else if (chat.substring(0, 9) === "/unblock ") {
+        socket.emit("mutelistupdate", data.id);
+        const target_name: string = chat.substring(9, chat.length);
         axios
           .get("http://localhost:3001/users/nickname/" + target_name, {
             withCredentials: true,
@@ -130,9 +288,9 @@ export default function Chat(props) {
           .catch((error) => {
             console.log(error);
           });
-        target.value = "";
+        chat = "";
         return;
-      } else if (target && target.value.substring(0, 9) === "/mutelist") {
+      } else if (chat.substring(0, 10) === "/blocklist") {
         axios
           .get("http://localhost:3001/users/blocks/list", {
             withCredentials: true,
@@ -150,71 +308,73 @@ export default function Chat(props) {
             msg += response.data[i].nickname + "]";
             addMessage(
               {
-                name: data.nickname,
+                name: data.id,
                 profile: null,
                 id: data.id,
                 isChecked: false,
               },
               msg,
-              "chat chat-end"
+              "chat chat-start"
             );
           })
           .catch((error) => {
             console.log(error);
           });
-        target.value = "";
+        chat = "";
         return;
-      } else if (target && target.value[0] === "/" && target.value[1] === "/") {
-        const firstSpaceIdx = target.value.indexOf(" ");
-        const target_name: string = target.value.substring(2, firstSpaceIdx);
-        const msg: string = target.value.substring(
-          firstSpaceIdx,
-          target.value.length - 1
-        );
+      } else if (chat[0] === "/" && chat[1] === "/") {
+        const firstSpaceIdx = chat.indexOf(" ");
+        const target_name: string = chat.substring(2, firstSpaceIdx);
+        const msg: string = chat.substring(firstSpaceIdx + 1, chat.length);
 
-        socket.emit("chat", {
-          nickname: data.nickname,
-          target: target_name,
-          flag: "dm",
-          msg: msg,
-        });
-        addMessage(
-          {
-            name: data.nickname,
-            profile: null,
-            id: data.id,
-            isChecked: false,
-          },
-          target.value,
-          "chat chat-end"
-        );
-        target.value = "";
-        return;
-      } else if (target && target.value.length) {
-        addMessage(
-          {
-            name: data.nickname,
-            profile: null,
-            id: data.id,
-            isChecked: false,
-          },
-          target.value,
-          "chat chat-end"
-        );
-        const channel = where(socket, data.nickname);
-        channel
-          .then((channel) => {
-            console.log(channel);
+        axios
+          .get("http://localhost:3001/users/nickname/" + target_name, {
+            withCredentials: true,
+          })
+          .then((response) => {
             socket.emit("chat", {
-              nickname: data.nickname,
-              target: "channel",
+              id: data.id,
+              target: response.data.id,
+              flag: "dm",
+              msg: msg,
+            });
+          });
+        addMessage(
+          {
+            name: data.nickname,
+            profile: null,
+            id: data.id,
+            isChecked: false,
+          },
+          chat,
+          "chat chat-end"
+        );
+        chat = "";
+        return;
+      } else if (chat.length) {
+        where(socket, data.id)
+          .then((channel) => {
+            // console.log(channel);
+            socket.emit("chat", {
+              id: data.id,
+              target: channel.channelname,
               flag: "broad",
-              msg: target.value,
+              msg: chat,
             });
           })
           .catch((error) => {
             console.log(error);
           });
+        addMessage(
+          {
+            name: data.nickname,
+            profile: null,
+            id: data.id,
+            isChecked: false,
+          },
+          chat,
+          "chat chat-end"
+        );
       }
     } catch (error) {
       console.log(error);
@@ -225,7 +385,7 @@ export default function Chat(props) {
     const target = inputRef.current as HTMLInputElement;
     console.log(target.value);
     event.preventDefault();
-    chatEnter(target);
+    chatEnter(target.value);
     target.value = "";
   };
 
@@ -233,9 +393,8 @@ export default function Chat(props) {
     // keyCode는 잘 사용되지 않는다고한다. 추후 리팩토링 예정
     if (event.keyCode === 13 && event.key === "Enter" && !event.shiftKey) {
       const target = event.target as HTMLInputElement;
-      console.log(target.value);
       event.preventDefault();
-      chatEnter(target);
+      chatEnter(target.value);
       target.value = "";
     }
   };
@@ -250,11 +409,13 @@ export default function Chat(props) {
     try {
       const data = await whoami();
       for (let i: number = 0; i < users.length; i++) {
-        if (users[i].isChecked)
+        if (users[i].isChecked) {
           socket.emit("kick", {
-            nickname: data.nickname,
-            target: users[i].name,
+            id: data.id,
+            target: users[i].id,
           });
+          console.log(users[i].name);
+        }
       }
     } catch (error) {
       console.log(error);
@@ -264,7 +425,18 @@ export default function Chat(props) {
   const goHome = async () => {
     try {
       const data = await whoami();
-      socket.emit("home", data.nickname);
+      socket.emit("home", data.id);
+      setMessages([]);
+      addMessage(
+        {
+          name: "SERVER",
+          profile: null,
+          id: 0,
+          isChecked: false,
+        },
+        "$home 채널에 참가하셨습니다.",
+        "chat chat-start"
+      );
     } catch (error) {
       console.log(error);
     }
@@ -275,30 +447,36 @@ export default function Chat(props) {
       const data = await whoami();
       for (let i: number = 0; i < users.length; i++) {
         if (users[i].isChecked)
-          socket.emit("op", { nickname: data.nickname, target: users[i].name });
+          socket.emit("op", { id: data.id, target: users[i].id });
       }
     } catch (error) {
       console.log(error);
     }
   };
 
-  const receiveMessage = () => {
-    let receiveData;
-
-    socket.on('chat', receiveData);
-    if (!receiveData)
-      return;
-    axios.get('http://localhost:3001/users/nickname/' + receiveData.nickname, { withCredentials: true })
-      .then(response => {
-        if (!response.data)
-          return ;
-        addMessage(
-          { name: receiveData.nickname, profile: receiveData.avatar, id: receiveData.id, isChecked: false },
-          receiveData.msg,
-          "chat chat-start"
-        );
-      })
-
+  const initMessages = async () => {
+    setMessages([]);
+    try {
+      const data = await whoami();
+      where(socket, data.id)
+        .then((channel) => {
+          addMessage(
+            {
+              name: "SERVER",
+              profile: null,
+              id: 0,
+              isChecked: false,
+            },
+            channel.channelname + " 채널에 참가하셨습니다.",
+            "chat chat-start"
+          );
+        })
+        .catch((error) => {
+          console.log(error);
+        });
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   const [isModalOpen, setModalOpen] = useState(false);
@@ -310,204 +488,6 @@ export default function Chat(props) {
     setModalOpen(false);
   };
   const [chatConfigure, setChatConfigure] = useState("");
-
-  function ChatSetting() {
-    const [isChecked, setChecked] = useState("public");
-    const [password, setPassword] = useState('');
-
-  const passwordChange = (event) => {
-    setPassword(event.target.value);
-  };
-
-    const modifyChatSock = async() => {
-      try {
-        const data = await whoami();
-        socket.emit('modify', { nickname: data.nickname, maxmember: 10, option: isChecked, password: password})
-          .catch( error => {
-            console.log(error);
-          });
-      } catch (error) {
-        console.log(error);
-      }
-    };
-
-    return (
-      <div id="ChatSetting">
-        <h1
-          style={{
-            fontSize: "30px",
-            textAlign: "center",
-            padding: "10px",
-          }}
-        >
-          채팅방 설정
-        </h1>
-        <div className="container">
-          <div className="form-container">
-            <form>
-              <label>
-                <input
-                  type="radio"
-                  name="public"
-                  checked={isChecked === "public"}
-                  onChange={(e) => {
-                    setChecked(e.target.name);
-                  }}
-                ></input>
-                <span>PUBLIC</span>
-              </label>
-              <label>
-                <input
-                  type="radio"
-                  name="protected"
-                  checked={isChecked === "protected"}
-                  onChange={(e) => {
-                    setChecked(e.target.name);
-                  }}
-                ></input>
-                <span>PROTECTED</span>
-              </label>
-              <label>
-                <input
-                  type="radio"
-                  name="private"
-                  checked={isChecked === "private"}
-                  onChange={(e) => {
-                    setChecked(e.target.name);
-                  }}
-                ></input>
-                <span>PRIVATE</span>
-              </label>
-            </form>
-            <div className="chat-set-right">
-              <div className="max-People" style={{ padding: "10px" }}>
-                최대 수용 인원
-                <select
-                  style={{ marginLeft: "10px" }}
-                  name="max-people"
-                  className="select"
-                >
-                  {Array(24)
-                    .fill(0)
-                    .map((_, i) => (
-                      <option key={i} value={i + 2}>
-                        {i + 2}
-                      </option>
-                    ))}
-                </select>
-              </div>
-              {isChecked === "protected" && (
-                <div style={{ padding: "10px" }}>
-                  password
-                  <input onChange={passwordChange} type="text" style={{ marginLeft: "10px" }} />
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-        <button onClick={modifyChatSock} className="setting-button">수정</button>
-      </div>
-    );
-  }
-
-  function CreateChat() {
-    const [isChecked, setChecked] = useState("public");
-    const [password, setPassword] = useState('');
-
-    const passwordChange = (event) => {
-      setPassword(event.target.value);
-    };
-
-    const createChatSock = async() => {
-      try {
-        const data = await whoami();
-        socket.emit('create', { nickname: data.nickname, maxmember: 10, option: "public", password: password})
-          .catch( error => {
-            console.log(error);
-          });
-      } catch (error) {
-        console.log(error);
-      }
-    };
-
-    return (
-      <div id="ChatSetting">
-        <h1
-          style={{
-            fontSize: "30px",
-            textAlign: "center",
-            padding: "10px",
-          }}
-        >
-          채팅방 생성
-        </h1>
-        <div className="container">
-          <div className="form-container">
-            <form>
-              <label>
-                <input
-                  type="radio"
-                  name="public"
-                  checked={isChecked === "public"}
-                  onChange={(e) => {
-                    setChecked(e.target.name);
-                  }}
-                ></input>
-                <span>PUBLIC</span>
-              </label>
-              <label>
-                <input
-                  type="radio"
-                  name="protected"
-                  checked={isChecked === "protected"}
-                  onChange={(e) => {
-                    setChecked(e.target.name);
-                  }}
-                ></input>
-                <span>PROTECTED</span>
-              </label>
-              <label>
-                <input
-                  type="radio"
-                  name="private"
-                  checked={isChecked === "private"}
-                  onChange={(e) => {
-                    setChecked(e.target.name);
-                  }}
-                ></input>
-                <span>PRIVATE</span>
-              </label>
-            </form>
-            <div className="chat-set-right">
-              <div className="max-People" style={{ padding: "10px" }}>
-                최대 수용 인원
-                <select
-                  style={{ marginLeft: "10px" }}
-                  name="max-people"
-                  className="select"
-                >
-                  {Array(24)
-                    .fill(0)
-                    .map((_, i) => (
-                      <option key={i} value={i + 2}>
-                        {i + 2}
-                      </option>
-                    ))}
-                </select>
-              </div>
-              {isChecked === "protected" && (
-                <div style={{ padding: "10px" }}>
-                  password
-                  <input onChange={passwordChange} type="text" style={{ marginLeft: "10px" }} />
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-        <button onClick={createChatSock} className="setting-button">생성</button>
-      </div>
-    );
-  }
 
   return (
     <>
@@ -557,13 +537,14 @@ export default function Chat(props) {
             <li key={"chat" + index}>
               <input
                 type="checkbox"
+                checked={users[index].isChecked}
                 onChange={() =>
                   (users[index].isChecked = users[index].isChecked
                     ? false
                     : true)
                 }
               />
-              <ProfileModal name={user.name + index} currUser="ohter" />
+              <ProfileModal name={user.name + index} currUser={index} />
             </li>
           ))}
         </ul>
@@ -575,11 +556,11 @@ export default function Chat(props) {
             style={{ width: "70%", marginTop: "5%" }}
             onClick={() => {
               setChatConfigure("create");
-              
+
               openModal();
             }}
           >
-            chat setting
+            채팅방 생성
           </button>
           <button
             style={{ width: "70%", marginTop: "5%" }}
@@ -588,7 +569,7 @@ export default function Chat(props) {
               openModal();
             }}
           >
-            create chat
+            채팅방 설정
           </button>
         </div>
         {isModalOpen && (
@@ -596,7 +577,14 @@ export default function Chat(props) {
             <Modal
               closeModal={closeModal}
               ConfigureModal={() =>
-                chatConfigure === "setting" ? <ChatSetting /> : <CreateChat />
+                chatConfigure === "setting" ? (
+                  <SettingChat closeModal={closeModal} />
+                ) : (
+                  <CreateChat
+                    entryChannel={initMessages}
+                    closeModal={closeModal}
+                  />
+                )
               }
             />
           </div>
@@ -605,3 +593,7 @@ export default function Chat(props) {
     </>
   );
 }
+
+const MemoChat = React.memo(Chat);
+
+export default MemoChat;

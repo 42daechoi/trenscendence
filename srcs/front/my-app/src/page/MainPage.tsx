@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, KeyboardEvent, useEffect, useRef } from "react";
 
 import "../css/MainPage.css";
 import Profile from "../component/Profile";
@@ -6,25 +6,59 @@ import GameWaiting from "../component/GameWaiting";
 import LeaderBoard from "../component/LeaderBoard";
 import FriendsList from "../component/FriendsList";
 import ChannelsList from "../component/ChannelsList";
+import MemoChat from "../component/Chat";
+import { getWhoami } from "../utils/ApiRequest";
 import Chat from "../component/Chat";
+import { getUserByNickname } from "../utils/ApiRequest";
+import Modal from "../component/Modal";
 import { useSocket } from "../component/SocketContext";
 import { apiRequest } from "../utils/ApiRequest";
 
 export default function MainPage() {
-  const socket = useSocket();
   const [curPage, setCurPage] = useState("my_profile");
+  const [channelList, setChannelList] = useState([]);
+  const [memberList, setMemberList] = useState([]);
+  const socket = useSocket();
+  const [myId, setMyId] = useState(0);
+
   useEffect(() => {
-    apiRequest<any>(
-      "get",
-      "http://localhost:3001/users/whoami"
-    ).then((response) => {
-    });
-  },[socket]);
+    if (!socket) return;
+    // socket.on("allinfo", (data) => {
+    //   getWhoami()
+    //     .then((response) => {
+    //       for (let i = 0; i < data.length; i++) {
+    //         for (let j = 0; j < data[i].users.length; j++) {
+    //           if (data[i].users[j] === response.data.id) {
+    //             if (JSON.stringify(data) != JSON.stringify(channelList))
+    //               setChannelList(data);
+    //             if (JSON.stringify(data[i].users) != JSON.stringify(memberList))
+    //               setMemberList(data[i].users);
+    //             return;
+    //           }
+    //         }
+    //       }
+    //     })
+    //     .catch((err) => {
+    //       console.log(err);
+    //     });
+    // });
+    return () => {
+      socket.off("allinfo");
+    };
+  }, [socket]);
+
+  useEffect(() => {
+    apiRequest<any>("get", "http://localhost:3001/users/whoami").then(
+      (response) => {
+        setMyId(response.data.id);
+      }
+    );
+  }, []);
 
   const renderPage = () => {
     switch (curPage) {
       case "my_profile":
-        return <Profile currUser="gyyu" />;
+        return <Profile currUser={myId} isMe={true} />;
       case "game_waiting":
         return <GameWaiting />;
       case "leaderboard":
@@ -48,14 +82,41 @@ export default function MainPage() {
       setChannelsButtonClass("clicked-button");
     }
   };
+  const [currUser, setCurrUser] = useState(null); // 현재 유저 상태
+  const searchText = useRef(null);
+  function searchUser() {
+    getUserByNickname(searchText.current.value)
+      .then((result) => {
+        if (result.data) {
+          setModalOpen(true);
+          setCurrUser(result.data.id);
+        } else {
+          alert("해당 유저가 없습니다");
+        }
+      })
+      .catch((err) => {
+        alert("해당 유저가 없습니다");
+      });
+  }
 
   const renderSide = () => {
     switch (curSide) {
       case "friends_list":
         return <FriendsList />;
       case "channels_list":
-        return <ChannelsList />;
+        return <ChannelsList channelList={channelList} />;
     }
+  };
+
+  const handleKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+    if (event.keyCode === 13 && event.key === "Enter") {
+      searchUser();
+    }
+  };
+
+  const [isModalOpen, setModalOpen] = useState(false);
+  const closeModal = (): void => {
+    setModalOpen(false);
   };
   return (
     <div className="background">
@@ -65,7 +126,9 @@ export default function MainPage() {
           <section className="btn-container">
             <button
               className="btn btn-outline btn-success"
-              onClick={() => {curPage !== "game_waiting" &&(setCurPage("game_waiting"))}}
+              onClick={() => {
+                curPage !== "game_waiting" && setCurPage("game_waiting");
+              }}
             >
               GAME START
             </button>
@@ -83,13 +146,12 @@ export default function MainPage() {
             </button>
           </section>
           <section className="chat-container">
-            <Chat /*socket={socket}*/ />
+            <MemoChat memberList={memberList} />
           </section>
           <section className="swap-container">{renderPage()}</section>
           <label
             htmlFor="my-drawer-4"
             className="drawer-button btn btn-primary"
-            // 컴포넌트를 항상 오른쪽에 위치시킴
             style={{ position: "fixed", right: "0" }}
           >
             COMM<br></br>◀︎
@@ -119,8 +181,22 @@ export default function MainPage() {
               <div className="list">{renderSide()}</div>
             </div>
             <div className="search-side ">
-              <input type="text"></input>
-              <button>🔍</button>
+              <input
+                ref={searchText}
+                onKeyDown={handleKeyDown}
+                type="text"
+              ></input>
+              <button className="search-button" onClick={searchUser}>
+                🔍
+              </button>
+              {currUser && isModalOpen && (
+                <Modal
+                  closeModal={closeModal}
+                  ConfigureModal={() => (
+                    <Profile currUser={currUser} isMe={false} />
+                  )}
+                />
+              )}
             </div>
           </div>
         </div>

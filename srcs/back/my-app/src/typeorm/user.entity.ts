@@ -1,4 +1,4 @@
-import {Min} from 'class-validator';
+import { Min } from 'class-validator';
 import {
   Column,
   Entity,
@@ -29,7 +29,7 @@ export class User {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({unique: true, nullable: false})
+  @Column({ unique: true, nullable: false })
   @Min(0)
   intraId: string;
 
@@ -38,7 +38,7 @@ export class User {
 
   @Column({ unique: true, nullable: true })
   name: string;
-  
+
   @Column({
     default: UserStatus.OFFLINE,
   })
@@ -52,31 +52,31 @@ export class User {
   @JoinTable()
   blocks: User[];
 
-  @Column({default : 0})
+  @Column({ default: 0 })
   wins: number;
 
-  @Column({default : 0})
+  @Column({ default: 0 })
   loses: number;
 
-  @Column({default : 0})
+  @Column({ default: 0 })
   xp: number;
 
-  @Column({default : -1})
+  @Column({ default: -1 })
   rank: number;
 
-  @Column({ nullable: false, default : false })
+  @Column({ nullable: false, default: false })
   currentAvatarData: boolean;
 
   @Column({ nullable: false, default: false })
   twoFA: boolean;
-  
+
   @Column({ default: false })
   avatarinit: boolean;
 
   @Column({ nullable: true })
   twoFASecret: string;
 
-  @Column({unique: true, nullable : true})
+  @Column({ unique: true, nullable: true })
   socketId: string;
 
   @OneToMany(() => GamePlayer, (gamePlayer) => gamePlayer.user)
@@ -84,10 +84,10 @@ export class User {
 
   //I want to add picture column for user
   @Column({ type: 'bytea', nullable: true })
-  profilePicture: Buffer | string;
+  profilePicture: Buffer;
 
-  @Column({nullable : true})
-  ft_pictureUrl : string;
+  @Column({ nullable: true })
+  ft_pictureUrl: string;
 
   @AfterInsert()
   logInsert() {
@@ -103,5 +103,4 @@ export class User {
   logRemove() {
     console.log('Removed User with id', this.id);
   }
-
 }

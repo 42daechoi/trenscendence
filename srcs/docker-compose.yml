@@ -25,26 +25,6 @@ services:
       - tran_net
     volumes:
       - back_vol:/back/my-app
-<<<<<<< HEAD
-=======
-
-
-  temp_serv:
-    container_name: temp
-    build: ./temp_serv
-
-    restart: always
-    ports:
-      - "3004:3004"
-    networks:
-      - tran_net
-    volumes:
-      - temp_vol:/server
-    env_file:
-      - .env
-    depends_on:
-      - db
->>>>>>> 0bba6f1346086f3a7006991fc084359ce8575540
 
   # PostgreSQL service
   db:
@@ -52,14 +32,14 @@ services:
     image: postgres:latest
     restart: unless-stopped
     environment:
-        - POSTGRES_USER=postgres
-        - POSTGRES_PASSWORD=postgres
-        - POSTGRES_DB=tr42
-        - TZ=Asia/Seoul
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=tr42
+      - TZ=Asia/Seoul
     volumes:
-        - postgres_vol:/var/lib/postgresql/data
+      - postgres_vol:/var/lib/postgresql/data
     ports:
-        - "5432:5432"
+      - "5432:5432"
     networks:
       - tran_net
 
@@ -103,7 +83,6 @@ volumes:
       type: none
       device: ${PWD}/srcs/back/my-app
       o: bind
-
 
 networks:
   tran_net:
