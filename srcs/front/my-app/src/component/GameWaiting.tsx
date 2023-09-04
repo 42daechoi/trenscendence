@@ -18,12 +18,13 @@ export default function GameWaiting() {
   const [MapNum, setMapNum] = useState(1);
   const [BallNum, setBallNum] = useState(2);
   const [SpeedNum, setSpeedNum] = useState(2);
+  const [myinfo, setMyInfo] = useState("");
+  const [other, setOther] = useState("");
   const [PadNum, setPadNum] = useState(2);
   const [client, setclient] = useState(-1);
   const gameset = new game([], 0, 0, new ballItem(0,0,0,0,0,0), []);
   const pad = [];
   const obstacle = [];
-  console.log("asd");
   const ball = new ballItem(0,0,0,0,0,0);
   let board_x;
   let board_y;
@@ -144,12 +145,15 @@ export default function GameWaiting() {
   };
   function gameSettingbutton(list :string, num:number, set: React.Dispatch<React.SetStateAction<number>>){
     function gameSettingNum(num :number){
-      if (num === 5)
-        set(1);
-      else if(num === 0)
-        set(4);
-      else 
-        set(num);
+      if (client === 0)
+      {
+        if (num === 5)
+          set(1);
+        else if(num === 0)
+          set(4);
+        else 
+          set(num);
+      }
     }
     return (
       <div className="game-setting-button">
@@ -219,14 +223,18 @@ export default function GameWaiting() {
     }
   }
   useEffect(() => {
+    socket.emit('whoamiGateway',"",response => {
+      setMyInfo(response);
+    });
     return () => {
       if (socket)
       {
-        socket.off('matching waiting');
-        socket.off('matchInfo');
-        socket.off('allReady');
+        socket.off('setupReply');
         socket.off('client');
-        socket.off('client');
+        socket.off("matching waiting");
+        socket.off("matchInfo");
+        socket.off("goodtogo");
+        socket.off("allReady");
       }
     }
   },[])
@@ -249,6 +257,9 @@ export default function GameWaiting() {
       });
       socket.on("matchInfo", data => {
         setState(true);
+        socket.emit('other', "", response => {
+          setOther(response);
+        });
         console.log("State",State);
       });
       socket.on("goodtogo", ()=>{
@@ -337,13 +348,14 @@ export default function GameWaiting() {
   return (
     <div className="game-waiting-container">
       <div className="player">
-        <div>daechoi</div>
+        <div>{myinfo}</div>
         <div>vs</div>
-        <div>
+        {!State && (<div>
           <div className="btn-loading btn-square">  
             <span className="loading loading-spinner"></span>
           </div>
-        </div>
+        </div>)}
+        {State && (<div>{other}</div>)}
       </div>
       <div className="game-setting">
         <div className="mini-map" ref={gameRef}>
@@ -364,6 +376,7 @@ export default function GameWaiting() {
       </div>
       </div>
       <div className="ready-button">
+        <div className="check-box"></div>
         <button
           className="btn-ready btn-outline btn-success"
           onClick={handleButtonClick}

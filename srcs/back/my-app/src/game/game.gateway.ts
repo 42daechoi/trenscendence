@@ -144,6 +144,13 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
 		const amihost = await this.gameService.amIhost(socket);
 		return (amihost);
 	}
+	@SubscribeMessage('other')
+	async idnetifyOther(
+		@ConnectedSocket() socket: Socket) {
+
+		const other = await this.gameService.other(socket);
+		return (other);
+	}
 
 	
 

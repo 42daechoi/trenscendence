@@ -263,6 +263,16 @@ export class GameService {
 		return (1);
 	}
 
+	async other(client: Socket){
+		const cur_game_id = await this.getCurGameRoomId(client);
+		if (cur_game_id === null)
+			return (-1);
+		const cur_game = this.gameSessions.get(cur_game_id);
+		if (client.id === cur_game.player1.nickname)
+			return cur_game.player2.nickname;
+		return cur_game.player1.nickname;
+	}
+
 	async echoRoom(client: Socket, server: Server, body: any){
 		const cur_game_id = await this.getCurGameRoomId(client);
 		server.to(cur_game_id).emit("setupReply", body);
