@@ -1,5 +1,5 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
-import io from 'socket.io-client';
+import React, { createContext, useContext, useEffect, useState } from "react";
+import io from "socket.io-client";
 
 const SocketContext = createContext();
 
@@ -19,9 +19,9 @@ function useSocketConnection() {
   const [socket, setSocket] = useState(null);
 
   useEffect(() => {
-    const newSocket = io('localhost:3001');
+    const newSocket = io("localhost:3001");
     setSocket(newSocket);
-    
+
     return () => {
       newSocket.disconnect();
     };

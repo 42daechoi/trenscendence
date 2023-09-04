@@ -544,7 +544,7 @@ function Chat(props) {
                     : true)
                 }
               />
-              <ProfileModal name={user.name + index} currUser="ohter" />
+              <ProfileModal name={user.name + index} currUser={index} />
             </li>
           ))}
         </ul>

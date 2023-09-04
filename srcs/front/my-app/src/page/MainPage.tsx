@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, KeyboardEvent, useEffect, useRef } from "react";
 
 import "../css/MainPage.css";
 import Profile from "../component/Profile";
@@ -7,20 +7,22 @@ import LeaderBoard from "../component/LeaderBoard";
 import FriendsList from "../component/FriendsList";
 import ChannelsList from "../component/ChannelsList";
 import MemoChat from "../component/Chat";
-import io from "socket.io-client";
-import axios from "axios";
-import { useSocket } from "../component/SocketContext";
 import { getWhoami } from "../utils/ApiRequest";
+import Chat from "../component/Chat";
+import { getUserByNickname } from "../utils/ApiRequest";
+import Modal from "../component/Modal";
+import { useSocket } from "../component/SocketContext";
+import { apiRequest } from "../utils/ApiRequest";
 
 export default function MainPage() {
   const [curPage, setCurPage] = useState("my_profile");
   const [channelList, setChannelList] = useState([]);
   const [memberList, setMemberList] = useState([]);
   const socket = useSocket();
+  const [myId, setMyId] = useState(0);
 
   useEffect(() => {
-    if (!socket)
-      return ;
+    if (!socket) return;
     socket.on("allinfo", (data) => {
       getWhoami()
         .then((response) => {
@@ -45,10 +47,18 @@ export default function MainPage() {
     };
   }, [socket]);
 
+  useEffect(() => {
+    apiRequest<any>("get", "http://localhost:3001/users/whoami").then(
+      (response) => {
+        setMyId(response.data.id);
+      }
+    );
+  }, []);
+
   const renderPage = () => {
     switch (curPage) {
       case "my_profile":
-        return <Profile currUser="gyyu" />;
+        return <Profile currUser={myId} isMe={true} />;
       case "game_waiting":
         return <GameWaiting />;
       case "leaderboard":
@@ -72,6 +82,22 @@ export default function MainPage() {
       setChannelsButtonClass("clicked-button");
     }
   };
+  const [currUser, setCurrUser] = useState(null); // 현재 유저 상태
+  const searchText = useRef(null);
+  function searchUser() {
+    getUserByNickname(searchText.current.value)
+      .then((result) => {
+        if (result.data) {
+          setModalOpen(true);
+          setCurrUser(result.data.id);
+        } else {
+          alert("해당 유저가 없습니다");
+        }
+      })
+      .catch((err) => {
+        alert("해당 유저가 없습니다");
+      });
+  }
 
   const renderSide = () => {
     switch (curSide) {
@@ -82,6 +108,16 @@ export default function MainPage() {
     }
   };
 
+  const handleKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+    if (event.keyCode === 13 && event.key === "Enter") {
+      searchUser();
+    }
+  };
+
+  const [isModalOpen, setModalOpen] = useState(false);
+  const closeModal = (): void => {
+    setModalOpen(false);
+  };
   return (
     <div className="background">
       <div className="drawer drawer-end">
@@ -143,8 +179,22 @@ export default function MainPage() {
               <div className="list">{renderSide()}</div>
             </div>
             <div className="search-side ">
-              <input type="text"></input>
-              <button>🔍</button>
+              <input
+                ref={searchText}
+                onKeyDown={handleKeyDown}
+                type="text"
+              ></input>
+              <button className="search-button" onClick={searchUser}>
+                🔍
+              </button>
+              {currUser && isModalOpen && (
+                <Modal
+                  closeModal={closeModal}
+                  ConfigureModal={() => (
+                    <Profile currUser={currUser} isMe={false} />
+                  )}
+                />
+              )}
             </div>
           </div>
         </div>
