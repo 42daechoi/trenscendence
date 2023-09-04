@@ -6,17 +6,46 @@ import GameWaiting from "../component/GameWaiting";
 import LeaderBoard from "../component/LeaderBoard";
 import FriendsList from "../component/FriendsList";
 import ChannelsList from "../component/ChannelsList";
+import MemoChat from "../component/Chat";
+import { getWhoami } from "../utils/ApiRequest";
 import Chat from "../component/Chat";
 import { getUserByNickname } from "../utils/ApiRequest";
 import Modal from "../component/Modal";
-
 import { useSocket } from "../component/SocketContext";
 import { apiRequest } from "../utils/ApiRequest";
 
 export default function MainPage() {
-  const socket = useSocket();
   const [curPage, setCurPage] = useState("my_profile");
+  const [channelList, setChannelList] = useState([]);
+  const [memberList, setMemberList] = useState([]);
+  const socket = useSocket();
   const [myId, setMyId] = useState(0);
+
+  useEffect(() => {
+    if (!socket) return;
+    socket.on("allinfo", (data) => {
+      getWhoami()
+        .then((response) => {
+          for (let i = 0; i < data.length; i++) {
+            for (let j = 0; j < data[i].users.length; j++) {
+              if (data[i].users[j] === response.data.id) {
+                if (JSON.stringify(data) != JSON.stringify(channelList))
+                  setChannelList(data);
+                if (JSON.stringify(data[i].users) != JSON.stringify(memberList))
+                  setMemberList(data[i].users);
+                return;
+              }
+            }
+          }
+        })
+        .catch((err) => {
+          console.log(err);
+        });
+    });
+    return () => {
+      socket.off("allinfo");
+    };
+  }, [socket]);
 
   useEffect(() => {
     apiRequest<any>("get", "http://localhost:3001/users/whoami").then(
@@ -24,7 +53,7 @@ export default function MainPage() {
         setMyId(response.data.id);
       }
     );
-  }, [socket]);
+  }, []);
 
   const renderPage = () => {
     switch (curPage) {
@@ -75,7 +104,7 @@ export default function MainPage() {
       case "friends_list":
         return <FriendsList />;
       case "channels_list":
-        return <ChannelsList />;
+        return <ChannelsList channelList={channelList} />;
     }
   };
 
@@ -115,13 +144,12 @@ export default function MainPage() {
             </button>
           </section>
           <section className="chat-container">
-            <Chat /*socket={socket}*/ />
+            <MemoChat memberList={memberList} />
           </section>
           <section className="swap-container">{renderPage()}</section>
           <label
             htmlFor="my-drawer-4"
             className="drawer-button btn btn-primary"
-            // 컴포넌트를 항상 오른쪽에 위치시킴
             style={{ position: "fixed", right: "0" }}
           >
             COMM<br></br>◀︎
