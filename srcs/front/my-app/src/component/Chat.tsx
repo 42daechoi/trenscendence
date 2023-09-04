@@ -74,17 +74,16 @@ function Chat(props) {
               profile: response.data.avatar,
               id: response.data.id,
               isChecked: false,
-            },  
+            },
             receiveData.msg,
             "chat chat-start"
           );
         });
-    })
+    });
   };
 
   useEffect(() => {
-    if (!socket)
-      return ;
+    if (!socket) return;
     init();
     console.log(socket);
     socket.on("op", (data) => {
@@ -97,7 +96,7 @@ function Chat(props) {
             id: 0,
             isChecked: false,
           },
-          '채팅방 관리자 권한을 부여 받으셨습니다.',
+          "채팅방 관리자 권한을 부여 받으셨습니다.",
           "chat chat-start"
         );
       }
@@ -112,7 +111,7 @@ function Chat(props) {
             id: 0,
             isChecked: false,
           },
-          '채널에서 강제 퇴장 당하셨습니다.',
+          "채널에서 강제 퇴장 당하셨습니다.",
           "chat chat-start"
         );
         addMessage(
@@ -151,7 +150,7 @@ function Chat(props) {
     const fetchData = async () => {
       const prevUsers = JSON.parse(JSON.stringify(users));
       const newUsers = [];
-  
+
       for (let i = 0; i < props.memberList.length; i++) {
         try {
           const response = await axios.get(
@@ -160,7 +159,7 @@ function Chat(props) {
           );
           const data = response.data;
           let isAdd = false;
-  
+
           for (let j = 0; j < prevUsers.length; j++) {
             if (prevUsers[j].id === data.id && prevUsers[j].isChecked) {
               newUsers.push({
@@ -173,7 +172,7 @@ function Chat(props) {
               break;
             }
           }
-  
+
           if (!isAdd) {
             newUsers.push({
               name: data.nickname,
@@ -186,17 +185,15 @@ function Chat(props) {
           console.log(error);
         }
       }
-  
+
       setUsers(newUsers);
     };
-  
+
     if (isSameList()) {
       return;
     }
     fetchData();
-  
   }, [props.memberList]);
-  
 
   // useEffect(() => {
   //   const fetchData = async (prevUsers) => {
@@ -231,7 +228,6 @@ function Chat(props) {
   //   fetchData(prevUsers);
   // }, [props.memberList]);
 
-
   const addMessage = (user: IUsers, text: string, className: string) => {
     const time = new Date().toLocaleTimeString();
     setMessages((prevMessages) => [
@@ -249,7 +245,7 @@ function Chat(props) {
       const data = await whoami();
       if (chat.substring(0, 7) === "/block ") {
         const target_name: string = chat.substring(7, chat.length);
-        socket.emit('mutelistupdate', data.id);
+        socket.emit("mutelistupdate", data.id);
         axios
           .get("http://localhost:3001/users/nickname/" + target_name, {
             withCredentials: true,
@@ -271,7 +267,7 @@ function Chat(props) {
         chat = "";
         return;
       } else if (chat.substring(0, 9) === "/unblock ") {
-        socket.emit('mutelistupdate', data.id);
+        socket.emit("mutelistupdate", data.id);
         const target_name: string = chat.substring(9, chat.length);
         axios
           .get("http://localhost:3001/users/nickname/" + target_name, {
@@ -451,7 +447,7 @@ function Chat(props) {
       const data = await whoami();
       for (let i: number = 0; i < users.length; i++) {
         if (users[i].isChecked)
-          socket.emit("op", { id: data.id, target: users[i].name });
+          socket.emit("op", { id: data.id, target: users[i].id });
       }
     } catch (error) {
       console.log(error);
@@ -492,8 +488,6 @@ function Chat(props) {
     setModalOpen(false);
   };
   const [chatConfigure, setChatConfigure] = useState("");
-
-
 
   return (
     <>
@@ -584,9 +578,12 @@ function Chat(props) {
               closeModal={closeModal}
               ConfigureModal={() =>
                 chatConfigure === "setting" ? (
-                  <SettingChat closeModal={closeModal}/>
+                  <SettingChat closeModal={closeModal} />
                 ) : (
-                  <CreateChat entryChannel={initMessages} closeModal={closeModal}/>
+                  <CreateChat
+                    entryChannel={initMessages}
+                    closeModal={closeModal}
+                  />
                 )
               }
             />
