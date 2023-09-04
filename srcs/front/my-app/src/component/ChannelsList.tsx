@@ -1,6 +1,9 @@
 import React, { useRef, useState } from "react";
 import Modal from "./Modal";
 import "../css/ChannelList.css";
+import { useSocket } from "../component/SocketContext"
+import { whoami } from "../utils/whoami";
+import { where } from "../utils/where";
 
 const initChannels: string[] = ["a", "b", "c"];
 
@@ -8,13 +11,32 @@ export default function ChannelsList() {
   // 초기 채널 설정
   const [channelList, setChannelList] = useState<string[]>(initChannels);
   // const [channelList, setChannelList] = useState<string[]>([]);
+  const socket = useSocket();
+  let password;
+
+  const joinChannel = async(password) => {
+    try {
+      const data = await whoami();
+      const channel = where(socket, "temp");
+
+      channel.then(channel => {
+        setModalOpen(true);
+        socket.emit('join', { nickname:data.nickname, channelname:channel.channelname, password:password });
+      }) .catch (error => {
+        console.log(error);
+      })
+
+    } catch (error) {
+      console.log(error);
+    }
+  }
 
   function addChannelList(channelName: string) {
     setChannelList([...channelList, channelName]);
   }
   const [isModalOpen, setModalOpen] = useState(false);
   const openModal = (): void => {
-    setModalOpen(true);
+    joinChannel(password);
   };
 
   const closeModal = (): void => {

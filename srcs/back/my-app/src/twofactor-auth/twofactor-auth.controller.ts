@@ -92,8 +92,13 @@ export class TwoFactorAuthController {
 	this.authService.setJwtCookie(res, full_token.accessToken);
 	this.authService.setJwtHeader(res, full_token.accessToken);
 //    res.setHeader("Set-Cookie", authCookie);
+<<<<<<< HEAD
 	res.json(user);
 	return ;
+=======
+      res.json(user);
+	    return ;
+>>>>>>> 0bba6f1346086f3a7006991fc084359ce8575540
   }
 
   private validateCode(user: User, twoFactorAuthCode: string) {

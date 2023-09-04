@@ -25,6 +25,26 @@ services:
       - tran_net
     volumes:
       - back_vol:/back/my-app
+<<<<<<< HEAD
+=======
+
+
+  temp_serv:
+    container_name: temp
+    build: ./temp_serv
+
+    restart: always
+    ports:
+      - "3004:3004"
+    networks:
+      - tran_net
+    volumes:
+      - temp_vol:/server
+    env_file:
+      - .env
+    depends_on:
+      - db
+>>>>>>> 0bba6f1346086f3a7006991fc084359ce8575540
 
   # PostgreSQL service
   db:
