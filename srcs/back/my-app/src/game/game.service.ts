@@ -181,7 +181,7 @@ export class GameService {
       .createQueryBuilder('gamePlayer')
       .leftJoinAndSelect('gamePlayer.user', 'user')
       .leftJoinAndSelect('gamePlayer.game', 'game')
-      .select(['gamePlayer.id', 'gamePlayer.score', 'gamePlayer.winner', 'user.name', 'game.id', 'game.date'])
+      .select(['gamePlayer.id', 'gamePlayer.score', 'gamePlayer.winner', 'user.intraId', 'game.id', 'game.date'])
       .orderBy('game.date', 'ASC')
       .where((qb) => {
         const subQuery = qb
@@ -197,6 +197,7 @@ export class GameService {
       .getMany();
 
     let results: Result[] = [];
+	console.log("gameStats", gameStats);
 
     for (let i: number = 0; i < gameStats.length - 1; i++) {
       if (gameStats[i].game.id == gameStats[i + 1].game.id) {
