@@ -63,7 +63,7 @@ function Chat(props) {
     socket.on("chat", (receiveData) => {
       if (!receiveData) return;
       axios
-        .get("http://localhost:3001/users/" + receiveData.id, {
+        .get("http://localhost:3001/users/id/" + receiveData.id, {
           withCredentials: true,
         })
         .then((response) => {
@@ -85,9 +85,9 @@ function Chat(props) {
   useEffect(() => {
     if (!socket) return;
     init();
-    console.log(socket);
     socket.on("op", (data) => {
-      if (data.flag) {
+      console.log(data);
+      if (data) {
         setMessages([]);
         addMessage(
           {
@@ -102,7 +102,8 @@ function Chat(props) {
       }
     });
     socket.on("kick", (data) => {
-      if (data.flag) {
+      console.log("kick");
+      if (data) {
         setMessages([]);
         addMessage(
           {
@@ -154,7 +155,7 @@ function Chat(props) {
       for (let i = 0; i < props.memberList.length; i++) {
         try {
           const response = await axios.get(
-            "http://localhost:3001/users/" + props.memberList[i],
+            "http://localhost:3001/users/id/" + props.memberList[i],
             { withCredentials: true }
           );
           const data = response.data;
@@ -353,7 +354,7 @@ function Chat(props) {
       } else if (chat.length) {
         where(socket, data.id)
           .then((channel) => {
-            console.log(channel);
+            // console.log(channel);
             socket.emit("chat", {
               id: data.id,
               target: channel.channelname,
@@ -393,7 +394,6 @@ function Chat(props) {
     if (event.keyCode === 13 && event.key === "Enter" && !event.shiftKey) {
       const target = event.target as HTMLInputElement;
       event.preventDefault();
-      console.log(target.value);
       chatEnter(target.value);
       target.value = "";
     }
@@ -434,7 +434,7 @@ function Chat(props) {
           id: 0,
           isChecked: false,
         },
-        "Home 채널에 참가하셨습니다.",
+        "$home 채널에 참가하셨습니다.",
         "chat chat-start"
       );
     } catch (error) {

@@ -309,7 +309,7 @@ export default function Profile(pn: ProfileNode) {
     useEffect(() => {
       getWhoami()
         .then((response) => {
-          console.log(response.data.profilePicture);
+          // console.log(response.data.profilePicture);
           if (pn.currUser === response.data.id) {
             if (!response.data.twoFA) setTwoFA("false");
             else setTwoFA("true");
@@ -324,32 +324,36 @@ export default function Profile(pn: ProfileNode) {
             // newInfo.avatar = buffer.toString("base64");
             // setInfo(newInfo);
           } else {
-            getId(String(pn.currUser))
-              .then((response) => {
-                if (info.nickname !== response.data.nickname)
-                  newInfo.nickname = response.data.nickname;
-                if (info.rank !== response.data.rank)
-                  newInfo.rank = response.data.rank;
-                newInfo.isMyProfile = false;
-                const bufferData: number[] = response.data.profilePicture.data;
-                const buffer: Buffer = Buffer.from(bufferData);
-                newInfo.avatar = buffer.toString("base64");
-                setInfo(newInfo);
-                getFriendList(pn.currUser)
-                  .then((res) => {
-                    res.data.forEach((element) => {
-                      if (element.id === pn.currUser) newInfo.isFriendly = true;
-                      // else newInfo.isFriendly = false;
+            if (pn.currUser !== 0) {
+              getId(String(pn.currUser))
+                .then((response) => {
+                  if (info.nickname !== response.data.nickname)
+                    newInfo.nickname = response.data.nickname;
+                  if (info.rank !== response.data.rank)
+                    newInfo.rank = response.data.rank;
+                  newInfo.isMyProfile = false;
+                  const bufferData: number[] =
+                    response.data.profilePicture.data;
+                  const buffer: Buffer = Buffer.from(bufferData);
+                  newInfo.avatar = buffer.toString("base64");
+                  setInfo(newInfo);
+                  getFriendList(pn.currUser)
+                    .then((res) => {
+                      res.data.forEach((element) => {
+                        if (element.id === pn.currUser)
+                          newInfo.isFriendly = true;
+                        // else newInfo.isFriendly = false;
+                      });
+                      setInfo(newInfo);
+                    })
+                    .catch((err) => {
+                      console.log(err);
                     });
-                    setInfo(newInfo);
-                  })
-                  .catch((err) => {
-                    console.log(err);
-                  });
-              })
-              .catch((err) => {
-                console.log(err);
-              });
+                })
+                .catch((err) => {
+                  console.log(err);
+                });
+            }
           }
         })
         .catch((err) => {
