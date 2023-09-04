@@ -1,30 +1,43 @@
 import React, { useState, useEffect } from "react";
-import { useSocket } from '../component/SocketContext';
+import { useSocket } from './SocketContext';
 import "../css/GameWaiting.css";
 import { useNavigate } from "react-router-dom";
+import { apiRequest } from "../utils/ApiRequest";
 
 export default function GameWaiting() {
   let player = 0;
   const socket = useSocket();
   const navigate = useNavigate();
   const [Ready, setReady] = useState(false);
+  const [State, setState] = useState(false);
   const handleButtonClick = () => {
     setReady(!Ready);
   };
   useEffect(() => {
-    socket.emit("wait", "");
-    socket.on("player", (data) =>{
-      console.log("data", data);
-      player = data;
-    });
-    socket.on("Start", () => {
-      console.log("a");
-      navigate('/game');
-    });
+  
+      if (socket)
+      {
+        socket.on("matching waiting", data => {
+          console.log(data);
+        });
+        socket.on("matchInfo", data => {
+          setState(true);
+          if (Ready)
+            socket.emit("ready", "");
+        });
+        socket.on("allReady",() => {
+          navigate("/game");
+        })
+        socket.emit("match", "");
+      }
+    ;
   }, [socket]);
   useEffect(() => {
-      console.log("ready");
-       socket.emit("Ready", Ready);
+      console.log(Ready);
+      if (Ready && State)
+        socket.emit("ready", Ready);
+      else if (!Ready && State)
+        socket.emit("unReady", Ready);
   }, [Ready]);
   return (
     <div className="game-waiting-container">
@@ -41,7 +54,7 @@ export default function GameWaiting() {
         <div className="form-control">
           <label className="label cursor-pointer">
             <span className="label-text">게임 어쩌구 선택 어쩌구</span>
-            <input type="checkbox" checked="checked" className="checkbox" />
+            {/* <input type="checkbox" checked={true} className="checkbox" /> */}
           </label>
         </div>
       </div>

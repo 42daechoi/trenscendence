@@ -1,15 +1,4 @@
-const express = require('express');
-const http = require('http');
-const { Server } = require('socket.io');
-const app = express();
-const server = http.createServer(app);
-const io = new Server(server, {
-  cors: {
-    origin: '*',
-    methods: ['GET', 'POST'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
-  },
-});
+
 function bounce_obstacle(obs) {
   for (let i = 0; i < obs.length; i++) {
     if (ball.temp != i)
@@ -91,11 +80,15 @@ function pong() {
   bounce();
   bounce_obstacle(obstacle);
   bounce_obstacle(pad);
-  io.emit('draw', ball);
 }
 
 class game {
-  constructor(pad, board_x, board_y, ball, obs){
+  pad : padItem[];
+  board_x :number;
+  board_y:number;
+  ball :ballItem;
+  obs :htmlItem[];
+  constructor(pad : padItem[], board_x :number, board_y:number, ball :ballItem, obs :htmlItem[]){
     this.pad = pad;
     this.board_x = board_x;
     this.board_y = board_y;
@@ -104,13 +97,17 @@ class game {
   }
 } //gameset;
 class htmlItem {
-  constructor(x, y, width, height) {
+  x :number;
+  y :number;
+  width :number;
+  height :number;
+  constructor(x :number, y :number, width :number, height :number) {
     this.x = x;
     this.y = y;
     this.width = width;
     this.height = height;
   }
-  isEqual(other) {
+  isEqual(other : htmlItem) {
     this.x = other.x;
     this.y = other.y;
     this.width = other.width;
@@ -118,6 +115,14 @@ class htmlItem {
   }
 } //장애물
 class ballItem {
+  x :number;
+  y :number;
+  dx :number;
+  dy :number;
+  v :number;
+  z :number;
+  r :number;
+  temp :number;
   constructor(){
     this.x = 0;
     this.y = 0;
@@ -147,6 +152,12 @@ class ballItem {
   }
 }//공
 class padItem {
+  x :number;
+  y :number;
+  width :number;
+  height :number;
+  color :number;
+  radi :number;
   constructor(x, y, width, height, color, radi) {
     this.x = x;
     this.y = y;
@@ -164,97 +175,54 @@ class padItem {
     this.radi = other.radi;
   }
 }//paddle
-const gameset = new game();
 const ball = new ballItem;
-let pad = [];
-let obstacle = [];
-let board_x;
-let board_y;
+let pad : padItem[] = [];
+let obstacle :htmlItem[] = [];
+let board_x :number;
+let board_y :number;
 
-let i = 0;
-let j = 0;
+let i :number = 0;
+let j :number = 0;
 // 클라이언트와 연결이 수립되었을 때 처리
-function updatedirection(ball) {
+function updatedirection(ball : ballItem) {
   ball.dy = 0.5 * Math.random() + 0.5;
   ball.dx = 1;
   ball.dx *= Math.random() < 0.5 ? -1 : 1;
   ball.dy *= Math.random() < 0.5 ? -1 : 1;
 }
-class client{
-  constructor(id, pad){
-    this.id = id;
-    this.pad = pad;
-    this.ready = false;
-  }
-}
 
-const user = [];
-io.on('connection', (socket) => {
-  console.log('Client connected: ', socket.id);
-  i++;
-  console.log(i);
-  socket.on('wait', () => {
-    user.push(new client(socket.id, j));
-    io.to(socket.id).emit("player", j);
-    j++;
-  });
-  socket.on('Ready', data => { 
-  const find = user.find(user => user.id === socket.id);
-  find.ready = data;
-  console.log("wait", user);
-  for(let i = 0; i < 2; i++)
-  {
-    if (user[i].ready === false)
-      break;
-    if (i === 1)
-      io.emit("Start", "");
-      io.to(user[0].id).emit("client", 0);
-      io.to(user[1].id).emit("client", 1);
-  }
-  });
-  socket.on('gameset', (data) =>{
+
     console.log(data);
     ball.isEqual(data.ball);
     board_x = data.board_x;
     board_y = data.board_y;
-    pad.push(new padItem(0,0,0,0,0,0));
-    pad.push(new padItem(0,0,0,0,0,0));
-    pad[0].isEqual(data.pad[0]);
-    pad[1].isEqual(data.pad[1]);
-    obstacle.push(new htmlItem(0,0,0,0));
-    obstacle.push(new htmlItem(0,0,0,0));
-    obstacle[0].isEqual(data.obs[0]);
-    obstacle[1].isEqual(data.obs[1]);
+    for(let i = 0 ; i < 2; i++)
+    {
+        pad.push(new padItem(0,0,0,0,0,0));
+        pad[i].isEqual(data.pad[i]);
+    }
+    for(let i :number = 0 ; i <  obs.length; i++)
+    {
+        pad.push(new htmlItem(0,0,0,0,0,0));
+        pad[i].isEqual(data.obs[i]);
+    }
     updatedirection(ball);
     console.log(pad);
     console.log(obstacle);
     console.log(ball);
 
-    io.emit('ball', ball);
+    // io.emit('ball', ball);
     
     const interval = setInterval(() => {
       pong();
-    }, 1000);
-    
-  });
-  socket.on('pad1', (data) => {
-    io.emit('pad1', data);
-  });
-  socket.on('pad2', (data) => {
-    io.emit('pad2', data);
-  });
-  socket.on('disconnect', () => {
-    i--;
-    console.log('Client disconnected: ', socket.id);
-    console.log(i);
-    const find = user.findIndex(user => user.id === socket.id);
-    user.splice(find, 1);
-    j = 0;
-  });
-});
+      // io.emit('draw', ball);
+    }, 20);
 
-
-const port = 3004;
-server.listen(port, () => {
-  console.log(`Server is running on http://localhost:${port}`);
-});
+  // socket.on('pad1', (data) => {
+  //   pad[0].isEqual(data);
+  //   io.emit('pad1', data);
+  // });
+  // socket.on('pad2', (data) => {
+  //   pad[1].isEqual(data);
+  //   io.emit('pad2', data);
+  // });
