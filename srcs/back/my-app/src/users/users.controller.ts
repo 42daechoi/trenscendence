@@ -114,11 +114,10 @@ export class UsersController {
 
     let this_profilePicture;
 
-    if (contentType === 'application/json') {
+    if (contentType === 'application/json' && body.profilePicture) {
       this_profilePicture = Buffer.from(body.profilePicture);
       return this.usersService.update(parseInt(id), {
         profilePicture: this_profilePicture,
-        ...body,
       });
     }
 
