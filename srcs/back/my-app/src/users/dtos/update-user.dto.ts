@@ -60,5 +60,5 @@ export class UpdateUserDto {
   gamePlayer: GamePlayer;
 
   @IsOptional()
-  profilePicture: Buffer | string;
+  profilePicture: Buffer;
 }

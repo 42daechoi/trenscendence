@@ -9,10 +9,11 @@ import { User, GamePlayer, Games } from 'src/typeorm';
 import { Server, Socket, Namespace } from 'socket.io';
 import { ConnectedSocket } from '@nestjs/websockets';
 import { Repository } from 'typeorm';
-import  {updatedirection, Game, Player1, Player2, PlayerStatus, PadItem, Ball, Obstacle, Collidable, GameStatus}  from './classes/game.class';
+import  {Game, Player1, Player2, PlayerStatus, PadItem, Ball, Obstacle, Collidable, GameStatus}  from './classes/game.class';
 import { UserStatus } from 'src/typeorm/user.entity';
 import { CreateGamePlayerDto } from './dtos/create-gamePlayer.dto';
 import { Result } from './interfaces/game.interface';
+import { response } from 'express';
 
 
 @Injectable()
@@ -77,8 +78,9 @@ export class GameService {
 		gameInfo.gameService = this;
 		client1.join(gameInfo.gameID);
 		client2.join(gameInfo.gameID);
+		nsp.to(user1.socketId).emit('client', 0);
+		nsp.to(user2.socketId).emit('client', 1);
 		nsp.to(gameInfo.gameID).emit('matchInfo', {gameId: gameInfo.gameID, host : user1, guest: user2});
-
 		/* add that game info to the gameSessions */
 		this.gameSessions.set(gameInfo.gameID, gameInfo);
 		this.logger.log("created game session, size : " + this.gameSessions.size);
@@ -108,6 +110,7 @@ export class GameService {
 			this.queue.get(Array.from(this.queue.keys())[0]),
 			this.queue.get(Array.from(this.queue.keys())[1]),
 			nsp,
+
 		);
 		this.queue.delete(player1.id);
 		this.queue.delete(player2.id);
@@ -120,6 +123,7 @@ export class GameService {
 	async updateGameSettingInfo(body : any){
 		const cur_game : Game = this.gameSessions.get(body.gameId);
 		//update gameInfo
+
 
 		//emit to two players
 	}
@@ -146,8 +150,11 @@ export class GameService {
 
 	async userOutNsp(client: Socket){
 		this.logger.log("user has out of game " + client.id);
-		this.usersSockets.delete(client.id);
-		await this.updateUserStatusOnline(client);
+		const cur_game_id = await this.getCurGameRoomId(client);
+		const cur_game = this.gameSessions.get(cur_game_id);
+			this.usersSockets.delete(client.id);
+			await this.updateUserStatusOnline(client);
+
 	}
 
 	async updateGameRoomInfo(client: Socket, body: any){
@@ -155,6 +162,7 @@ export class GameService {
 	}
 
 	async updateUserStatusInGame(client: Socket){
+
 		const user : User = await this.usersService.findUserBySocketId(client.id);
 		if (!user)
 			return ;
@@ -173,7 +181,7 @@ export class GameService {
       .createQueryBuilder('gamePlayer')
       .leftJoinAndSelect('gamePlayer.user', 'user')
       .leftJoinAndSelect('gamePlayer.game', 'game')
-      .select(['gamePlayer.id', 'gamePlayer.score', 'gamePlayer.winner', 'user.name', 'game.id', 'game.date'])
+      .select(['gamePlayer.id', 'gamePlayer.score', 'gamePlayer.winner', 'user.intraId', 'game.id', 'game.date'])
       .orderBy('game.date', 'ASC')
       .where((qb) => {
         const subQuery = qb
@@ -189,14 +197,15 @@ export class GameService {
       .getMany();
 
     let results: Result[] = [];
+	console.log("gameStats", gameStats);
 
     for (let i: number = 0; i < gameStats.length - 1; i++) {
       if (gameStats[i].game.id == gameStats[i + 1].game.id) {
         let result = {
           key: i,
           date: gameStats[i].game.date.toDateString(),
-          winner: gameStats[i].winner ? gameStats[i].user.name : gameStats[i + 1].user.name,
-          loser: gameStats[i].winner ? gameStats[i + 1].user.name : gameStats[i].user.name,
+          winner: gameStats[i].winner ? gameStats[i].user.intraId : gameStats[i + 1].user.intraId,
+          loser: gameStats[i].winner ? gameStats[i + 1].user.intraId : gameStats[i].user.intraId,
           scoreWinner: gameStats[i].winner ? gameStats[i].score : gameStats[i + 1].score,
           scoreLoser: gameStats[i].winner ? gameStats[i + 1].score : gameStats[i].score,
         };
@@ -244,6 +253,16 @@ export class GameService {
 	//#############################################################
 	// ##########           AFTER MATCH UP            #############
 	//#############################################################
+
+	async amIhost(client: Socket){
+		const cur_game_id = await this.getCurGameRoomId(client);
+		if (cur_game_id === null)
+			return (-1);
+		if (client.id === cur_game_id)
+		return (0);
+		return (1);
+	}
+
 	async echoRoom(client: Socket, server: Server, body: any){
 		const cur_game_id = await this.getCurGameRoomId(client);
 		server.to(cur_game_id).emit("setupReply", body);
@@ -258,6 +277,7 @@ export class GameService {
 			server.to(client.id).emit("setupReply", body);
 //		client.emit('setupReply', body);
 	}
+
 
 	async playerReady(client: Socket, nsp : Namespace){
 		const cur_game_id = await this.getCurGameRoomId(client);
@@ -274,11 +294,6 @@ export class GameService {
 			this.logger.log("game is good to go!");
 			cur_game.gameStatus = GameStatus.AllReady;
 			nsp.to(cur_game_id).emit("allReady");
-			const to_host : Player1 = cur_game.host;
-			const to_guest : Player2 = cur_game.guest;
-			nsp.to(to_host.socketID).emit("client", 0);
-			nsp.to(to_guest.socketID).emit("client", 1);
-			nsp.to(cur_game_id).emit("gameset");
 		}
 	}
 
@@ -298,8 +313,12 @@ export class GameService {
 		}
 		cur_player.playerStatus = PlayerStatus.Waiting;
 	}
+	async socketGetter(socketId: string){
+		const returnSocket : Socket = this.usersSockets.get(socketId);
+		return (returnSocket);
+	}
 
-	async gameStart(client: Socket, nsp: Namespace, game_info : any){
+	async gameSetting(client: Socket, nsp: Namespace, game_info : any){
 		const cur_game_id = await this.getCurGameRoomId(client);
 		const cur_game = this.gameSessions.get(cur_game_id);
 		const host : Player2 = cur_game.host;
@@ -309,10 +328,11 @@ export class GameService {
 		cur_game.gameStatus = GameStatus.Playing;
 		guest.playerStatus = PlayerStatus.Playing;
 		host.playerStatus = PlayerStatus.Playing;
-
-		const guestSocket : Socket = this.usersSockets.get(guest.socketID); 
-		const hostSocket : Socket = this.usersSockets.get(host.socketID); 
-
+		console.log(game_info);
+		//const guestSocket : Socket = await this.socketGetter(guest.socketID); 
+		//const hostSocket : Socket = await this.socketGetter(host.socketID);
+		const guestSocket : Socket = nsp.sockets.get(guest.socketID); 
+		const hostSocket : Socket = nsp.sockets.get(host.socketID);  
 		//flag as in game
 		await this.updateUserStatusInGame(guestSocket);
 		await this.updateUserStatusInGame(hostSocket);
@@ -321,6 +341,7 @@ export class GameService {
 		//set up game resources
 		cur_game.ball.isEqual(game_info.ball);
 		cur_game.board_x = game_info.board_x;
+
 		cur_game.board_y = game_info.board_y;
 
 		//set up pad resources
@@ -336,17 +357,43 @@ export class GameService {
 			cur_game.obstacles[i].isEqual(game_info.obs[i]);
 		}
 
-
+		console.log(cur_game.obstacles);
+		console.log(cur_game.ball);
+		console.log(cur_game.pad);
 		//update ball direction.
-		updatedirection(cur_game.ball);
+		cur_game.updatedirection(cur_game.ball);
+		console.log("setting");
+		nsp.to(cur_game_id).emit("goodtogo", "");
+	
 
 		//draw game elements by 20ms
+	}
+
+	async gameWait(client: Socket, nsp: Namespace){
+		const cur_game_id = await this.getCurGameRoomId(client);
+		const cur_game = this.gameSessions.get(cur_game_id);
+
+
+		nsp.to(cur_game_id).emit('gameSetting', { pad : cur_game.pad, ball : cur_game.ball, obs : cur_game.obstacles, board_x : cur_game.board_x, board_y: cur_game.board_y});
+		//draw game elements by 20ms
+		let count = 2;
+		cur_game.count_intervalId = setInterval(()=>{
+			nsp.to(cur_game_id).emit('count', count);
+			count--;	
+		},1000);
+	}
+
+	async gameStart(client: Socket, nsp: Namespace){
+		console.log("start");
+		
+		const cur_game_id = await this.getCurGameRoomId(client);
+		const cur_game = this.gameSessions.get(cur_game_id);
+		clearInterval(cur_game.count_intervalId);
 		cur_game.intervalId = setInterval(() => {
 			cur_game.pong(nsp);
 			nsp.to(cur_game_id).emit('draw', cur_game.ball);
 		}, 20);
 	}
-
 
 	
 	//#############################################################
@@ -406,18 +453,21 @@ export class GameService {
 		const guest : Player2 = cur_game.guest;
 		const host : Player1  = cur_game.host;
 		const guestSocket : Socket = this.usersSockets.get(guest.socketID); 
-		const hostSocket : Socket = this.usersSockets.get(host.socketID);
+		const hostSocket : Socket = this.usersSockets.get(host.socketID);		
+		//const guestSocket : Socket = this.usersSockets.get(guest.socketID); 
+		//const hostSocket : Socket = this.usersSockets.get(host.socketID);
 
-		await this.updateUserStatusOnline(guestSocket);
-		await this.updateUserStatusOnline(hostSocket);
+		//await this.updateUserStatusOnline(guestSocket);
+		//await this.updateUserStatusOnline(hostSocket);
 
 		//disjoin guest socket
 		guestSocket.leave(cur_game_id);
 
-		this.logger.log("destoyed game : " + JSON.stringify(this.gameSessions.get(cur_game_id)));
+		//this.logger.log("destoyed game : " + JSON.stringify(this.gameSessions.get(cur_game_id)));
 
+		await this.recordGame(cur_game);
 		//destory gameSession
-		this.gameSessions.delete(cur_game_id);
+
 	}
 
 
@@ -425,11 +475,10 @@ export class GameService {
 		//if in queue, pop out queue
 		await this.popQueue(client);
 
+
 		//if in game, destroy game
 		await this.destroyGame(client);
 
-		//leave namespace
-		await this.userOutNsp(client);
 	}
 
 
@@ -450,6 +499,7 @@ export class GameService {
 		const cur_game : Game = gameSession;
 		const loserPlayer = cur_game.gameLoser;
 		const winnerPlayer = cur_game.gameWinner;
+
       this.createGame().then(async (game) => {
         const player1Dto: CreateGamePlayerDto = {
           user: await this.userRepository.findOneBy({
@@ -476,6 +526,9 @@ export class GameService {
 	  	//update user DB
 		await this.loserUpdate(loserPlayer);
 		await this.winnerUpdate(winnerPlayer);
+
+		this.gameSessions.delete(cur_game.gameID);
+		
 	}
 
 

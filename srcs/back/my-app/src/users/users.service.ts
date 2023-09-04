@@ -85,6 +85,13 @@ export class UsersService {
       user.ft_pictureUrl = attrs.ft_pictureUrl;
       delete attrs.profilePicture;
     }
+    if (attrs.profilePicture) {
+      console.log('#########       PROFILE BUFFER INPUT        #########');
+      console.log(attrs.profilePicture.length);
+      const buffer = Buffer.from(attrs.profilePicture);
+      user.profilePicture = buffer;
+      console.log(user.profilePicture);
+    }
     // ######## IMPORTANT ########
     console.log('======before====');
     console.log(user.profilePicture);

@@ -1,6 +1,7 @@
 import axios, { AxiosResponse } from "axios";
 import { type } from "os";
 import { whoami } from "./whoami";
+import { StringLiteral } from "typescript";
 
 const serverUrl: string = "http://localhost:3001";
 const tagUser: string = "users";
@@ -39,7 +40,7 @@ export function getUserByNickname<T = any>(
 
 export function patchId<T = any>(
   id: number,
-  body: { nickname?: string; profilePicture?: Buffer | string | ArrayBuffer }
+  body: { nickname?: string; profilePicture?: profilePicture }
 ): Promise<AxiosResponse<T>> {
   return apiRequest("patch", `${serverUrl}/${tagUser}/${String(id)}`, body);
 }
@@ -80,34 +81,40 @@ export function modifyNickname(name: string) {
     });
 }
 
+type profilePicture = {
+  data: ArrayBuffer;
+};
+
 export function modifyAvatar(img: ArrayBuffer) {
   // getWhoami()
   //   .then((res) => {
-  //     axios.patch(
-  //       `http://localhost:3001/users/${res.data.id}`,
-  //       { profilePicture: img },
-  //       {
-  //         headers: {
-  //           "Content-Type": "application/octet-stream",
-  //         },
-  //       }
-  //     );
+  //     axios.patch("/some/api/endpoint", {
+  //       profilePicture: Array.from(arrayBuffer),
+  //     });
+  //     const formData = new FormData();
+  //     axios.patch("/some/api/endpoint", {
+  //       profilePicture: Array.from(arrayBuffer),
+  //     });
   //   })
   //   .catch((err) => {});
-  getWhoami()
-    .then((res) => {
-      patchId(res.data.id, { profilePicture: img })
-        .then((response) => {
-          console.log(response);
-          alert("아바타 수정 성공");
-        })
-        .catch((error) => {
-          if (error.response.data.statusCode) alert("아바타 수정 실패");
-        });
-    })
-    .catch((error) => {
-      console.log(error);
-    });
+  // getWhoami()
+  //   .then((res) => {
+  //     patchId(res.data.id, {
+  //       profilePicture: {
+  //         data: img,
+  //       },
+  //     })
+  //       .then((response) => {
+  //         console.log(response);
+  //         alert("아바타 수정 성공");
+  //       })
+  //       .catch((error) => {
+  //         if (error.response.data.statusCode) alert("아바타 수정 실패");
+  //       });
+  //   })
+  //   .catch((error) => {
+  //     console.log(error);
+  //   });
 }
 
 export function getAllUsers<T = any>(): Promise<AxiosResponse<T>> {

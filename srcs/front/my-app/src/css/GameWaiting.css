@@ -27,17 +27,82 @@
 	width: 100%;
 	height: 80%;
 	border-bottom: 2px solid #3c3c3c;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+}
+
+.mini-map {
+	width  : 715px;
+	height : 441px;
+	min-width: 715px;
+	min-height: 441px;
+	position: relative;
+	border: 5px white solid;
+}
+.game-setting-list{
+	width : 100%;
+	height : 25%;
+	position: relative;
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+
+}
+.game-setting-button{
+	display : flex;
+	flex-direction: row;
+	position: relative;
+	color : white;
 }
 
 .ready-button {
 	width: 100%;
 	height: 50px;
-	color: white;
 	text-align: center;
 	justify-content: center;
 	align-items: center;
 	font-size: 30px;
 	padding: 20px 20px 20px 20px;
+}
+
+.arrow {
+	border: solid white;
+	border-width: 0 3px 3px 0;
+	padding: 3px;
+}
+
+.key{
+	width: 50%;
+	height: 100%;
+	display: flex;
+	text-align: center;
+	justify-content: center;
+	align-items: center;
+	position: relative;
+
+}
+.value {
+	width: 30%;
+	height: 100%;
+	display: flex;
+	text-align: center;
+	justify-content: center;
+	align-items: center;
+	position: relative;
+
+}
+.right {
+	right : 35%;
+	transform: rotate(-45deg);
+	-webkit-transform: rotate(-45deg);
+	position: absolute;
+}
+  
+.left {
+	left : 35%;
+	transform: rotate(135deg);
+	-webkit-transform: rotate(135deg);
+	position: absolute;
 }
 
 .ready-button .btn-ready {

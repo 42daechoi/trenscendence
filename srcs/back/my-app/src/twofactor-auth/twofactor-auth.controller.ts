@@ -95,6 +95,8 @@ export class TwoFactorAuthController {
     //    res.setHeader("Set-Cookie", authCookie);
     res.json(user);
     return;
+	res.json(user);
+	return ;
   }
 
   private validateCode(user: User, twoFactorAuthCode: string) {

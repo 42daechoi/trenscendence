@@ -20,12 +20,6 @@ export interface Collidable{
 	height: number;
 }
 
-export function updatedirection(ball : Ball) {
-	ball.dy = 0.5 * Math.random() + 0.5;
-	ball.dx = 1;
-	ball.dx *= Math.random() < 0.5 ? -1 : 1;
-	ball.dy *= Math.random() < 0.5 ? -1 : 1;
-  }
 
 export class PadItem {
   x: number;
@@ -44,7 +38,7 @@ export class PadItem {
     this.radi = radi;
   }
 
-  isEqual(other: PadItem) {
+  isEqual(other: any) {
     this.x = other.x;
     this.y = other.y;
     this.width = other.width;
@@ -73,7 +67,7 @@ export class Ball {
 		this.temp = -1;
 	}
 	
-	isEqual(other: Ball) {
+	isEqual(other: any) {
 		this.x = other.x;
 		this.y = other.y;
 		this.dx = other.dx;
@@ -187,8 +181,17 @@ export class Game {
 	board_x : number;
 	board_y : number;
 	intervalId : NodeJS.Timeout;
+	count_intervalId : NodeJS.Timeout;
 	gameService: GameService;
 	
+	updatedirection(ball : Ball) {
+		ball.x = this.board_x / 2;
+		ball.y = this.board_y / 2;
+		ball.dy = 0.5 * Math.random() + 0.5;
+		ball.dx = 1;
+		ball.dx *= Math.random() < 0.5 ? -1 : 1;
+		ball.dy *= Math.random() < 0.5 ? -1 : 1;
+	  }
 
 	constructor(player1 : Player1, player2 : Player2){
 		this.ball = new Ball();
@@ -207,15 +210,18 @@ export class Game {
 		if (ball.x + ball.r > this.board_x) {
 			ball.x = this.board_x / 2;
 			ball.y = this.board_y / 2;
-			updatedirection(this.ball);
+			
+			this.updatedirection(this.ball);
 			this.player2.score++;
-			if (this.player2.score >= 3){
+			if (this.player2.score >= 1){
+				console.log(this.player2.score);
 				clearInterval(this.intervalId);
 				nsp.to(this.gameID).emit('guestWin',"");
 				this.gameStatus = GameStatus.Waiting;
 				const loser : Socket = nsp.sockets.get(this.host.socketID);
 				this.gameService.destroyGame(loser);
-				this.gameService.recordGame(this);
+				// this.gameService.recordGame(this);
+				
 				return ;
 			}
 		  nsp.to(this.gameID).emit("guestScore", ball);
@@ -223,17 +229,20 @@ export class Game {
 		} else if (ball.x - ball.r < 0) {
 			ball.x = this.board_x / 2;
 			ball.y = this.board_y / 2;
-			updatedirection(this.ball);
+			this.updatedirection(this.ball);
+			
 			this.player1.score++;
-			if (this.player1.score >= 3){
+			if (this.player1.score >= 1){
 				clearInterval(this.intervalId);
 				nsp.to(this.gameID).emit('hostWin',"");
 				this.gameStatus = GameStatus.Waiting;
+				console.log(this.player1.score);
 				const loser : Socket = nsp.sockets.get(this.guest.socketID);
 				this.gameService.destroyGame(loser);
-				this.gameService.recordGame(this);
+				// this.gameService.recordGame(this);
 				return ;
 			}
+
 		  nsp.to(this.gameID).emit("hostScore", ball);
 		  // player2_win();
 		} else if (ball.y + ball.r > this.board_y|| ball.y - ball.r < 0) {

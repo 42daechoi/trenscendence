@@ -2,9 +2,22 @@ import React, { useRef, useEffect } from "react";
 import "../css/GamePage.css";
 import { useSocket } from '../component/SocketContext';
 import { useNavigate } from "react-router-dom";
-
+import { ballItem, padItem, htmlItem, game} from "../utils/Game.Class"
 
 export default function GamePage() {
+  function socketEventoff(){
+    socket.off('hostScore');
+    socket.off('client');
+    socket.off('gameset');
+    socket.off("hostWin");
+    socket.off("guestWin");
+    socket.off('guestScore');
+    socket.off('pad1');
+    socket.off('ball');
+    socket.off('draw');
+    socket.off('pad2');
+    socket.off('count');
+  }
   const navigate = useNavigate();
   function host_win() {
     let score_1 = document.getElementById("score_2");
@@ -21,84 +34,9 @@ export default function GamePage() {
     score_2.innerText = score;
   }
   let client = -1;
-  class htmlItem {
-    constructor(x, y, width, height) {
-      this.x = x;
-      this.y = y;
-      this.width = width;
-      this.height = height;
-    }
-    isEqual(other) {
-      this.x = other.x;
-      this.y = other.y;
-      this.width = other.width;
-      this.height = other.height;
-    }
-  }
-
-  class ballItem {
-    constructor(){
-      this.x = 0;
-      this.y = 0;
-      this.dx = 0;
-      this.dy = 0;
-      this.v = 0;
-      this.r = 0;
-      this.temp = -1;
-    }
-    isEqual(other){
-      this.x = other.x;
-      this.y = other.y;
-      this.dx = other.dx;
-      this.dy = other.dy;
-      this.v = other.v;
-      this.r = other.r;
-      this.temp = other.temp;
-    }
-    init(x, y, dx ,dy, v,r,temp){
-      this.x = x;
-      this.y = y;
-      this.dx = dx;
-      this.dy = dy;
-      this.v = v;
-      this.r = r;
-      this.temp = temp;
-    }
-  }
-  class padItem {
-    constructor(x, y, width, height, color, radi) {
-      this.x = x;
-      this.y = y;
-      this.width = width;
-      this.height = height;
-      this.color = color;
-      this.radi = parseInt(radi);
-    }
-    isEqual(other) {
-      this.x = other.x;
-      this.y = other.y;
-      this.width = other.width;
-      this.height = other.height;
-      this.color = other.color;
-      this.radi = other.radi;
-    }
-  }
-  class game {
-    constructor(pad, board_x, board_y, ball, obs){
-      this.pad = pad;
-      this.board_x = board_x;
-      this.board_y = board_y;
-      this.ball = ball;
-      this.obs = obs;
-    }
-  }
-  let gameset = new game();
   let ball = new ballItem();
   const canvasRef = useRef(null);
   const gameRef = useRef(null);
-  const obsRef = useRef(null);
-  const padRef1 = useRef(null);
-  const padRef2 = useRef(null);
   let pad = [];
   let obstacle = [];
   let board_x;
@@ -110,7 +48,6 @@ export default function GamePage() {
   let move_px = 2;
   
   function draw() {
-    console.log("asdasdasd");
     ctx.clearRect(0, 0, board_x, board_y);
     ctx.beginPath();
     ctx.arc(ball.x, ball.y, ball.r, 0, Math.PI * 2);
@@ -135,40 +72,78 @@ export default function GamePage() {
     }
     ctx.closePath();
   }
-  
-useEffect(() => {
-  if (socket)
-  {
-    const handlKeyDown = (e) => {
+
+  useEffect(() => {
+    const handlKeyup = (e) => {
       if (e.key == "ArrowUp") {
-        e.preventDefault();
-        a += 1;
-        pad[client].y -= move_px + Math.log(a) / Math.log(1.05);
-        if (pad[client].y < 0) pad[client].y = 0;
-        if (client === 0)
-          socket.emit('pad1', pad[client]);
-        else if (client === 1)
-          socket.emit('pad2', pad[client]);
+        a = 3;
       }
       if (e.key == "ArrowDown") {
-        e.preventDefault();
-        a += 1;
-        pad[client].y += move_px + Math.log(a) / Math.log(1.05);
-        if (pad[client].y > board_y - pad[client].height)
-          pad[client].y = board_y - pad[client].height;
-        if (client === 0)
-          socket.emit('pad1', pad[client]);
-        else if (client === 1)
-          socket.emit('pad2', pad[client]);
+        a = 3;
       }
     };
+    // Canvas에 그릴 내용을 작성하세요.
+    const canvas = canvasRef.current;
+
+    ctx = canvas.getContext("2d");
+
+
+    if (gameRef.current) {
+      gameRef.current.addEventListener("keyup", handlKeyup);
+    }
+
+    return () => {
+      if (gameRef.current) {
+        gameRef.current.removeEventListener("keyup", handlKeyup);
+        console.log("asd");
+      }
+      socketEventoff();
+    };
+  }, []);
+useEffect(() => {
+  const handlKeyDown = (e) => {
+    if (e.key == "ArrowUp") {
+      e.preventDefault();
+      a += 1;
+      console.log("client hand ", client)
+      pad[client].y -= move_px + Math.log(a) / Math.log(1.05);
+      if (pad[client].y < 0) pad[client].y = 0;
+      if (client === 0 && socket)
+          socket.emit('pad1', pad[client]);
+      else if (client === 1 && socket)
+          socket.emit('pad2', pad[client]);
+    }
+    if (e.key == "ArrowDown") {
+      e.preventDefault();
+      a += 1;
+      pad[client].y += move_px + Math.log(a) / Math.log(1.05);
+      if (pad[client].y > board_y - pad[client].height)
+        pad[client].y = board_y - pad[client].height;
+      if (client === 0 && socket)
+      
+        socket.emit('pad1', pad[client]);
+      else if (client === 1 && socket)
+        socket.emit('pad2', pad[client]);
+    }
+  };
+  if (socket)
+  {
+      socket.on('count', (data, callback) => {
+        console.log("data", data);
+        let count = document.getElementById("count");
+        if (data === 0)
+        {
+          if (client === 0)
+          {
+            socket.emit("gameStart", "");
+          }
+          count.hidden = true;
+        }
+        count.innerText = data;
+      });
       socket.on('client', data => {
         console.log("client", data);
         client = data;
-      });
-      socket.on('gameset', ()=>{
-        if (client === 0)
-          socket.emit('gameStart', gameset);
       });
       socket.on('hostScore', (data)=>{
         host_win();
@@ -193,17 +168,51 @@ useEffect(() => {
         ball.dx = data.dx;
         ball.dy = data.dy;
       });
-      socket.on('draw', data => {
-        ball.isEqual(data);
-        draw();
-      })
+      socket.on('gameSetting', data => {
+        console.log("setting", data);
+        for(let i = 0; i < data.pad.length; i++)
+        {
+          pad.push(new padItem(data.pad[i].x,
+            data.pad[i].y,
+            data.pad[i].width,
+            data.pad[i].height,
+            data.pad[i].color,
+            data.pad[i].radi)
+            );
+        }
+        ball.isEqual(data.ball);
+        board_x = data.board_x;
+        board_y = data.board_y;
+        if (canvasRef.current)
+        {
+          canvasRef.current.width = data.board_x;
+          canvasRef.current.height = data.board_y;
+        }
+        for (let i =0; i < data.obs.length; i++)
+        {
+          obstacle.push(
+            new htmlItem(
+              data.obs[i].x,
+              data.obs[i].y,
+              data.obs[i].width,
+              data.obs[i].height));
+        }
+        socket.on('draw', data => {
+          ball.isEqual(data);
+          draw();
+        });
+        });
       socket.on('pad2', (data) => {
         pad[1] = data;
       });
-      if (client === 0)
-        socket.emit('pad1', pad[client]);
-      else if (client === 1)
-        socket.emit('pad2', pad[client]);
+      socket.emit("amiHost", "", response => {
+        client = response;
+        if (client === 0)
+        {
+          socket.emit("wait", "",);
+        }
+      });
+    }
       if (gameRef.current) {
         gameRef.current.addEventListener("keydown", handlKeyDown);
       }
@@ -211,80 +220,10 @@ useEffect(() => {
         if (gameRef.current) {
           gameRef.current.removeEventListener("keydown", handlKeyDown);
           console.log("asd");
+          socketEventoff();
         }
       };
-    }
-  },[socket])
-  useEffect(() => {
-    const handlKeyup = (e) => {
-      if (e.key == "ArrowUp") {
-        a = 3;
-      }
-      if (e.key == "ArrowDown") {
-        a = 3;
-      }
-    };
-    // Canvas에 그릴 내용을 작성하세요.
-    const canvas = canvasRef.current;
-
-    ctx = canvas.getContext("2d");
-
-    board_x = gameRef.current.clientWidth;
-    board_y = gameRef.current.clientHeight;
-    ball.init(board_x / 2, board_y / 2, 0, 0, v, r, -1);
-
-    pad.push(
-      new padItem(
-        padRef1.current.offsetLeft,
-        padRef1.current.offsetTop,
-        padRef1.current.offsetWidth,
-        padRef1.current.offsetHeight,
-        "#d9d9d9",
-        window.getComputedStyle(padRef1.current).borderBottomLeftRadius
-      )
-    );
-
-    pad.push(
-      new padItem(
-        padRef2.current.offsetLeft,
-        padRef2.current.offsetTop,
-        padRef2.current.offsetWidth,
-        padRef2.current.offsetHeight,
-        "#ffe500",
-        window.getComputedStyle(padRef2.current).borderBottomLeftRadius
-      )
-    );
-    canvas.width = board_x;
-    canvas.height = board_y;
-    let obstacles = obsRef.current;
-    let obj = obstacles.firstElementChild;
-    while (obj != null) {
-      obstacle.push(
-        new htmlItem(
-          obj.offsetLeft,
-          obj.offsetTop,
-          obj.clientWidth,
-          obj.clientHeight
-        )
-      );
-      obj = obj.nextElementSibling;
-    }
-    gameset.pad = pad;
-    gameset.ball = ball;
-    gameset.board_x = board_x;
-    gameset.board_y = board_y;
-    gameset.obs = obstacle;
-    if (gameRef.current) {
-      gameRef.current.addEventListener("keyup", handlKeyup);
-    }
-
-    return () => {
-      if (gameRef.current) {
-        gameRef.current.removeEventListener("keyup", handlKeyup);
-        console.log("asd");
-      }
-    };
-  }, []);
+  },[socket, canvasRef])
   return (
     <div className="background">
       <div className="pong">
@@ -301,13 +240,8 @@ useEffect(() => {
           </div>
         </div>
         <div className="gameset" ref={gameRef} tabIndex={0}>
+          <div id="count">3</div>
           <canvas id="canvas" ref={canvasRef}></canvas>
-          <div className="pad1" ref={padRef1}></div>
-          <div className="pad2" ref={padRef2}></div>
-          <div className="obstacle" ref={obsRef}>
-            <div id="obstacle1"></div>
-            <div id="obstacle2"></div>
-          </div>
         </div>
       </div>
     </div>

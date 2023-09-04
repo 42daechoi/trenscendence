@@ -78,10 +78,13 @@ export default function Profile(pn: ProfileNode) {
         newInfo.id = result.data.id;
         newInfo.nickname = result.data.nickname;
         newInfo.rank = result.data.rank;
+
         const bufferData: number[] = result.data.profilePicture.data;
         const buffer: Buffer = Buffer.from(bufferData);
         newInfo.avatar = buffer.toString("base64");
+
         myInfo = newInfo;
+        console.log(typeof result.data.profilePicture);
         setInfo(myInfo);
       })
       .catch((err) => {});
@@ -247,8 +250,22 @@ export default function Profile(pn: ProfileNode) {
           const result = event.target?.result;
           if (result) {
             const arrayBuffer = new Uint8Array(result as ArrayBuffer);
-            console.log(arrayBuffer);
-            modifyAvatar(arrayBuffer);
+            axios
+              .patch(`http://localhost:3001/users/${myInfo.id}`, {
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                profilePicture: Array.from(arrayBuffer),
+              })
+              .then((result) => {
+                console.log("ooooooooooo");
+              })
+              .catch((err) => {
+                console.log("xxxxxxxxxxx");
+              });
+
+            // console.log(arrayBuffer);
+            // modifyAvatar(arrayBuffer);
           }
         };
         reader.readAsArrayBuffer(selectedFile);

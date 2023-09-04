@@ -61,6 +61,8 @@
   width: 45%;
   height: 70%;
   position: absolute;
+  min-width: 900px;
+  min-height: 700px;
   left: 45%;
   top: 15%;
 }

@@ -70,11 +70,10 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
 	  const clientSocket = this.nsp.sockets.get(id);
 	  this.gameService.destroySession(clientSocket);
     });
-
+	
     this.nsp.adapter.on('delete-room', (roomName, id) => {
       this.logger.log(`"Room:${roomName}"is deleted.`);
-//	  const clientSocket = this.nsp.sockets.get(id);
-//	  this.gameService.destroySession(clientSocket);
+
     });
 
     this.logger.log('WebSocketServer init ✅');
@@ -108,7 +107,7 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
 		if (!out_user)
 			return;
 		this.logger.log(JSON.stringify(socket.rooms));
-		await this.gameService.destroySession(socket);
+		this.gameService.userOutNsp(socket);
 		await this.usersService.update(out_user.id, {socketId: null});
 	}
 
@@ -134,6 +133,19 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
 		this.logger.log("userId : " + userId);
 		return (userId);
 	}
+
+
+	@SubscribeMessage('amiHost')
+	async idnetifyHost(
+		@ConnectedSocket() socket: Socket,
+		@CurrentUserWs() userId : string) {
+		this.logger.log("finding socket id : " + socket.id);
+		this.logger.log("userId : " + userId);
+		const amihost = await this.gameService.amIhost(socket);
+		return (amihost);
+	}
+
+	
 
 	@SubscribeMessage('gameRoomCreate')
 	async gameRoomCreate(
@@ -219,6 +231,12 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
 		await this.gameService.playerUnready(socket, this.nsp);
 	}
 
+	@SubscribeMessage('wait')
+	async wait(
+		@ConnectedSocket() socket: Socket) {
+		await this.gameService.gameWait(socket, this.nsp);
+	}
+
 	@SubscribeMessage('gameRoomOut')
 	async gameRoomOut(
 		@ConnectedSocket() socket: Socket) {
@@ -227,18 +245,27 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
 
 		socket.emit('gameRoomOut', { socketId: socket.id, userId: user.id});
 		await this.gameService.destroyGame(socket);
+
+		
+		
 		return { socketId: socket.id, userId: user.id };
 	}
 
-	@SubscribeMessage('gameStart')
-	async gameStart(
+
+	@SubscribeMessage('gameSetting')
+	async gameSetting(
 		@ConnectedSocket() socket: Socket,
 		@MessageBody()
 		game_info : any
 	) {
-		await this.gameService.gameStart(socket, this.nsp, game_info);
+		await this.gameService.gameSetting(socket, this.nsp, game_info);
+		this.logger.log("game setting completed. Game is really good to go");
 	}
-
+	@SubscribeMessage('gameStart')
+	async gameStart(
+		@ConnectedSocket() socket: Socket){
+			await this.gameService.gameStart(socket, this.nsp);
+		}
 
 	//#############################################################
 	// ##########          AFTER GAME START           #############

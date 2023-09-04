@@ -13,6 +13,7 @@ import {
   NotFoundException,
   Req,
   Res,
+  UploadedFile,
 } from '@nestjs/common';
 import { User } from '../typeorm/user.entity';
 import { UsersService } from './users.service';
@@ -25,6 +26,8 @@ import { Request, Response } from 'express';
 import PartialJwtGuard from 'src/auth/guards/auth-partial-jwt.guard';
 import { currentAuthUser } from 'src/auth/decorators/auth-user.decorator';
 import { Serialize } from 'src/interceptors/serialize.interceptor';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { profile } from 'console';
 @Controller('users')
 export class UsersController {
   constructor(private usersService: UsersService) {}
@@ -99,12 +102,28 @@ export class UsersController {
     return this.usersService.remove(parseInt(id));
   }
 
-  // 	@Patch('/:id')
-  // //	@UseGuards(JwtAuthGuard)
-  // 	@Serialize(UpdateUserDto)
-  // 	updateUser(@Param('id') id: string, @Body() body: UpdateUserDto){
-  // 		return this.usersService.update(parseInt(id), body);
-  // 	}
+  @Patch('/:id')
+  //@UseGuards(JwtAuthGuard)
+  // @Serialize(UpdateUserDto)
+  updateUser(
+    @Param('id') id: string,
+    @Req() req: Request,
+    @Body() body: UpdateUserDto,
+  ) {
+    const contentType = req.headers['content-type'];
+
+    let this_profilePicture;
+
+    if (contentType === 'application/json') {
+      this_profilePicture = Buffer.from(body.profilePicture);
+      return this.usersService.update(parseInt(id), {
+        profilePicture: this_profilePicture,
+        ...body,
+      });
+    }
+
+    return this.usersService.update(parseInt(id), body);
+  }
 
   @Get('findAll')
   //	@UseGuards(JwtAuthGuard)
