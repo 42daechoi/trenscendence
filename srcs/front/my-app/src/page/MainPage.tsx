@@ -1,7 +1,7 @@
 import React, { useState, KeyboardEvent, useEffect, useRef } from "react";
 
 import "../css/MainPage.css";
-import Profile from "../component/Profile";
+import MemoProfile from "../component/Profile";
 import GameWaiting from "../component/GameWaiting";
 import LeaderBoard from "../component/LeaderBoard";
 import FriendsList from "../component/FriendsList";
@@ -58,7 +58,7 @@ export default function MainPage() {
   const renderPage = () => {
     switch (curPage) {
       case "my_profile":
-        return <Profile currUser={myId} isMe={true} />;
+        return <MemoProfile currUser={myId} isMe={true} />;
       case "game_waiting":
         return <GameWaiting />;
       case "leaderboard":
@@ -193,7 +193,7 @@ export default function MainPage() {
                 <Modal
                   closeModal={closeModal}
                   ConfigureModal={() => (
-                    <Profile currUser={currUser} isMe={false} />
+                    <MemoProfile currUser={currUser} isMe={false} />
                   )}
                 />
               )}

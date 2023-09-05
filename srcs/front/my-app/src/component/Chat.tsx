@@ -497,7 +497,6 @@ function Chat(props) {
   return (
     <>
       <div className="chat-box">
-        <h1>채팅방 제목</h1>
         <div ref={lastMessageRef}>
           {messages.map((message, index) => (
             <div

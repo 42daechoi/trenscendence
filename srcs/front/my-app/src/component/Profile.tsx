@@ -53,7 +53,7 @@ const initLog: string[] = [
   "gyyu vs test 2:3 lose",
 ];
 
-export default function Profile(pn: ProfileNode) {
+function Profile(pn: ProfileNode) {
   const [gameLog, setGameLog] = useState<string[]>(initLog);
   // const [gameLog, setGameLog] = useState<string[]>([]);
   const [info, setInfo] = useState<profileInfo>({
@@ -445,3 +445,8 @@ export default function Profile(pn: ProfileNode) {
     </div>
   );
 }
+
+
+const MemoProfile = React.memo(Profile);
+
+export default MemoProfile;
