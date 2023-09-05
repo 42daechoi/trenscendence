@@ -889,5 +889,12 @@ import { ChatService } from './chat.service';
         channelname: host_user.nickname,
         password: null
       }, target.socket);
+
+      this.handlemodify({
+        id: host.id,
+        maxmember: 2,
+        option: "private",
+        password: null
+      }, host.socket);
     }
 }
