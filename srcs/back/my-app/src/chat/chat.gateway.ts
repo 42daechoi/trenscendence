@@ -39,18 +39,12 @@ import { ChatService } from './chat.service';
     {
       socket.emit('allinfo', data);
     }
-
-    startSendingAllInfo() {
-      setInterval(() => {
-        this.connectedSockets.forEach(socket => {
-          const user = this.chatService.findUserBySocketId(socket.id);
-          if (user)
-          {
-            this.sendDataToSocket(socket, this.chatService.getChannels());
-          }
-        });
+    
+    async startSendingAllInfo(user: userDTO) {
+      user.interval = setInterval(() => {
+          this.sendDataToSocket(user.socket, this.chatService.getChannels());
       }, 1000);
-    }
+      }
 
 
     //**********************************************************************//
@@ -72,7 +66,6 @@ import { ChatService } from './chat.service';
           password: null,
       }
       this.chatService.getChannels().push(channel);
-      this.startSendingAllInfo();
     }
 
 
@@ -101,10 +94,12 @@ import { ChatService } from './chat.service';
       let user = this.chatService.findUserBySocketId(socket.id);
       if (user) {
         //2초마다 보내는 socket에서 해제
+        clearInterval(user.interval);
         this.connectedSockets.delete(user.id);
 
         //users에서 지우기.
         const userIndex = this.chatService.getUsers().indexOf(user);
+        
         this.chatService.getUsers().splice(userIndex, 1);
 
         if (user.channelname !== '$home')
@@ -169,27 +164,51 @@ import { ChatService } from './chat.service';
     //*********************************************************************//
     @SubscribeMessage('bind')
     async handlebind(@MessageBody() id: number, @ConnectedSocket() socket: Socket) {
+
       console.log('----------------------------------------');
       console.log('-----------------BIND-------------------');
       console.log('Userid: ', id);
       console.log('SocketId: ', socket.id);
       console.log('----------------------------------------');
 
+      let user_check = this.chatService.findUserById(id);
+      if (user_check)
+      {
+        clearInterval(user_check.interval);
+        
+        // //home으로 이동.
+        // this.handlehome(user_check.id, user_check.socket);
+
+        //home에서 제거.
+        let home = this.chatService.getChannels()[0];
+            home.member--;
+            const removeIdx = home.users.indexOf(user_check.id);
+            if (removeIdx !== -1) {
+                home.users.splice(removeIdx, 1);
+            }
+            socket.broadcast.to(home.channelname).emit('update', false);        //퇴장 메시지
+
+        const userIndex = this.chatService.getUsers().indexOf(user_check);
+        this.chatService.getUsers().splice(userIndex, 1);
+      } 
+
       this.connectedSockets.set(id, socket);
 
       let block_list = await this.chatService.getUserBlocklist(id);
 
-      const user: userDTO = {
+      const user : userDTO = {
         socketid: socket.id,
         id: id,
         channelname: '$home',
         socket: socket,
+        interval: null,
         blocklist: block_list
       };
 
       this.chatService.getUsers().push(user);
       this.chatService.getChannels()[0].users.push(user.id);
       this.chatService.getChannels()[0].member++;
+      this.startSendingAllInfo(user);
       socket.join(user.channelname);
       socket.broadcast.to(user.channelname).emit('update', true); //$home 채널 입장 시 정보 업데이트
 
