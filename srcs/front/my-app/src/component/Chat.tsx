@@ -40,7 +40,7 @@ const initTmpMessages: IMessage[] = [
   {
     user: { name: "SERVER", profile: null, id: 1, isChecked: false },
     sender: "chat chat-start",
-    text: "Home 채팅방에 입장하셨습니다.",
+    text: "Home 채널에 참가하셨습니다",
     time: new Date().toLocaleTimeString(),
   },
 ];
