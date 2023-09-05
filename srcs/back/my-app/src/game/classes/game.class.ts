@@ -11,6 +11,7 @@ export enum GameStatus{
   Waiting = 0,
   AllReady = 1,
   Playing = 2,
+  Record = 3
 }
 
 export interface Collidable{
@@ -216,10 +217,9 @@ export class Game {
 			if (this.player2.score >= 1){
 				console.log(this.player2.score);
 				clearInterval(this.intervalId);
-				nsp.to(this.gameID).emit('guestWin',"");
-				this.gameStatus = GameStatus.Waiting;
+				this.gameStatus = GameStatus.Record;
 				const loser : Socket = nsp.sockets.get(this.host.socketID);
-				this.gameService.destroyGame(loser);
+				this.gameService.destroyGame(loser, nsp);
 				// this.gameService.recordGame(this);
 				
 				return ;
@@ -234,11 +234,10 @@ export class Game {
 			this.player1.score++;
 			if (this.player1.score >= 1){
 				clearInterval(this.intervalId);
-				nsp.to(this.gameID).emit('hostWin',"");
-				this.gameStatus = GameStatus.Waiting;
+				this.gameStatus = GameStatus.Record;
 				console.log(this.player1.score);
 				const loser : Socket = nsp.sockets.get(this.guest.socketID);
-				this.gameService.destroyGame(loser);
+				this.gameService.destroyGame(loser,nsp);
 				// this.gameService.recordGame(this);
 				return ;
 			}
