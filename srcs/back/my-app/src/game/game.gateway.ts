@@ -30,16 +30,17 @@ import { TokenPayload } from 'src/auth/interfaces/token-payload.interface';
 import { WsJwtGuard } from './guards/ws.jwt.guard';
 import {AuthService} from 'src/auth/auth.service';
 import {CurrentUserWs} from './decorators/ws.current-user.decorator';
+import { ConfigService } from '@nestjs/config';
 
 @WebSocketGateway({
   namespace: 'game',
   cors: {
-    origin: ['http://localhost:3000'],
+    origin: [process.env.CORS_ORIGIN],
 	credentials: true,
   },
 })
 export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
-	private readonly logger = new Logger(GameGateway.name);
+	private readonly logger = new Logger(GameGateway.name,);
 	constructor(
 		@Inject(UsersService)private usersService: UsersService,
 		@Inject(AuthService)private authService: AuthService,
