@@ -57,18 +57,23 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
 
   	//execute right after init
 	afterInit() {
+
 		this.nsp.adapter.on('create-room', (room) => {
 	  this.logger.log(`"Room:${room}" has been created.`);
     });
+
 
     this.nsp.adapter.on('join-room', (room, id) => {
       this.logger.log(`"Socket:${id}" has joined "Room:${room}".`);
     });
 
     this.nsp.adapter.on('leave-room', (room, id) => {
+		
       this.logger.log(`"Socket:${id}" has left "Room:${room}".`);
 	  const clientSocket = this.nsp.sockets.get(id);
-	  this.gameService.destroySession(clientSocket);
+
+	  this.gameService.destroySession(clientSocket, this.nsp);
+	  this.gameService.destroyRoom(room, clientSocket, this.nsp);
     });
 	
     this.nsp.adapter.on('delete-room', (roomName, id) => {
@@ -144,6 +149,15 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
 		const amihost = await this.gameService.amIhost(socket);
 		return (amihost);
 	}
+
+	@SubscribeMessage('myInfo')
+	async idnetifyMyInfo(
+		@ConnectedSocket() socket: Socket) {
+
+		const myInfo = await this.gameService.myInfo(socket);
+		return (myInfo);
+	}
+	
 	@SubscribeMessage('other')
 	async idnetifyOther(
 		@ConnectedSocket() socket: Socket) {
@@ -152,11 +166,24 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
 		return (other);
 	}
 
+	@SubscribeMessage('inGame')
+	async inGame(
+
+		@ConnectedSocket() socket: Socket) {
+		console.log("inGame");
+		const gameRoomId = await this.gameService.getCurGameRoomId(socket);
+		const game  =  this.gameService.gameSessions.get(gameRoomId);
+		const ret = this.gameService.gameSessions.has(gameRoomId)
+		console.log(ret);
+	
+		return (ret);
+	}
 	
 
 	@SubscribeMessage('gameRoomCreate')
 	async gameRoomCreate(
 		@ConnectedSocket() socket: Socket) {
+
 		const user : User = await this.usersService.findUserBySocketId(socket.id);
 		socket.emit('gameRoomCreate', { socketId: socket.id, userId: user.id});
 		return { socketId: socket.id, userId: user.id };
@@ -237,6 +264,7 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
 		@ConnectedSocket() socket: Socket, nsp: Namespace) {
 		await this.gameService.playerUnready(socket, this.nsp);
 	}
+	
 
 	@SubscribeMessage('wait')
 	async wait(
@@ -247,15 +275,9 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
 	@SubscribeMessage('gameRoomOut')
 	async gameRoomOut(
 		@ConnectedSocket() socket: Socket) {
-		const user : User = await this.usersService.findUserBySocketId(socket.id);
 		//set user's status Online not InGame
-
-		socket.emit('gameRoomOut', { socketId: socket.id, userId: user.id});
-		await this.gameService.destroyGame(socket);
-
-		
-		
-		return { socketId: socket.id, userId: user.id };
+		console.log("aaasaasdasdasdasdsadasdassad", socket.id);
+		await this.gameService.destroyGame(socket, this.nsp);
 	}
 
 

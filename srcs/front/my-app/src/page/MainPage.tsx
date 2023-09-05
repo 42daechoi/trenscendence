@@ -26,7 +26,7 @@ export default function MainPage() {
       case "my_profile":
         return <Profile currUser="gyyu" />;
       case "game_waiting":
-        return <GameWaiting />;
+        return <GameWaiting leavefun={leaveGameWaiting}/>;
       case "leaderboard":
         return <LeaderBoard />;
     }
@@ -36,7 +36,9 @@ export default function MainPage() {
     useState("clicked-button");
   const [channelsButtonClass, setChannelsButtonClass] =
     useState("default-button");
-
+  const leaveGameWaiting = () => {
+    setCurPage("my_profile");
+  }
   const handleButtonClick = (side) => {
     if (side === "friends_list") {
       setCurSide("friends_list");

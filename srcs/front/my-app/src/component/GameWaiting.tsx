@@ -1,17 +1,20 @@
 import React, { useRef, useState, useEffect } from "react";
-import { useSocket } from './SocketContext';
+import { useSocket, useGameSocket } from './SocketContext';
 import "../css/GameWaiting.css";
 import { useNavigate } from "react-router-dom";
 import { apiRequest } from "../utils/ApiRequest";
 import "../css/GamePage.css"
 import { ballItem, padItem, htmlItem, game } from "../utils/Game.Class";
-export default function GameWaiting() {
+let tmp = -1;
+
+export default function GameWaiting(prop) {
+  const [exit, setExit] = useState(-1);
   const canvasRef = useRef(null);
   const gameRef = useRef(null);
   const obsRef = useRef(null);
   const padRef1 = useRef(null);
   const padRef2 = useRef(null);
-  const socket = useSocket();
+  const socket = useGameSocket();
   const navigate = useNavigate();
   const [Ready, setReady] = useState(false);
   const [State, setState] = useState(false);
@@ -141,7 +144,15 @@ export default function GameWaiting() {
     }
   }
   const handleButtonClick = () => {
-    setReady(!Ready);
+    if (State)
+    {
+      setReady(!Ready);
+      const element = document.getElementById("check-box");
+      if (!Ready)
+        element.style.backgroundColor = 'rgb(77, 246, 100)';
+      else
+        element.style.backgroundColor = "";
+    }
   };
   function gameSettingbutton(list :string, num:number, set: React.Dispatch<React.SetStateAction<number>>){
     function gameSettingNum(num :number){
@@ -214,7 +225,6 @@ export default function GameWaiting() {
     ball.v = 4 * (SpeedNum - 1) + 2;
     obstacle.splice(MapNum - 1, 4 - MapNum);
     ball.r = 5 * (BallNum - 1) + 7;
-    console.log("a");
     if (client != -1)
     {
       gameset.intervalId = setInterval(()=>{
@@ -223,12 +233,12 @@ export default function GameWaiting() {
     }
   }
   useEffect(() => {
-    socket.emit('whoamiGateway',"",response => {
-      setMyInfo(response);
-    });
+    tmp =-1;
     return () => {
+      console.log("return tmp = " + tmp);
       if (socket)
       {
+        socket.off("leave");
         socket.off('setupReply');
         socket.off('client');
         socket.off("matching waiting");
@@ -237,11 +247,51 @@ export default function GameWaiting() {
         socket.off("allReady");
       }
     }
-  },[])
+  },[]);
+  useEffect(() => {
+    if (socket)
+    {
+      socket.emit("match", "");
+    };
+    return() =>{
+      if (tmp === -1)
+      {
+        socket.emit('gameRoomOut',"");
+      }
+    }
+}, [socket]);
+  useEffect(() => {
+    if (exit === 1)
+    {
+      tmp = 1;
+      prop.leavefun();
+    }
+    if (exit === 2)
+    {
+      tmp = 2;
+      setTimeout(() => {navigate("/game");}, 0);
+    }
+
+    return () => {
+      console.log("exit4",exit);
+    }
+  },[exit]);
   useEffect(() => {
     init();
     if (socket)
     {
+      socket.emit('myInfo',"",response => {
+        console.log(response.length);
+        if (response.length > 5)
+        {
+          setMyInfo(response.substr(0, 5) + "...");
+        }
+        else
+          setMyInfo(response);
+      });
+      socket.on('leave', ()=> {
+        setExit(1);
+      })
       socket.on('setupReply', data => {
         setBallNum(data.Ball);
         setPadNum(data.Pad);
@@ -258,12 +308,17 @@ export default function GameWaiting() {
       socket.on("matchInfo", data => {
         setState(true);
         socket.emit('other', "", response => {
+          if (response.length > 5)
+        {
+          setOther(response.substr(0, 5) + "...");
+        }
+        else
           setOther(response);
         });
         console.log("State",State);
       });
       socket.on("goodtogo", ()=>{
-        navigate("/game");
+        setExit(2);
       });
       socket.on("allReady",() => {
         socket.emit('amiHost', "", (response) =>{
@@ -326,17 +381,12 @@ export default function GameWaiting() {
         socket.off("matchInfo");
         socket.off("goodtogo");
         socket.off("allReady");
+        socket.off('leave');
     
     }
     clearInterval(gameset.intervalId);
     }
   },[PadNum, SpeedNum, BallNum, MapNum, client, socket]);
-  useEffect(() => {
-      if (socket)
-      {
-        socket.emit("match", "");
-      };
-  }, [socket]);
 
   useEffect(() => {
       console.log(State,Ready);
@@ -376,7 +426,7 @@ export default function GameWaiting() {
       </div>
       </div>
       <div className="ready-button">
-        <div className="check-box"></div>
+        <div id="check-box"></div>
         <button
           className="btn-ready btn-outline btn-success"
           onClick={handleButtonClick}
