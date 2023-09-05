@@ -17,7 +17,9 @@ import {
   getFriendList,
   getId,
   modifyAvatar,
+  getGameLog,
 } from "../utils/ApiRequest";
+import { resolveTypeReferenceDirective } from "typescript";
 
 interface ProfileNode {
   currUser: number;
@@ -84,6 +86,13 @@ export default function Profile(pn: ProfileNode) {
         newInfo.avatar = buffer.toString("base64");
 
         myInfo = newInfo;
+        getGameLog(myInfo.id)
+          .then((result) => {
+            console.log(result);
+          })
+          .catch((err) => {
+            console.log(err);
+          });
         console.log(typeof result.data.profilePicture);
         setInfo(myInfo);
       })
@@ -258,7 +267,14 @@ export default function Profile(pn: ProfileNode) {
                 profilePicture: Array.from(arrayBuffer),
               })
               .then((result) => {
-                console.log("ooooooooooo");
+                getWhoami()
+                  .then((result) => {
+                    const bufferData: number[] =
+                      result.data.profilePicture.data;
+                    const buffer: Buffer = Buffer.from(bufferData);
+                    setInfo({ ...info, avatar: buffer.toString("base64") });
+                  })
+                  .catch((err) => {});
               })
               .catch((err) => {
                 console.log("xxxxxxxxxxx");
