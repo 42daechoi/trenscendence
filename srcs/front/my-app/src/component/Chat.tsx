@@ -14,6 +14,7 @@ import { where } from "../utils/where";
 import axios from "axios";
 import CreateChat from "./CreateChat";
 import SettingChat from "./SettingChat";
+import { channel } from "diagnostics_channel";
 
 interface IUsers {
   name: string;
@@ -122,7 +123,7 @@ function Chat(props) {
             id: 0,
             isChecked: false,
           },
-          "HOME 채널에 참가하셨습니다.",
+          "Home 채널에 참가하셨습니다.",
           "chat chat-start"
         );
       }
@@ -434,7 +435,7 @@ function Chat(props) {
           id: 0,
           isChecked: false,
         },
-        "$home 채널에 참가하셨습니다.",
+        "Home 채널에 참가하셨습니다.",
         "chat chat-start"
       );
     } catch (error) {
@@ -458,8 +459,12 @@ function Chat(props) {
     setMessages([]);
     try {
       const data = await whoami();
+
       where(socket, data.id)
         .then((channel) => {
+          let chname:string = channel.channelname;
+          if (channel.channelname === "$home")
+            chname = "Home";
           addMessage(
             {
               name: "SERVER",
@@ -467,7 +472,7 @@ function Chat(props) {
               id: 0,
               isChecked: false,
             },
-            channel.channelname + " 채널에 참가하셨습니다.",
+            chname + " 채널에 참가하셨습니다.",
             "chat chat-start"
           );
         })
@@ -538,11 +543,19 @@ function Chat(props) {
               <input
                 type="checkbox"
                 checked={users[index].isChecked}
-                onChange={() =>
-                  (users[index].isChecked = users[index].isChecked
-                    ? false
-                    : true)
-                }
+                // onChange={() => {
+                //   users[index].isChecked = users[index].isChecked ? false : true
+                // }}
+                onChange={() => {
+                  setUsers((prevUsers) => {
+                    return prevUsers.map((prevUser) => {
+                      if (prevUser.id === user.id) {
+                        return { ...prevUser, isChecked: !prevUser.isChecked };
+                      }
+                      return prevUser;
+                    });
+                  });
+                }}
               />
               <ProfileModal name={user.name + index} currUser={index} />
             </li>

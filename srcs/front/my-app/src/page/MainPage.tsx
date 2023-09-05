@@ -23,25 +23,25 @@ export default function MainPage() {
 
   useEffect(() => {
     if (!socket) return;
-    // socket.on("allinfo", (data) => {
-    //   getWhoami()
-    //     .then((response) => {
-    //       for (let i = 0; i < data.length; i++) {
-    //         for (let j = 0; j < data[i].users.length; j++) {
-    //           if (data[i].users[j] === response.data.id) {
-    //             if (JSON.stringify(data) != JSON.stringify(channelList))
-    //               setChannelList(data);
-    //             if (JSON.stringify(data[i].users) != JSON.stringify(memberList))
-    //               setMemberList(data[i].users);
-    //             return;
-    //           }
-    //         }
-    //       }
-    //     })
-    //     .catch((err) => {
-    //       console.log(err);
-    //     });
-    // });
+    socket.on("allinfo", (data) => {
+      getWhoami()
+        .then((response) => {
+          for (let i = 0; i < data.length; i++) {
+            for (let j = 0; j < data[i].users.length; j++) {
+              if (data[i].users[j] === response.data.id) {
+                if (JSON.stringify(data) != JSON.stringify(channelList))
+                  setChannelList(data);
+                if (JSON.stringify(data[i].users) != JSON.stringify(memberList))
+                  setMemberList(data[i].users);
+                return;
+              }
+            }
+          }
+        })
+        .catch((err) => {
+          console.log(err);
+        });
+    });
     return () => {
       socket.off("allinfo");
     };
