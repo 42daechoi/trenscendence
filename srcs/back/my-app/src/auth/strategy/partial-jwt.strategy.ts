@@ -4,6 +4,7 @@ import { ExtractJwt, Strategy } from "passport-jwt";
 import { AuthService } from "../auth.service";
 import { TokenPayload, TokenType } from "../interfaces/token-payload.interface";
 import { Request } from "express";
+import { ConfigService } from "@nestjs/config";
 
 @Injectable()
 export class PartialJwtStrategy extends PassportStrategy(
@@ -11,11 +12,10 @@ export class PartialJwtStrategy extends PassportStrategy(
   "partial-jwt",
 ) {
   private readonly logger = new Logger(PartialJwtStrategy.name);
-  constructor(private readonly authService: AuthService) {
+  constructor(private readonly authService: AuthService, private readonly configService: ConfigService) {
     super({
-      secretOrKey: 'SECRET_KEY',
+      secretOrKey: process.env.JWT_SECRET_KEY,
       ignoreExpiration: false,
-//	  jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       jwtFromRequest: ExtractJwt.fromExtractors([
         (request: Request) => {
           return request?.cookies?.jwt;

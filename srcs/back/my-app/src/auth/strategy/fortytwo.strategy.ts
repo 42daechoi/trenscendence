@@ -16,17 +16,11 @@ export class FortytwoStrategy extends PassportStrategy(Strategy) {
 
   constructor(private usersService: UsersService, private http: HttpService) {
     super({
-      //      clientID: process.env.FORTYTWO_ID,
-      //      clientSecret: process.env.FORTYTWO_APP_SECRET,
-      //      callbackURL: process.env.AUTH_CALLBACK,
-      authorizationURL:
-        'https://api.intra.42.fr/oauth/authorize?client_id=u-s4t2ud-2ba7bd194c505ff9326db61afa5c8f62b677dd535610878d78076cd0137b36b9&redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Fcallback&response_type=code',
-      tokenURL: 'https://api.intra.42.fr/oauth/token',
-      clientID:
-        'u-s4t2ud-2ba7bd194c505ff9326db61afa5c8f62b677dd535610878d78076cd0137b36b9',
-      clientSecret:
-        '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',
-      callbackURL: 'http://localhost:3001/auth/loginfortytwo/callback',
+      authorizationURL: process.env.AUTH_URL,
+      tokenURL: process.env.TOEKN_URL,
+      clientID: process.env.CLIENT_ID,
+      clientSecret: process.env.CLIENT_SECRET,
+      callbackURL: process.env.CALLBACKURL,
       scope: 'public',
       profileFields: {
         id: function (obj: { id: string }) {
