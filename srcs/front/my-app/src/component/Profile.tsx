@@ -297,6 +297,10 @@ function Profile(pn: ProfileNode) {
             alert("닉네임은 영문과 숫자만 가능합니다!!");
             return;
           }
+          if (textbox.current.value.length > 13) {
+            alert("닉네임은 13 글자를 초과할 수 없습니다.")
+            return;
+          }
           modifyNickname(textbox.current.value);
           setInfo({ ...info, nickname: textbox.current.value });
           textbox.current.value = "";
