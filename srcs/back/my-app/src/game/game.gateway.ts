@@ -54,7 +54,7 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
 	//만약 네임스페이스를 설정하지 않았다면 @WebSocketServer 데코레이터가 반환하는 값은 서버 인스턴스가 되고, 그 때는 타입을 다음과 같이 서버 타입을 설정해줘야 합니다.
 	//@WebSocketServer() server: Socket;
 	@WebSocketServer() nsp: Namespace;
-	@WebSocketServer() server: Server;
+//	@WebSocketServer() server: Server;
 
   	//execute right after init
 	afterInit() {
@@ -251,7 +251,7 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
 		@ConnectedSocket() socket: Socket,
 		@MessageBody() gameSetting: any ,
 	) {
-		this.gameService.echoRoomByGameHost(socket, this.server, gameSetting);
+		this.gameService.echoRoomByGameHost(socket, this.nsp, gameSetting);
 	}
 	
 	@SubscribeMessage('ready')

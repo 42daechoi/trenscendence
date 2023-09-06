@@ -5,9 +5,9 @@ import { WebSocketGateway,
     OnGatewayDisconnect, 
     MessageBody,
     ConnectedSocket,
-    OnGatewayInit
+    OnGatewayInit,
   } from '@nestjs/websockets';
-import { Server, Socket } from 'socket.io';
+import { Server, Socket, Namespace } from 'socket.io';
 import { userDTO,
     channelDTO,
     chatDTO, 
@@ -23,9 +23,11 @@ import { User } from 'src/typeorm';
 import { ChatService } from './chat.service';
 
   @WebSocketGateway({
-    cors: {
-      origin: "*",
-    },
+	namespace: 'chat',
+	cors: {
+	  origin: [process.env.CORS_ORIGIN],
+	  credentials: true,
+	},
   })
   export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect, OnGatewayInit {
     constructor(
@@ -34,6 +36,7 @@ import { ChatService } from './chat.service';
     ){}
     private connectedSockets: Map<number, Socket> = new Map();
 
+	@WebSocketServer() nsp: Namespace;
 
     sendDataToSocket(socket: Socket, data : any)
     {

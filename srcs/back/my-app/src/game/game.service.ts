@@ -287,12 +287,12 @@ export class GameService {
 //		client.emit('setupReply', body);
 	}
 
-	async echoRoomByGameHost(client: Socket, server: Server, body: any){
+	async echoRoomByGameHost(client: Socket, nsp: Namespace, body: any){
 		const room = Array.from(client.rooms);
 		console.log(room);
 		const gameRoom = this.gameSessions.get(client.id);
 		if (gameRoom && gameRoom.gameID === client.id)
-			server.to(client.id).emit("setupReply", body);
+			nsp.to(client.id).emit("setupReply", body);
 //		client.emit('setupReply', body);
 	}
 
