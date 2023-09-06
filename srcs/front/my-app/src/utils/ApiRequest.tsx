@@ -65,12 +65,12 @@ export function getFriendList<T = any>(id: number): Promise<AxiosResponse<T>> {
   return apiRequest("get", `${serverUrl}/${tagUser}/friends/list`);
 }
 
-export function modifyNickname(name: string) {
+export function modifyNickname(name: string, alertFlag: boolean) {
   getWhoami()
     .then((res) => {
       patchId(res.data.id, { nickname: name })
         .then((response) => {
-          alert("닉네임 수정 성공!");
+          if (alertFlag === true) alert("닉네임 수정 성공!");
         })
         .catch((error) => {
           if (error.response.data.statusCode) alert("닉네임 수정 실패");

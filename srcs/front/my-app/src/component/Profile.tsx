@@ -84,7 +84,6 @@ function Profile(pn: ProfileNode) {
         newInfo.avatar = buffer.toString("base64");
 
         myInfo = newInfo;
-        console.log(typeof result.data.profilePicture);
         setInfo(myInfo);
       })
       .catch((err) => {});
@@ -298,10 +297,10 @@ function Profile(pn: ProfileNode) {
             return;
           }
           if (textbox.current.value.length > 13) {
-            alert("닉네임은 13 글자를 초과할 수 없습니다.")
+            alert("닉네임은 13 글자를 초과할 수 없습니다.");
             return;
           }
-          modifyNickname(textbox.current.value);
+          modifyNickname(textbox.current.value, false);
           setInfo({ ...info, nickname: textbox.current.value });
           textbox.current.value = "";
         }
@@ -310,7 +309,7 @@ function Profile(pn: ProfileNode) {
     return (
       <>
         <h3 className="font-bold text-lg">닉네임 수정</h3>
-        <input type="text" ref={textbox} />
+        <input type="text" maxLength={13} ref={textbox} />
         <button className="avatar-upload" onClick={handleFileUpload}>
           수정하기
         </button>
@@ -449,7 +448,6 @@ function Profile(pn: ProfileNode) {
     </div>
   );
 }
-
 
 const MemoProfile = React.memo(Profile);
 
