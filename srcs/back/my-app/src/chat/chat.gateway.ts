@@ -24,6 +24,7 @@ import { Inject } from '@nestjs/common';
 import { User } from 'src/typeorm';
 import { ChatService } from './chat.service';
 
+
 @WebSocketGateway({
   namespace: 'chat',
   cors: {
