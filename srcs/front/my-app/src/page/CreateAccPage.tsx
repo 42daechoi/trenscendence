@@ -40,17 +40,17 @@ export default function CreateAccPage() {
       alert("닉네임이 입력되지 않았습니다.");
       return;
     }
-    console.log(nickname.current.value);
     getUserByNickname(nickname.current.value)
       .then((result) => {
-        console.log(result);
-        alert("이미 존재하는 닉네임입니다.");
+        console.log(result.data);
+        if (result.data) alert("이미 존재하는 닉네임입니다.");
+        else {
+          modifyNickname(nickname.current.value, false);
+          modifyAvatar(selectedFile);
+          navigate("/main");
+        }
       })
-      .catch((err) => {
-        modifyNickname(nickname.current.value, false);
-        modifyAvatar(selectedFile);
-        navigate("/main");
-      });
+      .catch((err) => {});
   };
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     // const files = e.target.files;
