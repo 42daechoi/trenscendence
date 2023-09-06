@@ -89,7 +89,6 @@ export class UsersController {
     console.log('Handler is running');
     const user = await this.usersService.findUserByNick(nickname);
     if (!user) {
-      console.log('errr\n\n\n\n\n\n\n\n');
       return null;
       //		  throw new NotFoundException('user not found');
     }

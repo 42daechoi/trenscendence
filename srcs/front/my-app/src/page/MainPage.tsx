@@ -1,7 +1,7 @@
 import React, { useState, KeyboardEvent, useEffect, useRef } from "react";
 
 import "../css/MainPage.css";
-import Profile from "../component/Profile";
+import MemoProfile from "../component/Profile";
 import GameWaiting from "../component/GameWaiting";
 import LeaderBoard from "../component/LeaderBoard";
 import FriendsList from "../component/FriendsList";
@@ -21,31 +21,31 @@ export default function MainPage() {
   const socket = useSocket();
   const [myId, setMyId] = useState(0);
 
-  // useEffect(() => {
-  //   if (!socket) return;
-  //   socket.on("allinfo", (data) => {
-  //     getWhoami()
-  //       .then((response) => {
-  //         for (let i = 0; i < data.length; i++) {
-  //           for (let j = 0; j < data[i].users.length; j++) {
-  //             if (data[i].users[j] === response.data.id) {
-  //               if (JSON.stringify(data) != JSON.stringify(channelList))
-  //                 setChannelList(data);
-  //               if (JSON.stringify(data[i].users) != JSON.stringify(memberList))
-  //                 setMemberList(data[i].users);
-  //               return;
-  //             }
-  //           }
-  //         }
-  //       })
-  //       .catch((err) => {
-  //         console.log(err);
-  //       });
-  //   });
-  //   return () => {
-  //     socket.off("allinfo");
-  //   };
-  // }, [socket]);
+  useEffect(() => {
+    if (!socket) return;
+    socket.on("allinfo", (data) => {
+      getWhoami()
+        .then((response) => {
+          for (let i = 0; i < data.length; i++) {
+            for (let j = 0; j < data[i].users.length; j++) {
+              if (data[i].users[j] === response.data.id) {
+                if (JSON.stringify(data) != JSON.stringify(channelList))
+                  setChannelList(data);
+                if (JSON.stringify(data[i].users) != JSON.stringify(memberList))
+                  setMemberList(data[i].users);
+                return;
+              }
+            }
+          }
+        })
+        .catch((err) => {
+          console.log(err);
+        });
+    });
+    return () => {
+      socket.off("allinfo");
+    };
+  }, [socket]);
 
   useEffect(() => {
     apiRequest<any>("get", "http://localhost:3001/users/whoami").then(
@@ -58,9 +58,9 @@ export default function MainPage() {
   const renderPage = () => {
     switch (curPage) {
       case "my_profile":
-        return <Profile currUser={myId} isMe={true} />;
+        return <MemoProfile currUser={myId} isMe={true} />;
       case "game_waiting":
-        return <GameWaiting />;
+        return <GameWaiting leavefun={leaveGameWaiting} />;
       case "leaderboard":
         return <LeaderBoard />;
     }
@@ -70,7 +70,9 @@ export default function MainPage() {
     useState("clicked-button");
   const [channelsButtonClass, setChannelsButtonClass] =
     useState("default-button");
-
+  const leaveGameWaiting = () => {
+    setCurPage("my_profile");
+  };
   const handleButtonClick = (side) => {
     if (side === "friends_list") {
       setCurSide("friends_list");
@@ -193,7 +195,7 @@ export default function MainPage() {
                 <Modal
                   closeModal={closeModal}
                   ConfigureModal={() => (
-                    <Profile currUser={currUser} isMe={false} />
+                    <MemoProfile currUser={currUser} isMe={false} />
                   )}
                 />
               )}

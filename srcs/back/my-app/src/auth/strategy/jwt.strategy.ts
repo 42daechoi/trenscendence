@@ -11,9 +11,8 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   private readonly logger = new Logger(JwtStrategy.name);
   constructor(private readonly authService : AuthService) {
     super({
-      secretOrKey: 'SECRET_KEY',
+      secretOrKey: process.env.JWT_SECRET_KEY,
       ignoreExpiration: false,
-//	  jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       jwtFromRequest: ExtractJwt.fromExtractors([
         (request: Request) => {
           return request?.cookies?.jwt;

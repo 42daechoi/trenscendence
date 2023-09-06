@@ -55,7 +55,7 @@ const initLog: string[] = [
   "gyyu vs test 2:3 lose",
 ];
 
-export default function Profile(pn: ProfileNode) {
+function Profile(pn: ProfileNode) {
   const [gameLog, setGameLog] = useState<string[]>(initLog);
   // const [gameLog, setGameLog] = useState<string[]>([]);
   const [info, setInfo] = useState<profileInfo>({
@@ -94,6 +94,7 @@ export default function Profile(pn: ProfileNode) {
             console.log(err);
           });
         console.log(typeof result.data.profilePicture);
+
         setInfo(myInfo);
       })
       .catch((err) => {});
@@ -248,43 +249,30 @@ export default function Profile(pn: ProfileNode) {
     const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
       const files = event.target.files;
       if (files && files.length > 0) {
+        const fileSizeKB = files[0].size / 1024;
+        console.log(fileSizeKB);
+        if (fileSizeKB > 30) {
+          // 100KB를 초과하면
+          alert("파일 크기가 30KB를 초과합니다.");
+          image.current.value = null;
+          return;
+        }
         setSelectedFile(files[0]);
       }
     };
 
     const handleFileUpload = () => {
       if (selectedFile) {
+        modifyAvatar(selectedFile);
         const reader = new FileReader();
         reader.onload = function (event) {
-          const result = event.target?.result;
-          if (result) {
-            const arrayBuffer = new Uint8Array(result as ArrayBuffer);
-            axios
-              .patch(`http://localhost:3001/users/${myInfo.id}`, {
-                headers: {
-                  "Content-Type": "application/json",
-                },
-                profilePicture: Array.from(arrayBuffer),
-              })
-              .then((result) => {
-                getWhoami()
-                  .then((result) => {
-                    const bufferData: number[] =
-                      result.data.profilePicture.data;
-                    const buffer: Buffer = Buffer.from(bufferData);
-                    setInfo({ ...info, avatar: buffer.toString("base64") });
-                  })
-                  .catch((err) => {});
-              })
-              .catch((err) => {
-                console.log("xxxxxxxxxxx");
-              });
-
-            // console.log(arrayBuffer);
-            // modifyAvatar(arrayBuffer);
+          const result = event.target.result;
+          if (typeof result === "string") {
+            setInfo({ ...info, avatar: result.split(",")[1] });
+            image.current.value = null;
           }
         };
-        reader.readAsArrayBuffer(selectedFile);
+        reader.readAsDataURL(selectedFile);
       }
     };
 
@@ -313,7 +301,11 @@ export default function Profile(pn: ProfileNode) {
             alert("닉네임은 영문과 숫자만 가능합니다!!");
             return;
           }
-          modifyNickname(textbox.current.value);
+          if (textbox.current.value.length > 13) {
+            alert("닉네임은 13 글자를 초과할 수 없습니다.");
+            return;
+          }
+          modifyNickname(textbox.current.value, false);
           setInfo({ ...info, nickname: textbox.current.value });
           textbox.current.value = "";
         }
@@ -322,7 +314,7 @@ export default function Profile(pn: ProfileNode) {
     return (
       <>
         <h3 className="font-bold text-lg">닉네임 수정</h3>
-        <input type="text" ref={textbox} />
+        <input type="text" maxLength={13} ref={textbox} />
         <button className="avatar-upload" onClick={handleFileUpload}>
           수정하기
         </button>
@@ -461,3 +453,7 @@ export default function Profile(pn: ProfileNode) {
     </div>
   );
 }
+
+const MemoProfile = React.memo(Profile);
+
+export default MemoProfile;

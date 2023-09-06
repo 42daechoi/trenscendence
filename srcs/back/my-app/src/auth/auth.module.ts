@@ -15,6 +15,7 @@ import {HttpModule, HttpService} from '@nestjs/axios';
 import {JwtModule} from '@nestjs/jwt';
 import { JwtStrategy } from './strategy/jwt.strategy';
 import { PartialJwtStrategy } from './strategy/partial-jwt.strategy';
+import { ConfigService } from '@nestjs/config';
 
 @Module({
   imports: [
@@ -22,10 +23,13 @@ import { PartialJwtStrategy } from './strategy/partial-jwt.strategy';
 		forwardRef(() => UsersModule),
 		PassportModule, 
 		HttpModule,
-	  	JwtModule.register({
-			secret: 'SECRET_KEY',
-			signOptions: {expiresIn: '3000s'},
-		})
+		JwtModule.registerAsync({
+			useFactory: async (configService: ConfigService) => ({
+			secret: configService.get<string>('JWT_SECRET_KEY'), // Retrieve secret from environment
+			signOptions: { expiresIn: '1h' }, // Optional: Set expiration time
+      }),
+		  inject: [ConfigService], // Inject the ConfigService
+    }),
   ],
   controllers: [AuthController, UsersController],
   providers: [

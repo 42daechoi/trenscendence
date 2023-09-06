@@ -259,8 +259,26 @@ export class GameService {
 		if (cur_game_id === null)
 			return (-1);
 		if (client.id === cur_game_id)
-		return (0);
+			return (0);
 		return (1);
+	}
+	async myInfo(client: Socket){
+		const user : User = await this.usersService.findUserBySocketId(client.id);
+		if (user === null)
+			return (-1);
+		return user.nickname;
+	}
+
+	async other(client: Socket){
+		const cur_game_id = await this.getCurGameRoomId(client);
+		if (cur_game_id === null)
+			return (-1);
+		const cur_game = this.gameSessions.get(cur_game_id);
+		if (!cur_game)
+			return;
+		if (client.id === cur_game.player1.socketID)
+			return cur_game.player2.nickname;
+		return cur_game.player1.nickname;
 	}
 
 	async echoRoom(client: Socket, server: Server, body: any){
@@ -391,6 +409,7 @@ export class GameService {
 		clearInterval(cur_game.count_intervalId);
 		cur_game.intervalId = setInterval(() => {
 			cur_game.pong(nsp);
+
 			nsp.to(cur_game_id).emit('draw', cur_game.ball);
 		}, 20);
 	}
@@ -420,11 +439,17 @@ export class GameService {
 		// nsp.to(cur_game_id).emit("draw", cur_game.ball);
 	}
 	
-	async destroyGame(client: Socket){
+	async destroyGame(client: Socket, nsp: Namespace){
+
+		//aboriting
+		
+		//normal termiation
 		const cur_game_id = await this.getCurGameRoomId(client);
-		const cur_game : Game = this.gameSessions.get(cur_game_id);
-		if (!cur_game)
+		let cur_game : Game = this.gameSessions.get(cur_game_id);
+
+		if (!cur_game){
 			return;
+		}
 		let loserPlayer : Player1 | Player2;
 		let winnerPlayer : Player1 | Player2;
 		//aborting game
@@ -453,7 +478,7 @@ export class GameService {
 		const guest : Player2 = cur_game.guest;
 		const host : Player1  = cur_game.host;
 		const guestSocket : Socket = this.usersSockets.get(guest.socketID); 
-		const hostSocket : Socket = this.usersSockets.get(host.socketID);		
+		// const hostSocket : Socket = this.usersSockets.get(host.socketID);		
 		//const guestSocket : Socket = this.usersSockets.get(guest.socketID); 
 		//const hostSocket : Socket = this.usersSockets.get(host.socketID);
 
@@ -462,25 +487,104 @@ export class GameService {
 
 		//disjoin guest socket
 		guestSocket.leave(cur_game_id);
-
+		clearInterval(cur_game.count_intervalId);
 		//this.logger.log("destoyed game : " + JSON.stringify(this.gameSessions.get(cur_game_id)));
-
-		await this.recordGame(cur_game);
+		if (cur_game.gameStatus !== GameStatus.Waiting)
+		{
+			await this.recordGame(cur_game);
+			console.log("=================win1========================");
+			nsp.to(loserPlayer.socketID).emit("Win",winnerPlayer);
+			nsp.to(winnerPlayer.socketID).emit("Win",winnerPlayer);
+		}
+		else
+		{
+			if (client.id === guest.socketID)
+				nsp.to(host.socketID).emit("leave","");
+			else (client.id === host.socketID)	
+				nsp.to(guest.socketID).emit("leave","");
+		}
+		this.gameSessions.delete(cur_game.gameID);
 		//destory gameSession
 
 	}
 
 
-	async destroySession(client: Socket){
+	async destroySession(client: Socket, nsp: Namespace){
 		//if in queue, pop out queue
 		await this.popQueue(client);
 
 
 		//if in game, destroy game
-		await this.destroyGame(client);
+		await this.destroyGame(client, nsp);
 
 	}
 
+	async findGameRoomIdBySocketId(client : Socket){
+		const socketId = client.id;
+		return (this.gameSessions.get(socketId));
+	}
+
+	async destroyRoom(roomId: string, client : Socket, nsp: Namespace){
+		const cur_game = this.gameSessions.get(roomId);
+		if (!cur_game){
+			return;
+		}
+		let loserPlayer : Player1 | Player2;
+		let winnerPlayer : Player1 | Player2;
+		//aborting game
+		if (cur_game.gameStatus === GameStatus.Playing){
+			const outPlayer : Player1 | Player2 = 
+				cur_game.player1.socketID === client.id ? cur_game.player1 : cur_game.player2;
+			const remainPlayer : Player1 | Player2 = 
+				cur_game.player2.socketID !== client.id ? cur_game.player1 : cur_game.player2;
+			loserPlayer = outPlayer;
+			winnerPlayer = remainPlayer;
+		}
+		else if (cur_game.player1.score > cur_game.player2.score)
+		{
+			winnerPlayer = cur_game.player1;
+			loserPlayer = cur_game.player2;
+		}
+		else
+		{
+			winnerPlayer = cur_game.player2;
+			loserPlayer = cur_game.player1;
+		}
+		cur_game.gameWinner = winnerPlayer;
+		cur_game.gameLoser = loserPlayer;
+
+		//disJoin room
+		const guest : Player2 = cur_game.guest;
+		const host : Player1  = cur_game.host;
+		const guestSocket : Socket = this.usersSockets.get(guest.socketID); 
+		// const hostSocket : Socket = this.usersSockets.get(host.socketID);		
+		//const guestSocket : Socket = this.usersSockets.get(guest.socketID); 
+		//const hostSocket : Socket = this.usersSockets.get(host.socketID);
+
+		//await this.updateUserStatusOnline(guestSocket);
+		//await this.updateUserStatusOnline(hostSocket);
+
+		//disjoin guest socket
+		guestSocket.leave(roomId);
+		clearInterval(cur_game.count_intervalId);
+		//this.logger.log("destoyed game : " + JSON.stringify(this.gameSessions.get(cur_game_id)));
+		if (cur_game.gameStatus !== GameStatus.Waiting)
+		{
+			console.log("=================win========================");
+			nsp.to(winnerPlayer.socketID).emit("Win",winnerPlayer);
+			await this.recordGame(cur_game);
+		}
+		else
+		{
+			if (client.id === guest.socketID)
+				nsp.to(host.socketID).emit("leave","");
+			else (client.id === host.socketID)
+				nsp.to(guest.socketID).emit("leave","");
+		}
+		console.log("=================2222========================");
+		this.gameSessions.delete(cur_game.gameID);
+		//destory gameSession
+	}
 
 	//#############################################################
 	//##########          MAKING GAME RECORD           ############
@@ -509,6 +613,7 @@ export class GameService {
           score: gameSession.player1.score,
           winner: gameSession.player1.score > gameSession.player2.score,
         };
+		
 
         const player2Dto: CreateGamePlayerDto = {
           user: await this.userRepository.findOneBy({
@@ -526,8 +631,6 @@ export class GameService {
 	  	//update user DB
 		await this.loserUpdate(loserPlayer);
 		await this.winnerUpdate(winnerPlayer);
-
-		this.gameSessions.delete(cur_game.gameID);
 		
 	}
 
