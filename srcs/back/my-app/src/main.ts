@@ -3,6 +3,7 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import * as cookieParser from 'cookie-parser';
 import { ConfigService } from '@nestjs/config';
+import { json, urlencoded } from 'express';
 //const cookieSession = require('cookie-session');
 
 async function bootstrap() {
@@ -19,8 +20,14 @@ async function bootstrap() {
 	  origin : config.get<string>('CORS_ORIGIN'),
 	  methods: config.get<string>('CORS_METHODS'),
 	  allowedHeaders: config.get<string>('CORS_ALLOW_HEADERS'),
-    credentials: true,
+//		origin : "http://localhost:3000",
+//		methods: "GET, HEAD, PUT, PATCH, POST, DELETE",
+//		allowedHeaders: 'Content-Type, Accept',
+		credentials: true,
   })
+  app.use(json({limit: '10mb'}));
+  app.use(urlencoded({extended: true, limit: '10mb'}));
   await app.listen(config.get<number>('CORS_PORT'));
+  //await app.listen(3001);
 }
 bootstrap();

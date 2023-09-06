@@ -32,7 +32,10 @@ function App() {
         <Router>
           {isSet && (
             <Routes>
-              <Route path="/" Component={isLogin ? LoginPage : LoginPage}></Route>
+              <Route
+                path="/"
+                Component={isLogin ? LoginPage : LoginPage}
+              ></Route>
               <Route
                 path="/main"
                 Component={isLogin ? MainPage : LoginPage}

@@ -57,7 +57,7 @@ function useSocketConnection() {
   const [socket, setSocket] = useState<Socket | null>(null);
 
   useEffect(() => {
-    const newSocket = io("localhost:3001");
+    const newSocket = io("localhost:3001/chat", { withCredentials: true });
     setSocket(newSocket);
 
     return () => {
