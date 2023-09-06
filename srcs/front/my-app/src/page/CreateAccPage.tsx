@@ -8,6 +8,7 @@ import {
   modifyNickname,
   getUserByNickname,
   getWhoami,
+  modifyAvatar,
 } from "../utils/ApiRequest";
 import { useRef } from "react";
 
@@ -15,7 +16,14 @@ export default function CreateAccPage() {
   const nickname = useRef(null);
   const [avatar, setAvatar] = useState("");
   const navigate = useNavigate();
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
+  // const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  //   const files = event.target.files;
+  //   if (files && files.length > 0) {
+  //     setSelectedFile(files[0]);
+  //   }
+  // };
   useEffect(() => {
     getWhoami()
       .then((result) => {
@@ -32,19 +40,39 @@ export default function CreateAccPage() {
       alert("닉네임이 입력되지 않았습니다.");
       return;
     }
+    console.log(nickname.current.value);
     getUserByNickname(nickname.current.value)
       .then((result) => {
+        console.log(result);
         alert("이미 존재하는 닉네임입니다.");
       })
       .catch((err) => {
         modifyNickname(nickname.current.value, false);
-
+        modifyAvatar(selectedFile);
         navigate("/main");
       });
   };
-  const handleFileChange = (e) => {
-    const img = e.target.files[0];
-    if (img) {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // const files = e.target.files;
+    // if (files && files.length > 0) {
+    //   setSelectedFile(files[0]);
+    // }
+    // const img = e.target.files[0];
+    // if (img) {
+    //   const reader = new FileReader();
+    //   reader.onload = function (event) {
+    //     const result = event.target.result;
+    //     if (typeof result === "string") {
+    //       setAvatar(result.split(",")[1]); // Base64 인코딩된 부분만 가져옵니다.
+    //     }
+    //   };
+    //   reader.readAsDataURL(img);
+    // }
+    const files = e.target.files;
+    if (files && files.length > 0) {
+      const selectedFile = files[0];
+      setSelectedFile(selectedFile);
+
       const reader = new FileReader();
       reader.onload = function (event) {
         const result = event.target.result;
@@ -52,7 +80,7 @@ export default function CreateAccPage() {
           setAvatar(result.split(",")[1]); // Base64 인코딩된 부분만 가져옵니다.
         }
       };
-      reader.readAsDataURL(img);
+      reader.readAsDataURL(selectedFile);
     }
   };
 

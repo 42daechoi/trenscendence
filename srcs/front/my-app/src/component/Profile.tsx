@@ -244,30 +244,7 @@ function Profile(pn: ProfileNode) {
 
     const handleFileUpload = () => {
       if (selectedFile) {
-        const reader = new FileReader();
-        reader.onload = function (event) {
-          const result = event.target?.result;
-          if (result) {
-            const arrayBuffer = new Uint8Array(result as ArrayBuffer);
-            axios
-              .patch(`http://localhost:3001/users/${myInfo.id}`, {
-                headers: {
-                  "Content-Type": "application/json",
-                },
-                profilePicture: Array.from(arrayBuffer),
-              })
-              .then((result) => {
-                console.log("ooooooooooo");
-              })
-              .catch((err) => {
-                console.log("xxxxxxxxxxx");
-              });
-
-            // console.log(arrayBuffer);
-            // modifyAvatar(arrayBuffer);
-          }
-        };
-        reader.readAsArrayBuffer(selectedFile);
+        modifyAvatar(selectedFile);
       }
     };
 
