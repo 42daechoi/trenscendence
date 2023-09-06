@@ -85,6 +85,12 @@ export class GameService {
 		this.gameSessions.set(gameInfo.gameID, gameInfo);
 		this.logger.log("created game session, size : " + this.gameSessions.size);
 
+		const guestSocket : Socket = nsp.sockets.get(gameInfo.guest.socketID); 
+		const hostSocket : Socket = nsp.sockets.get(gameInfo.host.socketID);  
+		//flag as in game
+		await this.updateUserStatusInGame(guestSocket);
+		await this.updateUserStatusInGame(hostSocket);
+
 //		/* send all active game sessions */
 //		const gameSessions = [];
 //		this.gameSessions.forEach((value: Game) => {
@@ -103,6 +109,27 @@ export class GameService {
 				nsp
 			);
 		}
+	}
+
+	async halfSetUpGame(client1 : Socket, client2: Socket, nsp: Namespace){
+		const user1 : User = await this.usersService.findUserBySocketId(client1.id);
+		const user2 : User = await this.usersService.findUserBySocketId(client2.id);
+		const player1 : Player1 = new Player1(user1.socketId, user1.id, user1.nickname);
+		const player2 : Player2 = new Player1(user2.socketId, user2.id, user2.nickname);
+		const gameInfo = new Game(player1, player2);
+		gameInfo.gameStatus = GameStatus.Waiting;
+		gameInfo.gameID = user1.socketId;
+		gameInfo.gameService = this;
+		const guestSocket : Socket = nsp.sockets.get(gameInfo.guest.socketID); 
+		const hostSocket : Socket = nsp.sockets.get(gameInfo.host.socketID);  
+		//flag as in game
+		await this.updateUserStatusInGame(guestSocket);
+		await this.updateUserStatusInGame(hostSocket);
+		this.logger.log("wating for target's game Join " + this.gameSessions.size);
+		const targetSocket : Socket = this.usersSockets.get(player2.socketID);
+		if (targetSocket)
+			targetSocket.emit('OneOnOneNoti', {user1, user2});
+		//update user1 , user2 as in Game
 	}
 
 	async matchUp(player1 : Socket, player2 : Socket, nsp: Namespace){
@@ -242,11 +269,19 @@ export class GameService {
 	async acceptOneOnOne(srcUser : User, targetUser : User, nsp : Namespace){
 		const hostSocket : Socket = this.usersSockets.get(srcUser.socketId);
 		const guestSocket : Socket = this.usersSockets.get(targetUser.socketId);
-		await this.setUpGame(hostSocket, guestSocket, nsp);
+
+		const cur_game  = this.gameSessions.get(hostSocket.id);
+		hostSocket.join(cur_game.gameID);
+		guestSocket.join(cur_game.gameID);
+		nsp.to(hostSocket.id).emit('client', 0);
+		nsp.to(guestSocket.id).emit('client', 1);
+		nsp.to(cur_game.gameID).emit('matchInfo', {gameId: cur_game.gameID, host : srcUser, guest: targetUser});
+		this.logger.log("accepted One on One : " + this.gameSessions.size);
 	}
 
 	async denyOneOnOne(srcUser : User, targetUser : User, nsp : Namespace){
 		const srcSocket : Socket = this.usersSockets.get(srcUser.socketId);
+		this.destroyGame(srcSocket, nsp);
 		srcSocket.emit("denyNoti", targetUser);
 	}
 
@@ -343,11 +378,6 @@ export class GameService {
 		console.log(game_info);
 		//const guestSocket : Socket = await this.socketGetter(guest.socketID); 
 		//const hostSocket : Socket = await this.socketGetter(host.socketID);
-		const guestSocket : Socket = nsp.sockets.get(guest.socketID); 
-		const hostSocket : Socket = nsp.sockets.get(host.socketID);  
-		//flag as in game
-		await this.updateUserStatusInGame(guestSocket);
-		await this.updateUserStatusInGame(hostSocket);
 
 		//nsp.to(cur_game_id).emit('gameStart');
 		//set up game resources
@@ -472,12 +502,12 @@ export class GameService {
 		const guest : Player2 = cur_game.guest;
 		const host : Player1  = cur_game.host;
 		const guestSocket : Socket = this.usersSockets.get(guest.socketID); 
-		// const hostSocket : Socket = this.usersSockets.get(host.socketID);		
+		 const hostSocket : Socket = this.usersSockets.get(host.socketID);		
 		//const guestSocket : Socket = this.usersSockets.get(guest.socketID); 
 		//const hostSocket : Socket = this.usersSockets.get(host.socketID);
 
-		//await this.updateUserStatusOnline(guestSocket);
-		//await this.updateUserStatusOnline(hostSocket);
+		await this.updateUserStatusOnline(guestSocket);
+		await this.updateUserStatusOnline(hostSocket);
 
 		//disjoin guest socket
 		guestSocket.leave(cur_game_id);

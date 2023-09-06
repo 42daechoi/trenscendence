@@ -22,6 +22,7 @@ import { WsJwtGuard } from './guards/ws.jwt.guard';
 import { AuthService } from 'src/auth/auth.service';
 import { CurrentUserWs } from './decorators/ws.current-user.decorator';
 import { ConfigService } from '@nestjs/config';
+import {ChatService} from 'src/chat/chat.service';
 const ORIGIN = process.env.CORS_ORIGIN;
 
 @WebSocketGateway({
@@ -40,7 +41,8 @@ export class GameGateway
     @Inject(AuthService) private authService: AuthService,
     @Inject(GameService) private gameService: GameService,
     @Inject(JwtService) private jwtService: JwtService,
-  @Inject(ConfigService) private readonly configService: ConfigService,
+	@Inject(ConfigService) private readonly configService: ConfigService,
+	@Inject(ChatService) private readonly chatService: ChatService,
   ) {}
   //@WebSocketServer 데코레이터 부분을 주목해주세요.
 
@@ -160,7 +162,6 @@ export class GameGateway
   async inGame(@ConnectedSocket() socket: Socket) {
     console.log('inGame');
     const gameRoomId = await this.gameService.getCurGameRoomId(socket);
-    const game = this.gameService.gameSessions.get(gameRoomId);
     const ret = this.gameService.gameSessions.has(gameRoomId);
     console.log(ret);
 
@@ -195,11 +196,19 @@ export class GameGateway
   @SubscribeMessage('OneOnOne')
   async OneOnOne(@ConnectedSocket() socket: Socket, body: any) {
     const src: User = await this.usersService.findUserBySocketId(socket.id);
-    await this.gameService.OneOnOneNoti(
-      src.id,
-      parseInt(body.targetId),
-      this.nsp,
-    );
+	const target : User = await this.usersService.findUserById(body.id);
+	const blocks : Map <number, string> = await this.chatService.getUserBlocklist(target.id);
+	//src is blocked by target
+	if (blocks.get(src.id))
+	{
+		this.nsp.to(socket.id).emit("blockGame");
+		return;
+	}
+	else{
+		const targetSocket = this.nsp.sockets.get(target.socketId);
+		const srcSocket = socket;
+		await this.gameService.halfSetUpGame(srcSocket, targetSocket, this.nsp);
+	}
   }
 
   @SubscribeMessage('acceptOneOnOne')
