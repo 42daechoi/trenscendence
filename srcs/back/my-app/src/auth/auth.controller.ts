@@ -46,7 +46,6 @@ export class AuthController {
     console.log('auth/loginfortytwo/callback');
     const intraId: string = res.req.user.login;
     const nickname: string = res.req.user.login;
-    console.log(res.req.user);
     let find_user: User = await this.usersService.findUserByIntraId(intraId);
     if (!find_user) {
       //default image

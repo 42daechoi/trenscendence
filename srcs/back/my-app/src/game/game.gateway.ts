@@ -22,11 +22,12 @@ import { WsJwtGuard } from './guards/ws.jwt.guard';
 import { AuthService } from 'src/auth/auth.service';
 import { CurrentUserWs } from './decorators/ws.current-user.decorator';
 import { ConfigService } from '@nestjs/config';
+const ORIGIN = process.env.CORS_ORIGIN;
 
 @WebSocketGateway({
   namespace: 'game',
   cors: {
-    origin: [process.env.CORS_ORIGIN],
+    origin: true,
     credentials: true,
   },
 })
@@ -39,6 +40,7 @@ export class GameGateway
     @Inject(AuthService) private authService: AuthService,
     @Inject(GameService) private gameService: GameService,
     @Inject(JwtService) private jwtService: JwtService,
+  @Inject(ConfigService) private readonly configService: ConfigService,
   ) {}
   //@WebSocketServer 데코레이터 부분을 주목해주세요.
 
@@ -47,11 +49,11 @@ export class GameGateway
   //만약 네임스페이스를 설정하지 않았다면 @WebSocketServer 데코레이터가 반환하는 값은 서버 인스턴스가 되고, 그 때는 타입을 다음과 같이 서버 타입을 설정해줘야 합니다.
   //@WebSocketServer() server: Socket;
   @WebSocketServer() nsp: Namespace;
-  @WebSocketServer() server: Server;
 
   //execute right after init
   afterInit() {
     this.nsp.adapter.on('create-room', (room) => {
+	  this.logger.log("ORIGIN : " + process.env.CORS_ORIGIN);
       this.logger.log(`"Room:${room}" has been created.`);
     });
 
@@ -239,7 +241,7 @@ export class GameGateway
     @ConnectedSocket() socket: Socket,
     @MessageBody() gameSetting: any,
   ) {
-    this.gameService.echoRoomByGameHost(socket, this.server, gameSetting);
+    this.gameService.echoRoomByGameHost(socket, this.nsp, gameSetting);
   }
 
   @SubscribeMessage('ready')

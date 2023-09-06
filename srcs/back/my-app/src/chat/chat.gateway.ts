@@ -8,7 +8,7 @@ import {
   ConnectedSocket,
   OnGatewayInit,
 } from '@nestjs/websockets';
-import { Server, Socket } from 'socket.io';
+import { Server, Socket, Namespace } from 'socket.io';
 import {
   userDTO,
   channelDTO,
@@ -25,8 +25,10 @@ import { User } from 'src/typeorm';
 import { ChatService } from './chat.service';
 
 @WebSocketGateway({
+  namespace: 'chat',
   cors: {
-    origin: '*',
+    origin: true,
+    credentials: true,
   },
 })
 export class ChatGateway
@@ -36,6 +38,8 @@ export class ChatGateway
     @Inject(UsersService) private readonly usersService,
     @Inject(ChatService) private readonly chatService,
   ) {}
+
+  @WebSocketServer() nsp: Namespace;
   private connectedSockets: Map<number, Socket> = new Map();
 
   sendDataToSocket(socket: Socket, data: any) {
