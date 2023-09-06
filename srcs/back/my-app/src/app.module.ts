@@ -17,6 +17,7 @@ import { TypeOrmConfigService } from './config/typeorm.service';
   imports: [
 	ConfigModule.forRoot({
 		isGlobal: true,
+		cache: true,
 	}),
     forwardRef(() => AuthModule),
     UsersModule,

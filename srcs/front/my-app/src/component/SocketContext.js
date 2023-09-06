@@ -5,11 +5,14 @@ const SocketContext = createContext();
 const GameSocketContext = createContext();
 export function GameSocketProvider({ children }) {
   const gameSocket = useGameSocketConnection();
-  
+
   return (
-    <GameSocketContext.Provider value={gameSocket}>{children}</GameSocketContext.Provider>
+    <GameSocketContext.Provider value={gameSocket}>
+      {children}
+    </GameSocketContext.Provider>
   );
 }
+
 export function SocketProvider({ children }) {
   const socket = useSocketConnection();
 
@@ -17,6 +20,7 @@ export function SocketProvider({ children }) {
     <SocketContext.Provider value={socket}>{children}</SocketContext.Provider>
   );
 }
+
 export function useGameSocket() {
   return useContext(GameSocketContext);
 }
@@ -28,9 +32,11 @@ function useGameSocketConnection() {
   const [gameSocket, setGameSocket] = useState(null);
 
   useEffect(() => {
-    const newGameSocket = io('localhost:3001/game', {withCredentials : true});
+    const newGameSocket = io("localhost:3001/game", { withCredentials: true });
     setGameSocket(newGameSocket);
-    
+    console.log("game");
+    console.log(newGameSocket);
+
     return () => {
       newGameSocket.disconnect();
     };
@@ -42,9 +48,10 @@ function useSocketConnection() {
   const [socket, setSocket] = useState(null);
 
   useEffect(() => {
-    const newSocket = io("localhost:3001");
-
+    const newSocket = io("localhost:3001/chat", {withCredentials: true});
     setSocket(newSocket);
+    console.log("chat");
+    console.log(newSocket);
 
     return () => {
       newSocket.disconnect();

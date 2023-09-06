@@ -65,12 +65,12 @@ export function getFriendList<T = any>(id: number): Promise<AxiosResponse<T>> {
   return apiRequest("get", `${serverUrl}/${tagUser}/friends/list`);
 }
 
-export function modifyNickname(name: string) {
+export function modifyNickname(name: string, alertFlag: boolean) {
   getWhoami()
     .then((res) => {
       patchId(res.data.id, { nickname: name })
         .then((response) => {
-          alert("닉네임 수정 성공!");
+          if (alertFlag === true) alert("닉네임 수정 성공!");
         })
         .catch((error) => {
           if (error.response.data.statusCode) alert("닉네임 수정 실패");
@@ -85,36 +85,35 @@ type profilePicture = {
   data: ArrayBuffer;
 };
 
-export function modifyAvatar(img: ArrayBuffer) {
-  // getWhoami()
-  //   .then((res) => {
-  //     axios.patch("/some/api/endpoint", {
-  //       profilePicture: Array.from(arrayBuffer),
-  //     });
-  //     const formData = new FormData();
-  //     axios.patch("/some/api/endpoint", {
-  //       profilePicture: Array.from(arrayBuffer),
-  //     });
-  //   })
-  //   .catch((err) => {});
-  // getWhoami()
-  //   .then((res) => {
-  //     patchId(res.data.id, {
-  //       profilePicture: {
-  //         data: img,
-  //       },
-  //     })
-  //       .then((response) => {
-  //         console.log(response);
-  //         alert("아바타 수정 성공");
-  //       })
-  //       .catch((error) => {
-  //         if (error.response.data.statusCode) alert("아바타 수정 실패");
-  //       });
-  //   })
-  //   .catch((error) => {
-  //     console.log(error);
-  //   });
+export function modifyAvatar(img: File) {
+  getWhoami()
+    .then((res) => {
+      const reader = new FileReader();
+      reader.onload = function (event) {
+        const result = event.target?.result;
+        if (result) {
+          const arrayBuffer = new Uint8Array(result as ArrayBuffer);
+          axios
+            .patch(`http://localhost:3001/users/${res.data.id}`, {
+              headers: {
+                "Content-Type": "application/json",
+              },
+              profilePicture: Array.from(arrayBuffer),
+            })
+            .then((result) => {
+              console.log("ooooooooooo");
+            })
+            .catch((err) => {
+              console.log("xxxxxxxxxxx");
+            });
+
+          // console.log(arrayBuffer);
+          // modifyAvatar(arrayBuffer);
+        }
+      };
+      reader.readAsArrayBuffer(img);
+    })
+    .catch((err) => {});
 }
 
 export function getAllUsers<T = any>(): Promise<AxiosResponse<T>> {

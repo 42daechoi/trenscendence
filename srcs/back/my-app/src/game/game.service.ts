@@ -281,12 +281,6 @@ export class GameService {
 		return cur_game.player1.nickname;
 	}
 
-	async echoRoom(client: Socket, server: Server, body: any){
-		const cur_game_id = await this.getCurGameRoomId(client);
-		server.to(cur_game_id).emit("setupReply", body);
-//		client.emit('setupReply', body);
-	}
-
 	async echoRoomByGameHost(client: Socket, nsp: Namespace, body: any){
 		const room = Array.from(client.rooms);
 		console.log(room);
