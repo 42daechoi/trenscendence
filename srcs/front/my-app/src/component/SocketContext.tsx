@@ -1,9 +1,14 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
-import io from "socket.io-client";
+import{ io,Socket } from "socket.io-client";
 
-const SocketContext = createContext();
-const GameSocketContext = createContext();
-export function GameSocketProvider({ children }) {
+interface GameSocketProviderProps {
+  children: React.ReactNode;
+}
+
+const SocketContext = createContext<Socket | null>(null);
+const GameSocketContext = createContext<Socket | null>(null);
+
+export function GameSocketProvider({ children }: GameSocketProviderProps) {
   const gameSocket = useGameSocketConnection();
 
   return (
@@ -13,45 +18,47 @@ export function GameSocketProvider({ children }) {
   );
 }
 
-export function SocketProvider({ children }) {
+export function SocketProvider({ children }: GameSocketProviderProps) {
   const socket = useSocketConnection();
 
   return (
-    <SocketContext.Provider value={socket}>{children}</SocketContext.Provider>
+    <SocketContext.Provider value={socket}>
+      {children}
+    </SocketContext.Provider>
   );
 }
 
 export function useGameSocket() {
   return useContext(GameSocketContext);
 }
+
 export function useSocket() {
   return useContext(SocketContext);
 }
 
 function useGameSocketConnection() {
-  const [gameSocket, setGameSocket] = useState(null);
+  const [gameSocket, setGameSocket] = useState<Socket | null>(
+    null
+  );
 
   useEffect(() => {
     const newGameSocket = io("localhost:3001/game", { withCredentials: true });
     setGameSocket(newGameSocket);
-    console.log("game");
-    console.log(newGameSocket);
 
     return () => {
       newGameSocket.disconnect();
     };
   }, []);
+
   return gameSocket;
 }
 
 function useSocketConnection() {
-  const [socket, setSocket] = useState(null);
+  const [socket, setSocket] = useState<Socket | null>(null);
 
   useEffect(() => {
-    const newSocket = io("localhost:3001");
+    const newSocket = io("localhost:3001/chat", { withCredentials: true });
     setSocket(newSocket);
-    console.log("chat");
-    console.log(newSocket);
 
     return () => {
       newSocket.disconnect();
