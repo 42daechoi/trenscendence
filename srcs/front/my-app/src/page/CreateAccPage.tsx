@@ -67,8 +67,9 @@ export default function CreateAccPage() {
       reader.onload = function (event) {
         const result = event.target.result;
         if (typeof result === "string") {
-          setAvatar(result.split(",")[1]); // Base64 인코딩된 부분만 가져옵니다.
+          setAvatar(result.split(",")[1]);
           image.current.value = null;
+
         }
       };
       reader.readAsDataURL(selectedFile);
