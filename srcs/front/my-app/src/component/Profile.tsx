@@ -49,23 +49,10 @@ let myInfo: profileInfo = {
   isMyProfile: false,
   isFriendly: false,
 };
-const initLog: string[] = [
-  "daechoi vs king 2:1 win",
-  "eunji vs hello 1:2 lose",
-  "gyyu vs test 2:3 lose",
-];
 
 function Profile(pn: ProfileNode) {
-  const [gameLog, setGameLog] = useState<string[]>(initLog);
-  // const [gameLog, setGameLog] = useState<string[]>([]);
-  const [info, setInfo] = useState<profileInfo>({
-    id: -1,
-    nickname: "unknown",
-    avatar: "unknown",
-    rank: "unknown",
-    isMyProfile: false,
-    isFriendly: false,
-  });
+  const [gameLog, setGameLog] = useState<string[]>([]);
+  const [info, setInfo] = useState<profileInfo>(myInfo);
   useEffect(() => {
     getWhoami()
       .then((result) => {
@@ -86,16 +73,8 @@ function Profile(pn: ProfileNode) {
         newInfo.avatar = buffer.toString("base64");
 
         myInfo = newInfo;
-        getGameLog(myInfo.id)
-          .then((result) => {
-            console.log(result);
-          })
-          .catch((err) => {
-            console.log(err);
-          });
-        console.log(typeof result.data.profilePicture);
-
         setInfo(myInfo);
+        loadGameLog(myInfo.id, myInfo.nickname);
       })
       .catch((err) => {});
   }, []);
@@ -181,7 +160,6 @@ function Profile(pn: ProfileNode) {
             />
           </form>
           <form method="dialog" className="modal-backdrop">
-            {/* close의 용도? */}
             <button>close</button>
           </form>
         </dialog>
@@ -321,6 +299,43 @@ function Profile(pn: ProfileNode) {
       </>
     );
   }
+  function loadGameLog(userId: number, userNick) {
+    getGameLog(userId)
+      .then((result) => {
+        let newGameLog: string[] = [];
+        result.data.games.forEach((element) => {
+          if (userNick === element.loser) {
+            const log: string =
+              info.nickname +
+              " vs " +
+              element.winner +
+              " " +
+              element.scoreLoser +
+              " : " +
+              element.scoreWinner +
+              " lose";
+            console.log(log);
+            newGameLog = [...newGameLog, log];
+          } else if (userNick === element.winner) {
+            const log: string =
+              userNick +
+              " vs " +
+              element.loser +
+              " " +
+              element.scoreWinner +
+              " : " +
+              element.scoreLoser +
+              " win";
+            console.log(log);
+            newGameLog = [...newGameLog, log];
+          }
+        });
+        setGameLog(newGameLog);
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+  }
 
   function LoadUserInfo() {
     let newInfo: profileInfo = {
@@ -334,28 +349,17 @@ function Profile(pn: ProfileNode) {
     useEffect(() => {
       getWhoami()
         .then((response) => {
-          // console.log(response.data.profilePicture);
           if (pn.currUser === response.data.id) {
             if (!response.data.twoFA) setTwoFA("false");
             else setTwoFA("true");
             setInfo(myInfo);
-            // if (info.nickname !== response.data.nickname)
-            //   newInfo.nickname = response.data.nickname;
-            // if (info.rank !== response.data.rank)
-            //   newInfo.rank = response.data.rank;
-            // newInfo.isMyProfile = true;
-            // const bufferData: number[] = response.data.profilePicture.data;
-            // const buffer: Buffer = Buffer.from(bufferData);
-            // newInfo.avatar = buffer.toString("base64");
-            // setInfo(newInfo);
+            loadGameLog(info.id, info.nickname);
           } else {
             if (pn.currUser !== 0) {
               getId(String(pn.currUser))
                 .then((response) => {
-                  if (info.nickname !== response.data.nickname)
-                    newInfo.nickname = response.data.nickname;
-                  if (info.rank !== response.data.rank)
-                    newInfo.rank = response.data.rank;
+                  newInfo.nickname = response.data.nickname;
+                  newInfo.rank = response.data.rank;
                   newInfo.isMyProfile = false;
                   const bufferData: number[] =
                     response.data.profilePicture.data;
@@ -367,9 +371,9 @@ function Profile(pn: ProfileNode) {
                       res.data.forEach((element) => {
                         if (element.id === pn.currUser)
                           newInfo.isFriendly = true;
-                        // else newInfo.isFriendly = false;
                       });
                       setInfo(newInfo);
+                      loadGameLog(info.id, info.nickname);
                     })
                     .catch((err) => {
                       console.log(err);

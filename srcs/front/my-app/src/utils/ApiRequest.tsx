@@ -140,6 +140,11 @@ export function modifyFirstCreateFlag() {
 export function getGameLog<T = any>(id: number): Promise<AxiosResponse<T>> {
   return apiRequest("get", `${serverUrl}/game/gameStats/id/${String(id)}`);
 }
+
+export function getLeaderBoard<T = any>(): Promise<AxiosResponse<T>> {
+  return apiRequest("get", `${serverUrl}/game/gameStats/leaderBoard`);
+}
+
 export function getAllUsers<T = any>(): Promise<AxiosResponse<T>> {
   return apiRequest("get", `${serverUrl}/${tagUser}/findAll`);
 }
