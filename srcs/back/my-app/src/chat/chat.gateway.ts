@@ -92,6 +92,7 @@ import { ChatService } from './chat.service';
 
 
       let user = this.chatService.findUserBySocketId(socket.id);
+
       if (user) {
         //2초마다 보내는 socket에서 해제
         clearInterval(user.interval);
@@ -109,6 +110,10 @@ import { ChatService } from './chat.service';
             channel.member--;
             if (channel.member === 0)
             {
+              const removeIdx = this.chatService.getChannels().indexOf(channel);
+              if (removeIdx !== -1) {
+                this.chatService.getChannels().splice(removeIdx, 1);
+              }
               channel = null; //마지막 인원이었을 경우 객체 삭제.
             }
             else
