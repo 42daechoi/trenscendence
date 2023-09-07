@@ -53,21 +53,7 @@ export default function CreateAccPage() {
       .catch((err) => {});
   };
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    // const files = e.target.files;
-    // if (files && files.length > 0) {
-    //   setSelectedFile(files[0]);
-    // }
-    // const img = e.target.files[0];
-    // if (img) {
-    //   const reader = new FileReader();
-    //   reader.onload = function (event) {
-    //     const result = event.target.result;
-    //     if (typeof result === "string") {
-    //       setAvatar(result.split(",")[1]); // Base64 인코딩된 부분만 가져옵니다.
-    //     }
-    //   };
-    //   reader.readAsDataURL(img);
-    // }
+
     const files = e.target.files;
     if (files && files.length > 0) {
       const selectedFile = files[0];
@@ -77,7 +63,7 @@ export default function CreateAccPage() {
       reader.onload = function (event) {
         const result = event.target.result;
         if (typeof result === "string") {
-          setAvatar(result.split(",")[1]); // Base64 인코딩된 부분만 가져옵니다.
+          setAvatar(result.split(",")[1]);
         }
       };
       reader.readAsDataURL(selectedFile);

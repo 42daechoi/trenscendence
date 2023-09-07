@@ -9,6 +9,7 @@ import Callback from "./page/CallbackPage";
 import FullTFA from "./page/FullTFA";
 import GamePage from "./page/GamePage";
 import PartialTFA from "./page/PartialTFA";
+import NotFound from "./page/Notfound";
 import { getWhoami } from "./utils/ApiRequest";
 
 function App() {
@@ -60,6 +61,7 @@ function App() {
                 path="/partial-tfa"
                 Component={isLogin ? PartialTFA : LoginPage}
               ></Route>
+              <Route path="*" Component={NotFound}/>
             </Routes>
           )}
         </Router>
