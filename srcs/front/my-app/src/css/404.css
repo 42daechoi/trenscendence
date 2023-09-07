@@ -1,16 +1,16 @@
 
-.background h1 {
+.background .nfh {
 	font-size: 100px;
 	color: #e74c3c;
 }
   
-.background p {
+.background .nfp {
 	position: absolute;
 	font-size: 24px;
 	margin-top: 140px;
 }
   
-.background a {
+.background .nfa {
 	text-decoration: none;
 	color: #3498db;
 	font-size: 18px;
