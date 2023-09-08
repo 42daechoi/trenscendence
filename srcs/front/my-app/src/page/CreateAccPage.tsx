@@ -2,8 +2,6 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../css/CreateAccPage.css";
 import { Buffer } from "buffer";
-import axios from "axios";
-import { response } from "express";
 import {
   modifyNickname,
   getUserByNickname,
@@ -34,6 +32,10 @@ export default function CreateAccPage() {
   const createAccount = () => {
     if (!nickname.current.value) {
       alert("닉네임이 입력되지 않았습니다.");
+      return;
+    }
+    if (nickname.current.value.search(/\W|\s/g) > -1) {
+      alert("닉네임은 영문과 숫자만 가능합니다!!");
       return;
     }
     getUserByNickname(nickname.current.value)
