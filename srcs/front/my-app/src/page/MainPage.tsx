@@ -8,9 +8,6 @@ import FriendsList from "../component/FriendsList";
 import ChannelsList from "../component/ChannelsList";
 import MemoChat from "../component/Chat";
 import { getWhoami } from "../utils/ApiRequest";
-import Chat from "../component/Chat";
-import { getUserByNickname } from "../utils/ApiRequest";
-import Modal from "../component/Modal";
 import { useSocket } from "../component/SocketContext";
 import { apiRequest } from "../utils/ApiRequest";
 
@@ -84,23 +81,6 @@ export default function MainPage() {
       setChannelsButtonClass("clicked-button");
     }
   };
-  const [currUser, setCurrUser] = useState(null); // 현재 유저 상태
-  const searchText = useRef(null);
-  function searchUser() {
-    getUserByNickname(searchText.current.value)
-      .then((result) => {
-        if (result.data) {
-          setModalOpen(true);
-          setCurrUser(result.data.id);
-        } else {
-          alert("해당 유저가 없습니다");
-        }
-      })
-      .catch((err) => {
-        alert("해당 유저가 없습니다");
-      });
-  }
-
   const renderSide = () => {
     switch (curSide) {
       case "friends_list":
@@ -110,16 +90,6 @@ export default function MainPage() {
     }
   };
 
-  const handleKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
-    if (event.keyCode === 13 && event.key === "Enter") {
-      searchUser();
-    }
-  };
-
-  const [isModalOpen, setModalOpen] = useState(false);
-  const closeModal = (): void => {
-    setModalOpen(false);
-  };
   return (
     <div className="background">
       <div className="drawer drawer-end">
@@ -181,24 +151,6 @@ export default function MainPage() {
                 </button>
               </div>
               <div className="list">{renderSide()}</div>
-            </div>
-            <div className="search-side ">
-              <input
-                ref={searchText}
-                onKeyDown={handleKeyDown}
-                type="text"
-              ></input>
-              <button className="search-button" onClick={searchUser}>
-                🔍
-              </button>
-              {currUser && isModalOpen && (
-                <Modal
-                  closeModal={closeModal}
-                  ConfigureModal={() => (
-                    <MemoProfile currUser={currUser} isMe={false} />
-                  )}
-                />
-              )}
             </div>
           </div>
         </div>
