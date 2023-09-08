@@ -88,7 +88,7 @@ function Profile(pn: ProfileNode) {
           else if (props.modalType === iGM) window[iGM].showModal();
           else if (props.modalType === "false") navigate("/full-tfa");
           else if (props.modalType === "true") {
-            axios.post("http://10.14.9.3:3001/2fa/disable", null, {
+            axios.post("http://localhost:3001/2fa/disable", null, {
               withCredentials: true,
             });
             toast.error("OTP가 비활성화 되었습니다.", {
@@ -270,7 +270,7 @@ function Profile(pn: ProfileNode) {
     const handleFileUpload = () => {
       if (textbox.current.value) {
         {
-          if (textbox.current.value.search(/\W|\s/g) > -1) {
+          if (textbox.current.value.search(/[^a-zA-Z0-9!@#$]/g) > -1) {
             alert("닉네임은 영문과 숫자만 가능합니다!!");
             return;
           }

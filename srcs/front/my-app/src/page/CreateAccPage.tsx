@@ -34,7 +34,7 @@ export default function CreateAccPage() {
       alert("닉네임이 입력되지 않았습니다.");
       return;
     }
-    if (nickname.current.value.search(/\W|\s/g) > -1) {
+    if (nickname.current.value.search(/[^a-zA-Z0-9!@#$]/g) > -1) {
       alert("닉네임은 영문과 숫자만 가능합니다!!");
       return;
     }
@@ -50,6 +50,7 @@ export default function CreateAccPage() {
                   navigate("/main");
                 })
                 .catch((err) => {
+                  modifyFirstCreateFlag();
                   navigate("/main");
                 });
             })

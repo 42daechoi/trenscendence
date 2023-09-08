@@ -3,7 +3,7 @@ import "../css/LoginPage.css";
 function LoginPage() {
   const login42 = () => {
     window.location.href =
-      "https://api.intra.42.fr/oauth/authorize?client_id=u-s4t2ud-76960aa574ff1a4710fe07b02dffe9b5d3bb691f66581a2e6d1a0f72cc591b56&redirect_uri=http%3A%2F%2F10.14.9.3%3A3001%2Fauth%2Floginfortytwo%2Fcallback&response_type=code";
+      "https://api.intra.42.fr/oauth/authorize?client_id=u-s4t2ud-2ba7bd194c505ff9326db61afa5c8f62b677dd535610878d78076cd0137b36b9&redirect_uri=http%3A%2F%2Flocalhost%3A3001%2Fauth%2Floginfortytwo%2Fcallback&response_type=code";
   };
   return (
     <div className="hero min-h-screen bg-base-200">

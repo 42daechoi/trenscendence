@@ -4,7 +4,7 @@ import { whoami } from "./whoami";
 import { StringLiteral } from "typescript";
 
 // const serverUrl: string = "http://localhost:3001";
-const serverUrl: string = "http://10.14.9.3:3001";
+const serverUrl: string = "http://localhost:3001";
 const tagUser: string = "users";
 
 export const apiRequest = <T = any,>(
@@ -134,7 +134,9 @@ export function modifyFirstCreateFlag() {
         .then((response) => {
           console.log(response.data);
         })
-        .catch((error) => {});
+        .catch((error) => {
+          console.log(error);
+        });
     })
     .catch((error) => {
       console.log(error);

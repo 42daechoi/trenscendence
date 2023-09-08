@@ -9,7 +9,7 @@ export default function FullTFA() {
   const [curState, setState] = useState(true);
   useEffect(() => {
     axios
-      .get("http://10.14.9.3:3001/OTPwhoami", { withCredentials: true })
+      .get("http://localhost:3001/OTPwhoami", { withCredentials: true })
       .then((response) => {
         response.data.twoFASecret === null
           ? setCurPage("otp_set")

@@ -22,7 +22,7 @@ export default function GoogleAuth(props) {
     const fullotp = otp + otp2;
     axios
       .post(
-        "http://10.14.9.3:3001/2fa/authenticate",
+        "http://localhost:3001/2fa/authenticate",
         { twoFactorAuthCode: fullotp },
         { withCredentials: true }
       )

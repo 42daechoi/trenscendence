@@ -6,7 +6,7 @@ export default function OtpSet(props) {
 
   useEffect(() => {
     axios
-      .post("http://10.14.9.3:3001/2fa/register", null, {
+      .post("http://localhost:3001/2fa/register", null, {
         withCredentials: true,
       })
       .then((response) => {
@@ -19,7 +19,7 @@ export default function OtpSet(props) {
 
   const btnOnClick = () => {
     axios
-      .post("http://10.14.9.3:3001/2fa/enable", null, { withCredentials: true })
+      .post("http://localhost:3001/2fa/enable", null, { withCredentials: true })
       .catch((error) => {
         console.log(error);
       });

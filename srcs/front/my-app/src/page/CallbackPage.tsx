@@ -27,7 +27,7 @@ export default function CallbackPage() {
       code: code,
     };
     axios
-      .get("http://10.14.9.3:3001/auth/loginfortytwo/callback")
+      .get("http://localhost:3001/auth/loginfortytwo/callback")
       .then((response) => {
         if (response.data) navigate("/create-account");
       })

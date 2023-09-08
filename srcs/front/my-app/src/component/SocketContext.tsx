@@ -38,7 +38,7 @@ function useGameSocketConnection() {
   const [gameSocket, setGameSocket] = useState<Socket | null>(null);
 
   useEffect(() => {
-    const newGameSocket = io("10.14.9.3:3001/game", { withCredentials: true });
+    const newGameSocket = io("localhost:3001/game", { withCredentials: true });
     setGameSocket(newGameSocket);
 
     return () => {
@@ -53,7 +53,7 @@ function useSocketConnection() {
   const [socket, setSocket] = useState<Socket | null>(null);
 
   useEffect(() => {
-    const newSocket = io("10.14.9.3:3001/chat", { withCredentials: true });
+    const newSocket = io("localhost:3001/chat", { withCredentials: true });
     setSocket(newSocket);
 
     return () => {
