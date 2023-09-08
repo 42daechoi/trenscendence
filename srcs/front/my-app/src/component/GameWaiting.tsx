@@ -249,11 +249,19 @@ export default function GameWaiting(prop) {
     }
   },[]);
   useEffect(() => {
-    if (socket)
+    if (socket && prop.type !== true)
     {
       socket.emit("match", "");
     };
+    if (socket && prop.type === true)
+    {
+      socket.emit("amiHost", response => {
+        if (response === 1)
+          socket.emit("oneOnOneMade","");
+      });
+    }
     return() =>{
+      console.log("tmp", tmp);
       if (tmp === -1)
       {
         socket.emit('gameRoomOut',"");
@@ -365,7 +373,6 @@ export default function GameWaiting(prop) {
               gameset.pad[i].width *= 2;
             }
             socket.emit('gameSetting', gameset);
-
           }
 
         });

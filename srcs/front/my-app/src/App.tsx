@@ -1,7 +1,7 @@
 import "./App.css";
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import { useState } from "react";
-import { SocketProvider, GameSocketProvider } from "./component/SocketContext";
+import { SocketProvider, GameSocketProvider, CurPageProvider } from "./component/SocketContext";
 import LoginPage from "./page/LoginPage";
 import MainPage from "./page/MainPage";
 import CreateAccPage from "./page/CreateAccPage";
@@ -29,6 +29,7 @@ function App() {
   return (
     <GameSocketProvider>
       <SocketProvider>
+        <CurPageProvider>
         <Router>
           {isSet && (
             <Routes>
@@ -63,6 +64,7 @@ function App() {
             </Routes>
           )}
         </Router>
+        </CurPageProvider>
       </SocketProvider>
     </GameSocketProvider>
   );

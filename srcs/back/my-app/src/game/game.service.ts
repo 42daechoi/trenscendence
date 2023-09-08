@@ -63,6 +63,7 @@ export class GameService {
 		if (this.queue.get(clientSocket.id))
 		{
 			this.queue.delete(clientSocket.id);
+			client_user.status = UserStatus.ONLINE;
 			console.log("poping in queue user id : " + client_user.id);
 		}
 	}
@@ -122,13 +123,15 @@ export class GameService {
 		gameInfo.gameService = this;
 		const guestSocket : Socket = nsp.sockets.get(gameInfo.guest.socketID); 
 		const hostSocket : Socket = nsp.sockets.get(gameInfo.host.socketID);  
+		hostSocket.join(gameInfo.gameID );
+		guestSocket.join(gameInfo.gameID );
 		//flag as in game
 		await this.updateUserStatusInGame(guestSocket);
 		await this.updateUserStatusInGame(hostSocket);
+		this.gameSessions.set(gameInfo.gameID, gameInfo);
 		this.logger.log("wating for target's game Join " + this.gameSessions.size);
 		const targetSocket : Socket = this.usersSockets.get(player2.socketID);
-		if (targetSocket)
-			targetSocket.emit('OneOnOneNoti', {user1, user2});
+		this.OneOnOneNoti(user1.id, user2.id , nsp);
 		//update user1 , user2 as in Game
 	}
 
@@ -254,35 +257,42 @@ export class GameService {
 		if (targetUser.status === UserStatus.OFFLINE)
 		{
 			this.logger.log("Target User is OFFLINE. id: " + targetUserId);
+			return ;
 		}
 		//In Game
 		if (targetUser.status === UserStatus.GAME)
 		{
 			this.logger.log("Target User is in Game. id: " + targetUserId);
+			return ;
 		}
 		//cannot find socket
 		const targetSocket : Socket = this.usersSockets.get(targetUser.socketId);
 		if (targetSocket)
-			targetSocket.emit('OneOnOneNoti', {srcUser, targetUser});
+			targetSocket.emit('OneOnOneNoti', srcUser);
 	}
 
-	async acceptOneOnOne(srcUser : User, targetUser : User, nsp : Namespace){
-		const hostSocket : Socket = this.usersSockets.get(srcUser.socketId);
-		const guestSocket : Socket = this.usersSockets.get(targetUser.socketId);
-
-		const cur_game  = this.gameSessions.get(hostSocket.id);
-		hostSocket.join(cur_game.gameID);
-		guestSocket.join(cur_game.gameID);
-		nsp.to(hostSocket.id).emit('client', 0);
-		nsp.to(guestSocket.id).emit('client', 1);
+	async acceptOneOnOne(client : Socket, nsp : Namespace){
+		const cur_game_id = await this.getCurGameRoomId(client);
+		const cur_game  = this.gameSessions.get(cur_game_id);
+		if (!cur_game)
+			return false;
+		return true;
+	}
+	async oneOnOneMade(client : Socket, nsp : Namespace){
+		const cur_game_id = await this.getCurGameRoomId(client);
+		const cur_game  = this.gameSessions.get(cur_game_id);
+		if (!cur_game)
+			return ;
+		nsp.to(cur_game_id).emit('client', 0);
+		nsp.to(cur_game_id).emit('client', 1);
+		const srcUser = await this.usersService.findUserBySocketId(cur_game.player1.socketID);
+		const targetUser = await this.usersService.findUserBySocketId(cur_game.player2.socketID);
 		nsp.to(cur_game.gameID).emit('matchInfo', {gameId: cur_game.gameID, host : srcUser, guest: targetUser});
 		this.logger.log("accepted One on One : " + this.gameSessions.size);
 	}
 
-	async denyOneOnOne(srcUser : User, targetUser : User, nsp : Namespace){
-		const srcSocket : Socket = this.usersSockets.get(srcUser.socketId);
-		this.destroyGame(srcSocket, nsp);
-		srcSocket.emit("denyNoti", targetUser);
+	async denyOneOnOne(socket : Socket, nsp : Namespace){
+		this.destroyGame(socket, nsp);
 	}
 
 	//#############################################################
@@ -527,7 +537,9 @@ export class GameService {
 			else (client.id === host.socketID)	
 				nsp.to(guest.socketID).emit("leave","");
 		}
+		console.log("----------------------------------------------------");
 		this.gameSessions.delete(cur_game.gameID);
+
 		//destory gameSession
 
 	}

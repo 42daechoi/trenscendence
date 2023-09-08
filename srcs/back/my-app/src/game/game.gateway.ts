@@ -23,6 +23,7 @@ import { AuthService } from 'src/auth/auth.service';
 import { CurrentUserWs } from './decorators/ws.current-user.decorator';
 import { ConfigService } from '@nestjs/config';
 import {ChatService} from 'src/chat/chat.service';
+import { UserStatus } from 'src/typeorm/user.entity';
 const ORIGIN = process.env.CORS_ORIGIN;
 
 @WebSocketGateway({
@@ -194,16 +195,16 @@ export class GameGateway
   }
 
   @SubscribeMessage('OneOnOne')
-  async OneOnOne(@ConnectedSocket() socket: Socket, body: any) {
-    const src: User = await this.usersService.findUserBySocketId(socket.id);
-	const target : User = await this.usersService.findUserById(body.id);
+  async OneOnOne(@ConnectedSocket() socket: Socket, @MessageBody() body: any) {
+  const src: User = await this.usersService.findUserBySocketId(socket.id);
+	const target : User = await this.usersService.findUserById(parseInt(body.targetId));
 	const blocks : Map <number, string> = await this.chatService.getUserBlocklist(target.id);
+  const cur_game_id = await this.gameService.getCurGameRoomId(socket);
+  if (this.gameService.gameSessions.get(cur_game_id))
+    return -1;
 	//src is blocked by target
-	if (blocks.get(src.id))
-	{
-		this.nsp.to(socket.id).emit("blockGame");
-		return;
-	}
+	if (blocks.get(src.id) || target.status !== UserStatus.ONLINE)
+		return -1;
 	else{
 		const targetSocket = this.nsp.sockets.get(target.socketId);
 		const srcSocket = socket;
@@ -211,20 +212,26 @@ export class GameGateway
 	}
   }
 
-  @SubscribeMessage('acceptOneOnOne')
-  async acceptOneOnOne(@ConnectedSocket() socket: Socket, body: any) {
-    await this.gameService.acceptOneOnOne(
-      body.srcUser,
-      body.targetUser,
+  @SubscribeMessage('oneOnOneMade')
+  async oneOnOneMade(@ConnectedSocket() socket: Socket) {
+    return (await this.gameService.oneOnOneMade(
+      socket,
       this.nsp,
-    );
+    ));
+  }
+
+  @SubscribeMessage('acceptOneOnOne')
+  async acceptOneOnOne(@ConnectedSocket() socket: Socket) {
+    return (await this.gameService.acceptOneOnOne(
+      socket,
+      this.nsp,
+    ));
   }
 
   @SubscribeMessage('denyOneOnOne')
-  async denyOneOnOne(@ConnectedSocket() socket: Socket, body: any) {
+  async denyOneOnOne(@ConnectedSocket() socket: Socket, @MessageBody() body: any) {
     await this.gameService.denyOneOnOne(
-      body.srcUser,
-      body.targetUser,
+      socket,
       this.nsp,
     );
   }

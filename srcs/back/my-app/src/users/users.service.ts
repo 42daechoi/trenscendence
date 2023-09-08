@@ -58,7 +58,7 @@ export class UsersService {
   async findUserByIntraId(findIntraId: string): Promise<User | null> {
     //find all of entities with query
     //return array
-    console.log('finding Intra ID in service : ' + findIntraId);
+    //console.log('finding Intra ID in service : ' + findIntraId);
     const user = await this.userRepository.findOneBy({ intraId: findIntraId });
     if (!user) return null;
     return user;
