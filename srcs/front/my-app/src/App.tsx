@@ -15,7 +15,6 @@ import { getWhoami } from "./utils/ApiRequest";
 function App() {
   const [isLogin, setIsLogin] = useState(false);
   const [isSet, setIsSet] = useState(false);
-  function ProtectedRoute() {}
 
   getWhoami()
     .then((result) => {
@@ -61,7 +60,7 @@ function App() {
                 path="/partial-tfa"
                 Component={isLogin ? PartialTFA : LoginPage}
               ></Route>
-              <Route path="*" Component={NotFound}/>
+              <Route path="*" Component={NotFound} />
             </Routes>
           )}
         </Router>

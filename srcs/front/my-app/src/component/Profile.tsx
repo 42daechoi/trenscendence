@@ -229,9 +229,9 @@ function Profile(pn: ProfileNode) {
       if (files && files.length > 0) {
         const fileSizeKB = files[0].size / 1024;
         console.log(fileSizeKB);
-        if (fileSizeKB > 30) {
+        if (fileSizeKB > 6000) {
           // 100KB를 초과하면
-          alert("파일 크기가 30KB를 초과합니다.");
+          alert("첨부 파일 크기가 허용 제한을 초과했습니다.");
           image.current.value = null;
           return;
         }

@@ -40,11 +40,20 @@ export default function CreateAccPage() {
       .then((result) => {
         if (result.data) alert("이미 존재하는 닉네임입니다.");
         else {
-          modifyNickname(nickname.current.value, false);
-          modifyAvatar(selectedFile).then((response) => {
-            modifyFirstCreateFlag();
-            navigate("/main");
-          });
+          modifyNickname(nickname.current.value, false)
+            .then((result) => {
+              modifyAvatar(selectedFile)
+                .then((response) => {
+                  modifyFirstCreateFlag();
+                  navigate("/main");
+                })
+                .catch((err) => {
+                  navigate("/main");
+                });
+            })
+            .catch((err) => {
+              console.log(err);
+            });
         }
       })
       .catch((err) => {});
@@ -54,9 +63,9 @@ export default function CreateAccPage() {
     if (files && files.length > 0) {
       const fileSizeKB = files[0].size / 1024;
       console.log(fileSizeKB);
-      if (fileSizeKB > 30) {
+      if (fileSizeKB > 6000) {
         // 100KB를 초과하면
-        alert("파일 크기가 30KB를 초과합니다.");
+        alert("첨부 파일 크기가 허용 제한을 초과했습니다.");
         image.current.value = null;
         return;
       }
@@ -69,7 +78,6 @@ export default function CreateAccPage() {
         if (typeof result === "string") {
           setAvatar(result.split(",")[1]);
           image.current.value = null;
-
         }
       };
       reader.readAsDataURL(selectedFile);
