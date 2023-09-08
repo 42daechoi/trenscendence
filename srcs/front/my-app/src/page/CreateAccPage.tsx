@@ -2,8 +2,6 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../css/CreateAccPage.css";
 import { Buffer } from "buffer";
-import axios from "axios";
-import { response } from "express";
 import {
   modifyNickname,
   getUserByNickname,
@@ -36,6 +34,10 @@ export default function CreateAccPage() {
       alert("닉네임이 입력되지 않았습니다.");
       return;
     }
+    if (nickname.current.value.search(/[^a-zA-Z0-9!@#$]/g) > -1) {
+      alert("닉네임은 영문과 숫자만 가능합니다!!");
+      return;
+    }
     getUserByNickname(nickname.current.value)
       .then((result) => {
         if (result.data) alert("이미 존재하는 닉네임입니다.");
@@ -48,6 +50,7 @@ export default function CreateAccPage() {
                   navigate("/main");
                 })
                 .catch((err) => {
+                  modifyFirstCreateFlag();
                   navigate("/main");
                 });
             })

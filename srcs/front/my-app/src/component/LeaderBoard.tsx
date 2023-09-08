@@ -22,9 +22,12 @@ export default function LeaderBoard() {
             element.wins
           }승 ${element.loses}패`;
           const rate: string =
-            element.wins === 0
+            "승률: " +
+            (element.wins === 0
               ? "0%"
-              : `${((element.wins + element.loses) / element.wins) * 100}%`;
+              : `${Math.floor(
+                  (element.wins / (element.wins + element.loses)) * 100
+                )}%`);
           const tmpLB: leaderBoardState = {
             nickname: nick,
             gameLog: gameLog,
