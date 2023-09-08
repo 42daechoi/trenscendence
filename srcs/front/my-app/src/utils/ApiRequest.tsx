@@ -3,7 +3,8 @@ import { type } from "os";
 import { whoami } from "./whoami";
 import { StringLiteral } from "typescript";
 
-const serverUrl: string = "http://localhost:3001";
+// const serverUrl: string = "http://localhost:3001";
+const serverUrl: string = "http://10.14.9.3:3001";
 const tagUser: string = "users";
 
 export const apiRequest = <T = any,>(
@@ -104,7 +105,7 @@ export function modifyAvatar(img: File): Promise<AxiosResponse<any>> {
           if (result) {
             const arrayBuffer = new Uint8Array(result as ArrayBuffer);
             axios
-              .patch(`http://localhost:3001/users/${res.data.id}`, {
+              .patch(`${serverUrl}/users/${res.data.id}`, {
                 headers: {
                   "Content-Type": "application/json",
                 },

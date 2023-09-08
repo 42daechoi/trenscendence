@@ -64,7 +64,7 @@ function Chat(props) {
     socket.on("chat", (receiveData) => {
       if (!receiveData) return;
       axios
-        .get("http://localhost:3001/users/id/" + receiveData.id, {
+        .get("http://10.14.9.3:3001/users/id/" + receiveData.id, {
           withCredentials: true,
         })
         .then((response) => {
@@ -156,7 +156,7 @@ function Chat(props) {
       for (let i = 0; i < props.memberList.length; i++) {
         try {
           const response = await axios.get(
-            "http://localhost:3001/users/id/" + props.memberList[i],
+            "http://10.14.9.3:3001/users/id/" + props.memberList[i],
             { withCredentials: true }
           );
           const data = response.data;
@@ -202,7 +202,7 @@ function Chat(props) {
   //     for (let i = 0; i < props.memberList.length; i++) {
   //       try {
   //         const response = await axios.get(
-  //           "http://localhost:3001/users/" + props.memberList[i],
+  //           "http://10.14.9.3:3001/" + props.memberList[i],
   //           { withCredentials: true }
   //         );
   //         const data = response.data;
@@ -249,13 +249,13 @@ function Chat(props) {
         const target_name: string = chat.substring(7, chat.length);
         socket.emit("mutelistupdate", data.id);
         axios
-          .get("http://localhost:3001/users/nickname/" + target_name, {
+          .get("http://10.14.9.3:3001/nickname/" + target_name, {
             withCredentials: true,
           })
           .then((response) => {
             axios
               .patch(
-                "http://localhost:3001/users/blocks/add/" + response.data.id,
+                "http://10.14.9.3:3001/blocks/add/" + response.data.id,
                 null,
                 { withCredentials: true }
               )
@@ -272,13 +272,13 @@ function Chat(props) {
         socket.emit("mutelistupdate", data.id);
         const target_name: string = chat.substring(9, chat.length);
         axios
-          .get("http://localhost:3001/users/nickname/" + target_name, {
+          .get("http://10.14.9.3:3001/nickname/" + target_name, {
             withCredentials: true,
           })
           .then((response) => {
             axios
               .patch(
-                "http://localhost:3001/users/blocks/remove/" + response.data.id,
+                "http://10.14.9.3:3001/blocks/remove/" + response.data.id,
                 null,
                 { withCredentials: true }
               )
@@ -293,7 +293,7 @@ function Chat(props) {
         return;
       } else if (chat.substring(0, 10) === "/blocklist") {
         axios
-          .get("http://localhost:3001/users/blocks/list", {
+          .get("http://10.14.9.3:3001/blocks/list", {
             withCredentials: true,
           })
           .then((response) => {
@@ -329,7 +329,7 @@ function Chat(props) {
         const msg: string = chat.substring(firstSpaceIdx + 1, chat.length);
 
         axios
-          .get("http://localhost:3001/users/nickname/" + target_name, {
+          .get("http://10.14.9.3:3001/nickname/" + target_name, {
             withCredentials: true,
           })
           .then((response) => {

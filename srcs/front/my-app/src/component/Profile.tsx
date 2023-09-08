@@ -36,7 +36,6 @@ type profileInfo = {
   id: number;
   nickname: string;
   avatar: string;
-  rank: string;
   isMyProfile: boolean;
   isFriendly: boolean;
 };
@@ -45,7 +44,6 @@ let myInfo: profileInfo = {
   id: -1,
   nickname: "unknown",
   avatar: "unknown",
-  rank: "unknown",
   isMyProfile: false,
   isFriendly: false,
 };
@@ -60,13 +58,11 @@ function Profile(pn: ProfileNode) {
           id: result.data.id,
           nickname: result.data.nickname,
           avatar: "unknown",
-          rank: result.data.rank,
           isMyProfile: true,
           isFriendly: false,
         };
         newInfo.id = result.data.id;
         newInfo.nickname = result.data.nickname;
-        newInfo.rank = result.data.rank;
 
         const bufferData: number[] = result.data.profilePicture.data;
         const buffer: Buffer = Buffer.from(bufferData);
@@ -92,7 +88,7 @@ function Profile(pn: ProfileNode) {
           else if (props.modalType === iGM) window[iGM].showModal();
           else if (props.modalType === "false") navigate("/full-tfa");
           else if (props.modalType === "true") {
-            axios.post("http://localhost:3001/2fa/disable", null, {
+            axios.post("http://10.14.9.3:3001/2fa/disable", null, {
               withCredentials: true,
             });
             toast.error("OTP가 비활성화 되었습니다.", {
@@ -228,7 +224,6 @@ function Profile(pn: ProfileNode) {
       const files = event.target.files;
       if (files && files.length > 0) {
         const fileSizeKB = files[0].size / 1024;
-        console.log(fileSizeKB);
         if (fileSizeKB > 6000) {
           // 100KB를 초과하면
           alert("첨부 파일 크기가 허용 제한을 초과했습니다.");
@@ -299,35 +294,35 @@ function Profile(pn: ProfileNode) {
       </>
     );
   }
-  function loadGameLog(userId: number, userNick) {
+  function loadGameLog(userId: number, userNick: string) {
     getGameLog(userId)
       .then((result) => {
         let newGameLog: string[] = [];
-        result.data.games.forEach((element) => {
-          if (userNick === element.loser) {
-            const log: string =
-              info.nickname +
-              " vs " +
-              element.winner +
-              " " +
-              element.scoreLoser +
-              " : " +
-              element.scoreWinner +
-              " lose";
-            console.log(log);
-            newGameLog = [...newGameLog, log];
-          } else if (userNick === element.winner) {
-            const log: string =
-              userNick +
-              " vs " +
-              element.loser +
-              " " +
-              element.scoreWinner +
-              " : " +
-              element.scoreLoser +
-              " win";
-            console.log(log);
-            newGameLog = [...newGameLog, log];
+        result.data.games.forEach((element, index) => {
+          if (index % 2) {
+            if (userNick === element.loser) {
+              const log: string =
+                element.loser +
+                " vs " +
+                element.winner +
+                " " +
+                element.scoreLoser +
+                " : " +
+                element.scoreWinner +
+                " lose";
+              newGameLog = [...newGameLog, log];
+            } else if (userNick === element.winner) {
+              const log: string =
+                element.winner +
+                " vs " +
+                element.loser +
+                " " +
+                element.scoreWinner +
+                " : " +
+                element.scoreLoser +
+                " win";
+              newGameLog = [...newGameLog, log];
+            }
           }
         });
         setGameLog(newGameLog);
@@ -342,27 +337,24 @@ function Profile(pn: ProfileNode) {
       id: -1,
       nickname: "unknown",
       avatar: "unknown",
-      rank: "unknown",
       isMyProfile: false,
       isFriendly: false,
     };
     useEffect(() => {
       getWhoami()
-        .then((response) => {
-          if (pn.currUser === response.data.id) {
-            if (!response.data.twoFA) setTwoFA("false");
+        .then((my) => {
+          if (pn.currUser === my.data.id) {
+            if (!my.data.twoFA) setTwoFA("false");
             else setTwoFA("true");
             setInfo(myInfo);
             loadGameLog(info.id, info.nickname);
           } else {
             if (pn.currUser !== 0) {
               getId(String(pn.currUser))
-                .then((response) => {
-                  newInfo.nickname = response.data.nickname;
-                  newInfo.rank = response.data.rank;
+                .then((target) => {
+                  newInfo.nickname = target.data.nickname;
                   newInfo.isMyProfile = false;
-                  const bufferData: number[] =
-                    response.data.profilePicture.data;
+                  const bufferData: number[] = target.data.profilePicture.data;
                   const buffer: Buffer = Buffer.from(bufferData);
                   newInfo.avatar = buffer.toString("base64");
                   setInfo(newInfo);
@@ -373,7 +365,7 @@ function Profile(pn: ProfileNode) {
                           newInfo.isFriendly = true;
                       });
                       setInfo(newInfo);
-                      loadGameLog(info.id, info.nickname);
+                      loadGameLog(target.data.id, target.data.nickname);
                     })
                     .catch((err) => {
                       console.log(err);
@@ -406,12 +398,7 @@ function Profile(pn: ProfileNode) {
             className="avatar-img"
           ></img>
         </div>
-        <div className="my-nickname">
-          {info.nickname}
-          <h1 style={{ fontSize: "20px", paddingTop: "10px" }}>
-            Rank : {info.rank}
-          </h1>
-        </div>
+        <div className="my-nickname">{info.nickname}</div>
         <div className="fix-profile">
           {(pn.isMe || pn.currUser !== info.id) && (
             <>

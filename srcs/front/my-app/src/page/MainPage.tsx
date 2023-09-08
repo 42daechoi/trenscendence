@@ -45,7 +45,7 @@ export default function MainPage() {
   }, [socket]);
 
   useEffect(() => {
-    apiRequest<any>("get", "http://localhost:3001/users/whoami").then(
+    apiRequest<any>("get", "http://10.14.9.3:3001/users/whoami").then(
       (response) => {
         setMyId(response.data.id);
       }
