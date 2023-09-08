@@ -69,21 +69,24 @@ export function getFriendList<T = any>(id: number): Promise<AxiosResponse<T>> {
   return apiRequest("get", `${serverUrl}/${tagUser}/friends/list`);
 }
 
-export function modifyNickname(name: string, alertFlag: boolean) {
-  getWhoami()
-    .then((res) => {
-      patchId(res.data.id, { nickname: name })
-        .then((response) => {
-          if (alertFlag === true) alert("닉네임 수정 성공!");
-        })
-        .catch((error) => {
-          if (error.response.data.statusCode) alert("닉네임 수정 실패");
-          throw error;
-        });
-    })
-    .catch((error) => {
-      console.log(error);
-    });
+export function modifyNickname(
+  name: string,
+  alertFlag: boolean
+): Promise<AxiosResponse<any>> {
+  return new Promise((resolve, reject) => {
+    getWhoami()
+      .then((res) => {
+        return patchId(res.data.id, { nickname: name });
+      })
+      .then((response) => {
+        if (alertFlag === true) alert("닉네임 수정 성공!");
+        resolve(response);
+      })
+      .catch((error) => {
+        if (error.response?.data?.statusCode) alert("닉네임 수정 실패");
+        reject(error);
+      });
+  });
 }
 
 type profilePicture = {
@@ -91,8 +94,8 @@ type profilePicture = {
 };
 
 export function modifyAvatar(img: File): Promise<AxiosResponse<any>> {
-  // T를 적절한 타입으로 변경해주세요.
   return new Promise((resolve, reject) => {
+    if (!img) reject(null);
     getWhoami()
       .then((res) => {
         const reader = new FileReader();
@@ -108,17 +111,17 @@ export function modifyAvatar(img: File): Promise<AxiosResponse<any>> {
                 profilePicture: Array.from(arrayBuffer),
               })
               .then((result) => {
-                resolve(result); // 성공한 경우 resolve를 호출
+                resolve(result);
               })
               .catch((err) => {
-                reject(err); // 실패한 경우 reject를 호출
+                reject(err);
               });
           }
         };
         reader.readAsArrayBuffer(img);
       })
       .catch((err) => {
-        reject(err); // getWhoami 실패한 경우 reject를 호출
+        reject(err);
       });
   });
 }
