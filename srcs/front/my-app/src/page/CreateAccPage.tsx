@@ -9,6 +9,7 @@ import {
   getUserByNickname,
   getWhoami,
   modifyAvatar,
+  modifyFirstCreateFlag,
 } from "../utils/ApiRequest";
 import { useRef } from "react";
 
@@ -17,20 +18,15 @@ export default function CreateAccPage() {
   const [avatar, setAvatar] = useState("");
   const navigate = useNavigate();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const image = useRef<HTMLInputElement>(null);
 
-  // const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-  //   const files = event.target.files;
-  //   if (files && files.length > 0) {
-  //     setSelectedFile(files[0]);
-  //   }
-  // };
   useEffect(() => {
     getWhoami()
       .then((result) => {
         const bufferData: number[] = result.data.profilePicture.data;
-        console.log(bufferData);
         const buffer: Buffer = Buffer.from(bufferData);
         setAvatar(buffer.toString("base64"));
+        nickname.current.value = result.data.nickname;
       })
       .catch((err) => {});
   }, []);
@@ -42,20 +38,28 @@ export default function CreateAccPage() {
     }
     getUserByNickname(nickname.current.value)
       .then((result) => {
-        console.log(result.data);
         if (result.data) alert("이미 존재하는 닉네임입니다.");
         else {
           modifyNickname(nickname.current.value, false);
-          modifyAvatar(selectedFile);
-          navigate("/main");
+          modifyAvatar(selectedFile).then((response) => {
+            modifyFirstCreateFlag();
+            navigate("/main");
+          });
         }
       })
       .catch((err) => {});
   };
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-
     const files = e.target.files;
     if (files && files.length > 0) {
+      const fileSizeKB = files[0].size / 1024;
+      console.log(fileSizeKB);
+      if (fileSizeKB > 30) {
+        // 100KB를 초과하면
+        alert("파일 크기가 30KB를 초과합니다.");
+        image.current.value = null;
+        return;
+      }
       const selectedFile = files[0];
       setSelectedFile(selectedFile);
 
@@ -64,6 +68,8 @@ export default function CreateAccPage() {
         const result = event.target.result;
         if (typeof result === "string") {
           setAvatar(result.split(",")[1]);
+          image.current.value = null;
+
         }
       };
       reader.readAsDataURL(selectedFile);
@@ -108,6 +114,7 @@ export default function CreateAccPage() {
               type="file"
               accept=".jpg, .jpeg, .png"
               onChange={handleFileChange} // 여기를 추가했습니다.
+              ref={image}
             ></input>
           </div>
           <button onClick={createAccount}>계정 생성</button>

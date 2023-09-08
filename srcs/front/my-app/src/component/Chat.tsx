@@ -462,9 +462,8 @@ function Chat(props) {
 
       where(socket, data.id)
         .then((channel) => {
-          let chname:string = channel.channelname;
-          if (channel.channelname === "$home")
-            chname = "Home";
+          let chname: string = channel.channelname;
+          if (channel.channelname === "$home") chname = "Home";
           addMessage(
             {
               name: "SERVER",
@@ -556,7 +555,7 @@ function Chat(props) {
                   });
                 }}
               />
-              <ProfileModal name={user.name + index} currUser={index} />
+              <ProfileModal name={user.name} currUser={user.id} />
             </li>
           ))}
         </ul>

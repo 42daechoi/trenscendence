@@ -1,18 +1,37 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState, useRef, KeyboardEvent } from "react";
 import Modal from "./Modal";
 import Profile from "./Profile";
-import { getFriendList, getWhoami } from "../utils/ApiRequest";
+import MemoProfile from "../component/Profile";
+import {
+  getFriendList,
+  getWhoami,
+  getUserByNickname,
+} from "../utils/ApiRequest";
 
 type friendMap = {
   nickname: string;
   id: number;
   status: number;
 };
-
 export default function Friends_list() {
   const [friendList, setFriendList] = useState<friendMap[]>([]);
   const [id, setId] = useState(0);
-
+  const [currUser, setCurrUser] = useState(null); // 현재 유저 상태
+  const searchText = useRef(null);
+  function searchUser() {
+    getUserByNickname(searchText.current.value)
+      .then((result) => {
+        if (result.data) {
+          setModalOpen(true);
+          setCurrUser(result.data.id);
+        } else {
+          alert("해당 유저가 없습니다");
+        }
+      })
+      .catch((err) => {
+        alert("해당 유저가 없습니다");
+      });
+  }
   function init() {
     getWhoami().then((myid) => {
       getFriendList(myid.data.id).then((friends) => {
@@ -29,6 +48,12 @@ export default function Friends_list() {
     });
   }
 
+  const handleKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+    if (event.keyCode === 13 && event.key === "Enter") {
+      searchUser();
+    }
+  };
+
   const [isModalOpen, setModalOpen] = useState(false);
   const openModal = (id: number): void => {
     setId(id);
@@ -43,7 +68,7 @@ export default function Friends_list() {
   }, []);
 
   return (
-    <div>
+    <div className="friend-list">
       {friendList.map((friend) => (
         <li key={"friendList" + friend.id}>
           <a className="chat_btn" onClick={() => openModal(friend.id)}>
@@ -59,6 +84,20 @@ export default function Friends_list() {
           ConfigureModal={() => <Profile currUser={id} isMe={false} />}
         />
       )}
+      <div className="search-side">
+        <input ref={searchText} onKeyDown={handleKeyDown} type="text"></input>
+        <button className="search-button" onClick={searchUser}>
+          🔍
+        </button>
+        {currUser && isModalOpen && (
+          <Modal
+            closeModal={closeModal}
+            ConfigureModal={() => (
+              <MemoProfile currUser={currUser} isMe={false} />
+            )}
+          />
+        )}
+      </div>
     </div>
   );
 }

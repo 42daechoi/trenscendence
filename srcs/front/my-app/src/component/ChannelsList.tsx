@@ -1,12 +1,9 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, KeyboardEvent } from "react";
 import Modal from "./Modal";
 import "../css/ChannelList.css";
 import { useSocket } from "../component/SocketContext";
 import { whoami } from "../utils/whoami";
-import { where } from "../utils/where";
-import { channel } from "diagnostics_channel";
-import { join } from "path";
-
+import { getUserByNickname } from "../utils/ApiRequest";
 const initChannels: string[] = ["a", "b", "c"];
 
 interface IChannel {
@@ -104,6 +101,25 @@ export default function ChannelsList(props) {
       </>
     );
   }
+  const searchText = useRef(null);
+  const [currUser, setCurrUser] = useState(null);
+
+  function searchChannel() {
+    const searchChannelName = searchText.current.value;
+    for (let i = 0; i < channelList.length; i++) {
+      if (searchChannelName === channelList[i].channelname) {
+        openModal(i);
+        searchText.current.value = "";
+        return;
+      }
+    }
+  }
+
+  const handleKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+    if (event.keyCode === 13 && event.key === "Enter") {
+      searchChannel();
+    }
+  };
 
   return (
     <div className="channel-list">
@@ -121,6 +137,12 @@ export default function ChannelsList(props) {
       {isModalOpen && (
         <Modal closeModal={closeModal} ConfigureModal={ChannelConfigure} />
       )}
+      <div className="search-side">
+        <input ref={searchText} onKeyDown={handleKeyDown} type="text"></input>
+        <button className="search-button" onClick={searchChannel}>
+          🔍
+        </button>
+      </div>
     </div>
   );
 }

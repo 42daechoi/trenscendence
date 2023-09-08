@@ -1,5 +1,6 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import "../css/LeaderBoard.css";
+import { getLeaderBoard } from "../utils/ApiRequest";
 
 type leaderBoardState = {
   nickname: string;
@@ -7,16 +8,36 @@ type leaderBoardState = {
   rate: string;
 };
 
-const initLBS: leaderBoardState[] = [
-  { nickname: "daechoi", gameLog: "30전 20승 10패", rate: "66.6%" },
-  { nickname: "김두한", gameLog: "30전 10승 20패", rate: "33.3%" },
-  { nickname: "김두한", gameLog: "10전 10승 0패", rate: "100%" },
-];
-
 const styles: string[] = ["gold", "silver", "#af6114"];
 
 export default function LeaderBoard() {
-  const [leaderBoard, setLeaderBoard] = useState<leaderBoardState[]>(initLBS);
+  const [leaderBoard, setLeaderBoard] = useState<leaderBoardState[]>([]);
+  useEffect(() => {
+    getLeaderBoard()
+      .then((result) => {
+        let newLeaderBoard: leaderBoardState[] = [];
+        result.data.forEach((element) => {
+          const nick: string = element.nickname;
+          const gameLog: string = `${element.wins + element.loses}전 ${
+            element.wins
+          }승 ${element.loses}패`;
+          const rate: string =
+            element.wins === 0
+              ? "0%"
+              : `${((element.wins + element.loses) / element.wins) * 100}%`;
+          const tmpLB: leaderBoardState = {
+            nickname: nick,
+            gameLog: gameLog,
+            rate: rate,
+          };
+          newLeaderBoard = [...newLeaderBoard, tmpLB];
+        });
+        setLeaderBoard(newLeaderBoard);
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+  }, []);
   return (
     <div className="leaderboard-container">
       <ul>
