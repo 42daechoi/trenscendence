@@ -48,6 +48,7 @@ export class GameService {
 //			this.logger.log("cannot find user is not online");
 //		}
 		this.queue.set(clientSocket.id, clientSocket);
+		client_user.status = UserStatus.GAME;
 		this.logger.log("cur size : " + this.queue.size);
 		console.log("pushing in queue user id : " + client_user.id);
 	}

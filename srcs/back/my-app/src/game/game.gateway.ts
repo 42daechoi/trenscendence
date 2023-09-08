@@ -209,6 +209,7 @@ export class GameGateway
 		const targetSocket = this.nsp.sockets.get(target.socketId);
 		const srcSocket = socket;
 		await this.gameService.halfSetUpGame(srcSocket, targetSocket, this.nsp);
+    return 1;
 	}
   }
 

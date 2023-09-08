@@ -56,6 +56,7 @@ export interface userDTO {
     id: number;
     channelname: string;
     socket: Socket;
+    interval: NodeJS.Timeout;
     blocklist: Map<number, string>;
 }
 

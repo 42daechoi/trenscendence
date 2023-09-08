@@ -8,7 +8,7 @@ import {
   ConnectedSocket,
   OnGatewayInit,
 } from '@nestjs/websockets';
-import { Server, Socket, Namespace } from 'socket.io';
+import { Server, Socket } from 'socket.io';
 import {
   userDTO,
   channelDTO,
@@ -24,7 +24,6 @@ import { Inject } from '@nestjs/common';
 import { User } from 'src/typeorm';
 import { ChatService } from './chat.service';
 
-
 @WebSocketGateway({
   namespace: 'chat',
   cors: {
@@ -39,22 +38,15 @@ export class ChatGateway
     @Inject(UsersService) private readonly usersService,
     @Inject(ChatService) private readonly chatService,
   ) {}
-
-  @WebSocketServer() nsp: Namespace;
   private connectedSockets: Map<number, Socket> = new Map();
 
   sendDataToSocket(socket: Socket, data: any) {
     socket.emit('allinfo', data);
   }
 
-  startSendingAllInfo() {
-    setInterval(() => {
-      this.connectedSockets.forEach((socket) => {
-        const user = this.chatService.findUserBySocketId(socket.id);
-        if (user) {
-          this.sendDataToSocket(socket, this.chatService.getChannels());
-        }
-      });
+  async startSendingAllInfo(user: userDTO) {
+    user.interval = setInterval(() => {
+      this.sendDataToSocket(user.socket, this.chatService.getChannels());
     }, 1000);
   }
 
@@ -77,7 +69,6 @@ export class ChatGateway
       password: null,
     };
     this.chatService.getChannels().push(channel);
-    this.startSendingAllInfo();
   }
 
   //**********************************************************************//
@@ -101,12 +92,15 @@ export class ChatGateway
     console.log('----------------------------------------');
 
     let user = this.chatService.findUserBySocketId(socket.id);
+
     if (user) {
       //2초마다 보내는 socket에서 해제
+      clearInterval(user.interval);
       this.connectedSockets.delete(user.id);
 
       //users에서 지우기.
       const userIndex = this.chatService.getUsers().indexOf(user);
+
       this.chatService.getUsers().splice(userIndex, 1);
 
       if (user.channelname !== '$home') {
@@ -116,6 +110,10 @@ export class ChatGateway
         if (channel) {
           channel.member--;
           if (channel.member === 0) {
+            const removeIdx = this.chatService.getChannels().indexOf(channel);
+            if (removeIdx !== -1) {
+              this.chatService.getChannels().splice(removeIdx, 1);
+            }
             channel = null; //마지막 인원이었을 경우 객체 삭제.
           } else {
             //일반 유저목록에서 삭제
@@ -174,6 +172,26 @@ export class ChatGateway
     console.log('SocketId: ', socket.id);
     console.log('----------------------------------------');
 
+    let user_check = this.chatService.findUserById(id);
+    if (user_check) {
+      clearInterval(user_check.interval);
+
+      // //home으로 이동.
+      // this.handlehome(user_check.id, user_check.socket);
+
+      //home에서 제거.
+      let home = this.chatService.getChannels()[0];
+      home.member--;
+      const removeIdx = home.users.indexOf(user_check.id);
+      if (removeIdx !== -1) {
+        home.users.splice(removeIdx, 1);
+      }
+      socket.broadcast.to(home.channelname).emit('update', false); //퇴장 메시지
+
+      const userIndex = this.chatService.getUsers().indexOf(user_check);
+      this.chatService.getUsers().splice(userIndex, 1);
+    }
+
     this.connectedSockets.set(id, socket);
 
     let block_list = await this.chatService.getUserBlocklist(id);
@@ -183,12 +201,14 @@ export class ChatGateway
       id: id,
       channelname: '$home',
       socket: socket,
+      interval: null,
       blocklist: block_list,
     };
 
     this.chatService.getUsers().push(user);
     this.chatService.getChannels()[0].users.push(user.id);
     this.chatService.getChannels()[0].member++;
+    this.startSendingAllInfo(user);
     socket.join(user.channelname);
     socket.broadcast.to(user.channelname).emit('update', true); //$home 채널 입장 시 정보 업데이트
 
@@ -892,6 +912,16 @@ export class ChatGateway
         password: null,
       },
       target.socket,
+    );
+
+    this.handlemodify(
+      {
+        id: host.id,
+        maxmember: 2,
+        option: 'private',
+        password: null,
+      },
+      host.socket,
     );
   }
 }

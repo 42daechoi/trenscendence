@@ -10,35 +10,30 @@ import { UsersController } from 'src/users/users.controller';
 import { UsersModule } from 'src/users/users.module';
 import { PassportModule } from '@nestjs/passport';
 import { FortytwoStrategy } from './strategy/fortytwo.strategy';
-import {LocalStrategy} from './strategy/local.startegy';
-import {HttpModule, HttpService} from '@nestjs/axios';
-import {JwtModule} from '@nestjs/jwt';
+import { LocalStrategy } from './strategy/local.startegy';
+import { HttpModule, HttpService } from '@nestjs/axios';
+import { JwtModule } from '@nestjs/jwt';
 import { JwtStrategy } from './strategy/jwt.strategy';
 import { PartialJwtStrategy } from './strategy/partial-jwt.strategy';
-import { ConfigService } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 
 @Module({
   imports: [
-		TypeOrmModule.forFeature([User]),
-		forwardRef(() => UsersModule),
-		PassportModule, 
-		HttpModule,
-		JwtModule.registerAsync({
-			useFactory: async (configService: ConfigService) => ({
-			secret: configService.get<string>('JWT_SECRET_KEY'), // Retrieve secret from environment
-			signOptions: { expiresIn: '1h' }, // Optional: Set expiration time
+    ConfigModule,
+    TypeOrmModule.forFeature([User]),
+    forwardRef(() => UsersModule),
+    PassportModule,
+    HttpModule,
+    JwtModule.registerAsync({
+      useFactory: async (configService: ConfigService) => ({
+        secret: configService.get<string>('JWT_SECRET_KEY'), // Retrieve secret from environment
+        signOptions: { expiresIn: '1h' }, // Optional: Set expiration time
       }),
-		  inject: [ConfigService], // Inject the ConfigService
+      inject: [ConfigService], // Inject the ConfigService
     }),
   ],
   controllers: [AuthController, UsersController],
-  providers: [
-		AuthService,
-		UsersService, 
-		JwtStrategy,
-		PartialJwtStrategy
-	  ],
-	exports:[AuthService],
-
+  providers: [AuthService, UsersService, JwtStrategy, PartialJwtStrategy],
+  exports: [AuthService],
 })
 export class AuthModule {}

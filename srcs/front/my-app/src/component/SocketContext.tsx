@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
-import{ io,Socket } from "socket.io-client";
+import { io, Socket } from "socket.io-client";
 
 interface ProviderProps {
   children: React.ReactNode;
@@ -34,9 +34,7 @@ export function SocketProvider({ children }: ProviderProps) {
   const socket = useSocketConnection();
 
   return (
-    <SocketContext.Provider value={socket}>
-      {children}
-    </SocketContext.Provider>
+    <SocketContext.Provider value={socket}>{children}</SocketContext.Provider>
   );
 }
 
@@ -59,9 +57,7 @@ export function useSocket() {
 
 
 function useGameSocketConnection() {
-  const [gameSocket, setGameSocket] = useState<Socket | null>(
-    null
-  );
+  const [gameSocket, setGameSocket] = useState<Socket | null>(null);
 
   useEffect(() => {
     const newGameSocket = io("localhost:3001/game", { withCredentials: true });

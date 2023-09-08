@@ -30,12 +30,14 @@ import { AuthGuard } from '@nestjs/passport';
 import { JwtAuthGuard } from './guards/auth-jwt.guard';
 import { TokenType } from './interfaces/token-payload.interface';
 import { UserStatus } from 'src/typeorm/user.entity';
+import { ConfigService } from '@nestjs/config';
 
 @Controller('auth')
 export class AuthController {
   constructor(
     private authService: AuthService,
     private usersService: UsersService,
+    private configService: ConfigService,
   ) {}
 
   //42login
@@ -72,7 +74,10 @@ export class AuthController {
     //#########     2FA     ###########
     //#################################
     if (user.twoFA == true) {
-      return res.redirect('http://localhost:3000/partial-tfa');
+      return res.redirect(
+        `${this.configService.get('REDIRECT_URL')}/partial-tfa`,
+      );
+      // return res.redirect('http://localhost:3000/partial-tfa');
     } else {
       this.authService.updateUserStatusOnline(user);
       //if no avata data
@@ -82,11 +87,17 @@ export class AuthController {
         await this.usersService.update(user.id, {
           ft_pictureUrl: smallProfilePictureUrl,
         });
-        return res.redirect('http://localhost:3000/create-account');
+        return res.redirect(
+          `${this.configService.get('REDIRECT_URL')}/create-account`,
+        );
+        // return res.redirect('http://localhost:3000/create-account');
       }
       //else redirect to main page
       else {
-        return res.redirect('http://localhost:3000/main');
+        const test_url = `${this.configService.get('REDIRECT_URL')}/main`;
+        console.log('@@@@@@    test URL    @@@@@@@@@', test_url);
+        return res.redirect(`${this.configService.get('REDIRECT_URL')}/main`);
+        // return res.redirect('http://localhost:3000/main');
       }
     }
   }

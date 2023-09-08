@@ -14,7 +14,7 @@ import { where } from "../utils/where";
 import axios from "axios";
 import CreateChat from "./CreateChat";
 import SettingChat from "./SettingChat";
-import { channel } from "diagnostics_channel";
+import { Buffer } from "buffer";
 
 interface IUsers {
   name: string;
@@ -28,34 +28,36 @@ interface IMessage {
   sender: string;
   text: string;
   time: string;
+  avatar: string;
 }
 
-const initTmpUsers: IUsers[] = [
-  { name: "Obi-Wan Kenobi", profile: null, id: 0, isChecked: false },
-  { name: "daechoi", profile: null, id: 0, isChecked: false },
-  { name: "youhan", profile: null, id: 0, isChecked: false },
-  { name: "gyyu", profile: null, id: 0, isChecked: false },
-];
 const initTmpMessages: IMessage[] = [
   {
     user: { name: "SERVER", profile: null, id: 1, isChecked: false },
     sender: "chat chat-start",
     text: "Home 채널에 참가하셨습니다",
     time: new Date().toLocaleTimeString(),
+    avatar: null,
   },
 ];
+// const bufferData: number[] = data.profilePicture.data;
+// const buffer: Buffer = Buffer.from(bufferData);
+// const img: string = buffer.toString("base64");
+// const serverImg: string = "";
 
 function Chat(props) {
   const [users, setUsers] = useState<IUsers[]>([]);
   const [messages, setMessages] = useState<IMessage[]>(initTmpMessages);
   const socket = useSocket();
   const inputRef = useRef<HTMLInputElement>(null);
-  // const [users, setUsers] = useState<IUsers[]>([]);
-  // const [messages, setMessages] = useState<IMessage[]>([]);
   const lastMessageRef = useRef<HTMLDivElement>(null);
 
   const init = async () => {
     const data = await whoami();
+    const bufferData: number[] = data.profilePicture.data;
+    const buffer: Buffer = Buffer.from(bufferData);
+    data.profilePicture.data = buffer.toString("base64");
+
     socket.emit("bind", data.id);
     receiveMessage();
   };
@@ -69,6 +71,9 @@ function Chat(props) {
         })
         .then((response) => {
           if (!response.data) return;
+          const bufferData: number[] = response.data.profilePicture.data;
+          const buffer: Buffer = Buffer.from(bufferData);
+          const img: string = buffer.toString("base64");
           addMessage(
             {
               name: response.data.nickname,
@@ -77,7 +82,8 @@ function Chat(props) {
               isChecked: false,
             },
             receiveData.msg,
-            "chat chat-start"
+            "chat chat-start",
+            img
           );
         });
     });
@@ -98,7 +104,8 @@ function Chat(props) {
             isChecked: false,
           },
           "채팅방 관리자 권한을 부여 받으셨습니다.",
-          "chat chat-start"
+          "chat chat-start",
+          null
         );
       }
     });
@@ -114,8 +121,10 @@ function Chat(props) {
             isChecked: false,
           },
           "채널에서 강제 퇴장 당하셨습니다.",
-          "chat chat-start"
+          "chat chat-start",
+          null
         );
+
         addMessage(
           {
             name: "SERVER",
@@ -124,7 +133,8 @@ function Chat(props) {
             isChecked: false,
           },
           "Home 채널에 참가하셨습니다.",
-          "chat chat-start"
+          "chat chat-start",
+          null
         );
       }
     });
@@ -202,7 +212,7 @@ function Chat(props) {
   //     for (let i = 0; i < props.memberList.length; i++) {
   //       try {
   //         const response = await axios.get(
-  //           "http://localhost:3001/users/" + props.memberList[i],
+  //           "http://localhost:3001/" + props.memberList[i],
   //           { withCredentials: true }
   //         );
   //         const data = response.data;
@@ -230,11 +240,16 @@ function Chat(props) {
   //   fetchData(prevUsers);
   // }, [props.memberList]);
 
-  const addMessage = (user: IUsers, text: string, className: string) => {
+  const addMessage = (
+    user: IUsers,
+    text: string,
+    className: string,
+    avatar: string
+  ) => {
     const time = new Date().toLocaleTimeString();
     setMessages((prevMessages) => [
       ...prevMessages,
-      { user: user, sender: className, text: text, time: time },
+      { user: user, sender: className, text: text, time: time, avatar: avatar },
     ]);
   };
 
@@ -249,13 +264,13 @@ function Chat(props) {
         const target_name: string = chat.substring(7, chat.length);
         socket.emit("mutelistupdate", data.id);
         axios
-          .get("http://localhost:3001/users/nickname/" + target_name, {
+          .get("http://localhost:3001/nickname/" + target_name, {
             withCredentials: true,
           })
           .then((response) => {
             axios
               .patch(
-                "http://localhost:3001/users/blocks/add/" + response.data.id,
+                "http://localhost:3001/blocks/add/" + response.data.id,
                 null,
                 { withCredentials: true }
               )
@@ -272,13 +287,13 @@ function Chat(props) {
         socket.emit("mutelistupdate", data.id);
         const target_name: string = chat.substring(9, chat.length);
         axios
-          .get("http://localhost:3001/users/nickname/" + target_name, {
+          .get("http://localhost:3001/nickname/" + target_name, {
             withCredentials: true,
           })
           .then((response) => {
             axios
               .patch(
-                "http://localhost:3001/users/blocks/remove/" + response.data.id,
+                "http://localhost:3001/blocks/remove/" + response.data.id,
                 null,
                 { withCredentials: true }
               )
@@ -293,7 +308,7 @@ function Chat(props) {
         return;
       } else if (chat.substring(0, 10) === "/blocklist") {
         axios
-          .get("http://localhost:3001/users/blocks/list", {
+          .get("http://localhost:3001/blocks/list", {
             withCredentials: true,
           })
           .then((response) => {
@@ -315,7 +330,8 @@ function Chat(props) {
                 isChecked: false,
               },
               msg,
-              "chat chat-start"
+              "chat chat-start",
+              null
             );
           })
           .catch((error) => {
@@ -329,7 +345,7 @@ function Chat(props) {
         const msg: string = chat.substring(firstSpaceIdx + 1, chat.length);
 
         axios
-          .get("http://localhost:3001/users/nickname/" + target_name, {
+          .get("http://localhost:3001/nickname/" + target_name, {
             withCredentials: true,
           })
           .then((response) => {
@@ -340,6 +356,7 @@ function Chat(props) {
               msg: msg,
             });
           });
+
         addMessage(
           {
             name: data.nickname,
@@ -348,7 +365,8 @@ function Chat(props) {
             isChecked: false,
           },
           chat,
-          "chat chat-end"
+          "chat chat-end",
+          null
         );
         chat = "";
         return;
@@ -366,6 +384,9 @@ function Chat(props) {
           .catch((error) => {
             console.log(error);
           });
+        const bufferData: number[] = data.profilePicture.data;
+        const buffer: Buffer = Buffer.from(bufferData);
+        const img: string = buffer.toString("base64");
         addMessage(
           {
             name: data.nickname,
@@ -374,7 +395,8 @@ function Chat(props) {
             isChecked: false,
           },
           chat,
-          "chat chat-end"
+          "chat chat-end",
+          img
         );
       }
     } catch (error) {
@@ -436,7 +458,8 @@ function Chat(props) {
           isChecked: false,
         },
         "Home 채널에 참가하셨습니다.",
-        "chat chat-start"
+        "chat chat-start",
+        null
       );
     } catch (error) {
       console.log(error);
@@ -462,9 +485,8 @@ function Chat(props) {
 
       where(socket, data.id)
         .then((channel) => {
-          let chname:string = channel.channelname;
-          if (channel.channelname === "$home")
-            chname = "Home";
+          let chname: string = channel.channelname;
+          if (channel.channelname === "$home") chname = "Home";
           addMessage(
             {
               name: "SERVER",
@@ -473,7 +495,8 @@ function Chat(props) {
               isChecked: false,
             },
             chname + " 채널에 참가하셨습니다.",
-            "chat chat-start"
+            "chat chat-start",
+            null
           );
         })
         .catch((error) => {
@@ -506,7 +529,14 @@ function Chat(props) {
             >
               <div className="chat-image avatar">
                 <div className="w-10 rounded-full">
-                  <img src="/img/img.jpg" alt="chat profile img" />
+                  <img
+                    src={
+                      message.avatar
+                        ? `data:image/jpeg;base64,${message.avatar}`
+                        : "/img/favicon.png"
+                    }
+                    alt="chat profile img"
+                  />
                 </div>
               </div>
               <div className="chat-header">
@@ -556,7 +586,7 @@ function Chat(props) {
                   });
                 }}
               />
-              <ProfileModal name={user.name + index} currUser={index} />
+              <ProfileModal name={user.name} currUser={user.id} />
             </li>
           ))}
         </ul>

@@ -18,7 +18,9 @@ import {
   getFriendList,
   getId,
   modifyAvatar,
+  getGameLog,
 } from "../utils/ApiRequest";
+import { resolveTypeReferenceDirective } from "typescript";
 
 interface ProfileNode {
   currUser: number;
@@ -38,7 +40,6 @@ type profileInfo = {
   id: number;
   nickname: string;
   avatar: string;
-  rank: string;
   isMyProfile: boolean;
   isFriendly: boolean;
 };
@@ -47,30 +48,17 @@ let myInfo: profileInfo = {
   id: -1,
   nickname: "unknown",
   avatar: "unknown",
-  rank: "unknown",
   isMyProfile: false,
   isFriendly: false,
 };
-const initLog: string[] = [
-  "daechoi vs king 2:1 win",
-  "eunji vs hello 1:2 lose",
-  "gyyu vs test 2:3 lose",
-];
 
 function Profile(pn: ProfileNode) {
   const {match, set} = useCurPage();
   const gamesocket = useGameSocket();
   const socket = useGameSocket();
-  const [gameLog, setGameLog] = useState<string[]>(initLog);
   // const [gameLog, setGameLog] = useState<string[]>([]);
-  const [info, setInfo] = useState<profileInfo>({
-    id: -1,
-    nickname: "unknown",
-    avatar: "unknown",
-    rank: "unknown",
-    isMyProfile: false,
-    isFriendly: false,
-  });
+  const [gameLog, setGameLog] = useState<string[]>([]);
+  const [info, setInfo] = useState<profileInfo>(myInfo);
   useEffect(() => {
     getWhoami()
       .then((result) => {
@@ -78,13 +66,11 @@ function Profile(pn: ProfileNode) {
           id: result.data.id,
           nickname: result.data.nickname,
           avatar: "unknown",
-          rank: result.data.rank,
           isMyProfile: true,
           isFriendly: false,
         };
         newInfo.id = result.data.id;
         newInfo.nickname = result.data.nickname;
-        newInfo.rank = result.data.rank;
 
         const bufferData: number[] = result.data.profilePicture.data;
         const buffer: Buffer = Buffer.from(bufferData);
@@ -92,6 +78,7 @@ function Profile(pn: ProfileNode) {
 
         myInfo = newInfo;
         setInfo(myInfo);
+        loadGameLog(myInfo.id, myInfo.nickname);
       })
       .catch((err) => {});
   }, []);
@@ -203,7 +190,6 @@ function Profile(pn: ProfileNode) {
             />
           </form>
           <form method="dialog" className="modal-backdrop">
-            {/* close의 용도? */}
             <button>close</button>
           </form>
         </dialog>
@@ -268,8 +254,10 @@ function Profile(pn: ProfileNode) {
           if (response === -1)
           {
             alert("게임 초대 실패");
+            return;
           }
-            set("match"); 
+          console.log("asd");
+          set("match"); 
           setTimeout(() => {
               set("accept");
             }, 500);
@@ -285,6 +273,13 @@ function Profile(pn: ProfileNode) {
     const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
       const files = event.target.files;
       if (files && files.length > 0) {
+        const fileSizeKB = files[0].size / 1024;
+        if (fileSizeKB > 6000) {
+          // 100KB를 초과하면
+          alert("첨부 파일 크기가 허용 제한을 초과했습니다.");
+          image.current.value = null;
+          return;
+        }
         setSelectedFile(files[0]);
       }
     };
@@ -292,6 +287,15 @@ function Profile(pn: ProfileNode) {
     const handleFileUpload = () => {
       if (selectedFile) {
         modifyAvatar(selectedFile);
+        const reader = new FileReader();
+        reader.onload = function (event) {
+          const result = event.target.result;
+          if (typeof result === "string") {
+            setInfo({ ...info, avatar: result.split(",")[1] });
+            image.current.value = null;
+          }
+        };
+        reader.readAsDataURL(selectedFile);
       }
     };
 
@@ -316,7 +320,7 @@ function Profile(pn: ProfileNode) {
     const handleFileUpload = () => {
       if (textbox.current.value) {
         {
-          if (textbox.current.value.search(/\W|\s/g) > -1) {
+          if (textbox.current.value.search(/[^a-zA-Z0-9!@#$]/g) > -1) {
             alert("닉네임은 영문과 숫자만 가능합니다!!");
             return;
           }
@@ -340,44 +344,67 @@ function Profile(pn: ProfileNode) {
       </>
     );
   }
+  function loadGameLog(userId: number, userNick: string) {
+    getGameLog(userId)
+      .then((result) => {
+        let newGameLog: string[] = [];
+        result.data.games.forEach((element, index) => {
+          if (index % 2) {
+            if (userNick === element.loser) {
+              const log: string =
+                element.loser +
+                " vs " +
+                element.winner +
+                " " +
+                element.scoreLoser +
+                " : " +
+                element.scoreWinner +
+                " lose";
+              newGameLog = [...newGameLog, log];
+            } else if (userNick === element.winner) {
+              const log: string =
+                element.winner +
+                " vs " +
+                element.loser +
+                " " +
+                element.scoreWinner +
+                " : " +
+                element.scoreLoser +
+                " win";
+              newGameLog = [...newGameLog, log];
+            }
+          }
+        });
+        setGameLog(newGameLog);
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+  }
 
   function LoadUserInfo() {
     let newInfo: profileInfo = {
       id: -1,
       nickname: "unknown",
       avatar: "unknown",
-      rank: "unknown",
       isMyProfile: false,
       isFriendly: false,
     };
     useEffect(() => {
       getWhoami()
-        .then((response) => {
-          // console.log(response.data.profilePicture);
-          if (pn.currUser === response.data.id) {
-            if (!response.data.twoFA) setTwoFA("false");
+        .then((my) => {
+          if (pn.currUser === my.data.id) {
+            if (!my.data.twoFA) setTwoFA("false");
             else setTwoFA("true");
             setInfo(myInfo);
-            // if (info.nickname !== response.data.nickname)
-            //   newInfo.nickname = response.data.nickname;
-            // if (info.rank !== response.data.rank)
-            //   newInfo.rank = response.data.rank;
-            // newInfo.isMyProfile = true;
-            // const bufferData: number[] = response.data.profilePicture.data;
-            // const buffer: Buffer = Buffer.from(bufferData);
-            // newInfo.avatar = buffer.toString("base64");
-            // setInfo(newInfo);
+            loadGameLog(info.id, info.nickname);
           } else {
             if (pn.currUser !== 0) {
               getId(String(pn.currUser))
-                .then((response) => {
-                  if (info.nickname !== response.data.nickname)
-                    newInfo.nickname = response.data.nickname;
-                  if (info.rank !== response.data.rank)
-                    newInfo.rank = response.data.rank;
+                .then((target) => {
+                  newInfo.nickname = target.data.nickname;
                   newInfo.isMyProfile = false;
-                  const bufferData: number[] =
-                    response.data.profilePicture.data;
+                  const bufferData: number[] = target.data.profilePicture.data;
                   const buffer: Buffer = Buffer.from(bufferData);
                   newInfo.avatar = buffer.toString("base64");
                   setInfo(newInfo);
@@ -386,9 +413,9 @@ function Profile(pn: ProfileNode) {
                       res.data.forEach((element) => {
                         if (element.id === pn.currUser)
                           newInfo.isFriendly = true;
-                        // else newInfo.isFriendly = false;
                       });
                       setInfo(newInfo);
+                      loadGameLog(target.data.id, target.data.nickname);
                     })
                     .catch((err) => {
                       console.log(err);
@@ -421,12 +448,7 @@ function Profile(pn: ProfileNode) {
             className="avatar-img"
           ></img>
         </div>
-        <div className="my-nickname">
-          {info.nickname}
-          <h1 style={{ fontSize: "20px", paddingTop: "10px" }}>
-            Rank : {info.rank}
-          </h1>
-        </div>
+        <div className="my-nickname">{info.nickname}</div>
         <div className="fix-profile">
           {(pn.isMe || pn.currUser !== info.id) && (
             <>

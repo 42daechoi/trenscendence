@@ -1,10 +1,7 @@
 {
-	"compilerOptions": {
-	  "jsx": "react-jsx",
-	  "esModuleInterop": true
-	},
-	"include": [
-	  "src"
-	]
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "esModuleInterop": true
+  },
+  "include": ["src"]
 }
-  
