@@ -40,7 +40,11 @@ export function getUserByNickname<T = any>(
 
 export function patchId<T = any>(
   id: number,
-  body: { nickname?: string; profilePicture?: profilePicture }
+  body: {
+    nickname?: string;
+    profilePicture?: profilePicture;
+    currentAvatarData?: boolean;
+  }
 ): Promise<AxiosResponse<T>> {
   return apiRequest("patch", `${serverUrl}/${tagUser}/${String(id)}`, body);
 }
@@ -65,56 +69,83 @@ export function getFriendList<T = any>(id: number): Promise<AxiosResponse<T>> {
   return apiRequest("get", `${serverUrl}/${tagUser}/friends/list`);
 }
 
-export function modifyNickname(name: string) {
-  getWhoami()
-    .then((res) => {
-      patchId(res.data.id, { nickname: name })
-        .then((response) => {
-          alert("닉네임 수정 성공!");
-        })
-        .catch((error) => {
-          if (error.response.data.statusCode) alert("닉네임 수정 실패");
-        });
-    })
-    .catch((error) => {
-      console.log(error);
-    });
+export function modifyNickname(
+  name: string,
+  alertFlag: boolean
+): Promise<AxiosResponse<any>> {
+  return new Promise((resolve, reject) => {
+    getWhoami()
+      .then((res) => {
+        return patchId(res.data.id, { nickname: name });
+      })
+      .then((response) => {
+        if (alertFlag === true) alert("닉네임 수정 성공!");
+        resolve(response);
+      })
+      .catch((error) => {
+        if (error.response?.data?.statusCode) alert("닉네임 수정 실패");
+        reject(error);
+      });
+  });
 }
 
 type profilePicture = {
   data: ArrayBuffer;
 };
 
-export function modifyAvatar(img: ArrayBuffer) {
-  // getWhoami()
-  //   .then((res) => {
-  //     axios.patch("/some/api/endpoint", {
-  //       profilePicture: Array.from(arrayBuffer),
-  //     });
-  //     const formData = new FormData();
-  //     axios.patch("/some/api/endpoint", {
-  //       profilePicture: Array.from(arrayBuffer),
-  //     });
-  //   })
-  //   .catch((err) => {});
-  // getWhoami()
-  //   .then((res) => {
-  //     patchId(res.data.id, {
-  //       profilePicture: {
-  //         data: img,
-  //       },
-  //     })
-  //       .then((response) => {
-  //         console.log(response);
-  //         alert("아바타 수정 성공");
-  //       })
-  //       .catch((error) => {
-  //         if (error.response.data.statusCode) alert("아바타 수정 실패");
-  //       });
-  //   })
-  //   .catch((error) => {
-  //     console.log(error);
-  //   });
+export function modifyAvatar(img: File): Promise<AxiosResponse<any>> {
+  return new Promise((resolve, reject) => {
+    if (!img) reject(null);
+    getWhoami()
+      .then((res) => {
+        const reader = new FileReader();
+        reader.onload = function (event) {
+          const result = event.target?.result;
+          if (result) {
+            const arrayBuffer = new Uint8Array(result as ArrayBuffer);
+            axios
+              .patch(`http://localhost:3001/users/${res.data.id}`, {
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                profilePicture: Array.from(arrayBuffer),
+              })
+              .then((result) => {
+                resolve(result);
+              })
+              .catch((err) => {
+                reject(err);
+              });
+          }
+        };
+        reader.readAsArrayBuffer(img);
+      })
+      .catch((err) => {
+        reject(err);
+      });
+  });
+}
+
+export function modifyFirstCreateFlag() {
+  getWhoami()
+    .then((res) => {
+      patchId(res.data.id, { currentAvatarData: true })
+        .then((response) => {
+          console.log(response.data);
+        })
+        .catch((error) => {});
+    })
+    .catch((error) => {
+      console.log(error);
+    });
+}
+
+export function getGameLog<T = any>(id: number): Promise<AxiosResponse<T>> {
+  return apiRequest("get", `${serverUrl}/game/gameStats/id/${String(id)}`);
+}
+
+export function getLeaderBoard<T = any>(): Promise<AxiosResponse<T>> {
+  return apiRequest("get", `${serverUrl}/game/gameStats/leaderBoard`);
 }
 
 export function getAllUsers<T = any>(): Promise<AxiosResponse<T>> {

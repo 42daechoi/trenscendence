@@ -1,29 +1,33 @@
 import React, { useRef, useState, useEffect } from "react";
-import { useSocket } from './SocketContext';
+import { useSocket, useGameSocket } from './SocketContext';
 import "../css/GameWaiting.css";
 import { useNavigate } from "react-router-dom";
 import { apiRequest } from "../utils/ApiRequest";
 import "../css/GamePage.css"
 import { ballItem, padItem, htmlItem, game } from "../utils/Game.Class";
-export default function GameWaiting() {
+let tmp = -1;
+
+export default function GameWaiting(prop) {
+  const [exit, setExit] = useState(-1);
   const canvasRef = useRef(null);
   const gameRef = useRef(null);
   const obsRef = useRef(null);
   const padRef1 = useRef(null);
   const padRef2 = useRef(null);
-  const socket = useSocket();
+  const socket = useGameSocket();
   const navigate = useNavigate();
   const [Ready, setReady] = useState(false);
   const [State, setState] = useState(false);
   const [MapNum, setMapNum] = useState(1);
   const [BallNum, setBallNum] = useState(2);
   const [SpeedNum, setSpeedNum] = useState(2);
+  const [myinfo, setMyInfo] = useState("");
+  const [other, setOther] = useState("");
   const [PadNum, setPadNum] = useState(2);
   const [client, setclient] = useState(-1);
   const gameset = new game([], 0, 0, new ballItem(0,0,0,0,0,0), []);
   const pad = [];
   const obstacle = [];
-  console.log("asd");
   const ball = new ballItem(0,0,0,0,0,0);
   let board_x;
   let board_y;
@@ -140,16 +144,27 @@ export default function GameWaiting() {
     }
   }
   const handleButtonClick = () => {
-    setReady(!Ready);
+    if (State)
+    {
+      setReady(!Ready);
+      const element = document.getElementById("check-box");
+      if (!Ready)
+        element.style.backgroundColor = 'rgb(77, 246, 100)';
+      else
+        element.style.backgroundColor = "";
+    }
   };
   function gameSettingbutton(list :string, num:number, set: React.Dispatch<React.SetStateAction<number>>){
     function gameSettingNum(num :number){
-      if (num === 5)
-        set(1);
-      else if(num === 0)
-        set(4);
-      else 
-        set(num);
+      if (client === 0)
+      {
+        if (num === 5)
+          set(1);
+        else if(num === 0)
+          set(4);
+        else 
+          set(num);
+      }
     }
     return (
       <div className="game-setting-button">
@@ -210,7 +225,6 @@ export default function GameWaiting() {
     ball.v = 4 * (SpeedNum - 1) + 2;
     obstacle.splice(MapNum - 1, 4 - MapNum);
     ball.r = 5 * (BallNum - 1) + 7;
-    console.log("a");
     if (client != -1)
     {
       gameset.intervalId = setInterval(()=>{
@@ -219,21 +233,65 @@ export default function GameWaiting() {
     }
   }
   useEffect(() => {
+    tmp =-1;
     return () => {
+      console.log("return tmp = " + tmp);
       if (socket)
       {
-        socket.off('matching waiting');
-        socket.off('matchInfo');
-        socket.off('allReady');
+        socket.off("leave");
+        socket.off('setupReply');
         socket.off('client');
-        socket.off('client');
+        socket.off("matching waiting");
+        socket.off("matchInfo");
+        socket.off("goodtogo");
+        socket.off("allReady");
       }
     }
-  },[])
+  },[]);
+  useEffect(() => {
+    if (socket)
+    {
+      socket.emit("match", "");
+    };
+    return() =>{
+      if (tmp === -1)
+      {
+        socket.emit('gameRoomOut',"");
+      }
+    }
+}, [socket]);
+  useEffect(() => {
+    if (exit === 1)
+    {
+      tmp = 1;
+      prop.leavefun();
+    }
+    if (exit === 2)
+    {
+      tmp = 2;
+      setTimeout(() => {navigate("/game");}, 0);
+    }
+
+    return () => {
+      console.log("exit4",exit);
+    }
+  },[exit]);
   useEffect(() => {
     init();
     if (socket)
     {
+      socket.emit('myInfo',"",response => {
+        console.log(response.length);
+        if (response.length > 5)
+        {
+          setMyInfo(response.substr(0, 5) + "...");
+        }
+        else
+          setMyInfo(response);
+      });
+      socket.on('leave', ()=> {
+        setExit(1);
+      })
       socket.on('setupReply', data => {
         setBallNum(data.Ball);
         setPadNum(data.Pad);
@@ -249,10 +307,18 @@ export default function GameWaiting() {
       });
       socket.on("matchInfo", data => {
         setState(true);
+        socket.emit('other', "", response => {
+          if (response.length > 5)
+        {
+          setOther(response.substr(0, 5) + "...");
+        }
+        else
+          setOther(response);
+        });
         console.log("State",State);
       });
       socket.on("goodtogo", ()=>{
-        navigate("/game");
+        setExit(2);
       });
       socket.on("allReady",() => {
         socket.emit('amiHost', "", (response) =>{
@@ -315,17 +381,12 @@ export default function GameWaiting() {
         socket.off("matchInfo");
         socket.off("goodtogo");
         socket.off("allReady");
+        socket.off('leave');
     
     }
     clearInterval(gameset.intervalId);
     }
   },[PadNum, SpeedNum, BallNum, MapNum, client, socket]);
-  useEffect(() => {
-      if (socket)
-      {
-        socket.emit("match", "");
-      };
-  }, [socket]);
 
   useEffect(() => {
       console.log(State,Ready);
@@ -337,13 +398,14 @@ export default function GameWaiting() {
   return (
     <div className="game-waiting-container">
       <div className="player">
-        <div>daechoi</div>
+        <div>{myinfo}</div>
         <div>vs</div>
-        <div>
+        {!State && (<div>
           <div className="btn-loading btn-square">  
             <span className="loading loading-spinner"></span>
           </div>
-        </div>
+        </div>)}
+        {State && (<div>{other}</div>)}
       </div>
       <div className="game-setting">
         <div className="mini-map" ref={gameRef}>
@@ -364,6 +426,7 @@ export default function GameWaiting() {
       </div>
       </div>
       <div className="ready-button">
+        <div id="check-box"></div>
         <button
           className="btn-ready btn-outline btn-success"
           onClick={handleButtonClick}

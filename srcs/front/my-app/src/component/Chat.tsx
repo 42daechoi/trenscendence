@@ -40,7 +40,7 @@ const initTmpMessages: IMessage[] = [
   {
     user: { name: "SERVER", profile: null, id: 1, isChecked: false },
     sender: "chat chat-start",
-    text: "Home 채팅방에 입장하셨습니다.",
+    text: "Home 채널에 참가하셨습니다",
     time: new Date().toLocaleTimeString(),
   },
 ];
@@ -462,9 +462,8 @@ function Chat(props) {
 
       where(socket, data.id)
         .then((channel) => {
-          let chname:string = channel.channelname;
-          if (channel.channelname === "$home")
-            chname = "Home";
+          let chname: string = channel.channelname;
+          if (channel.channelname === "$home") chname = "Home";
           addMessage(
             {
               name: "SERVER",
@@ -497,7 +496,6 @@ function Chat(props) {
   return (
     <>
       <div className="chat-box">
-        <h1>채팅방 제목</h1>
         <div ref={lastMessageRef}>
           {messages.map((message, index) => (
             <div
@@ -557,7 +555,7 @@ function Chat(props) {
                   });
                 }}
               />
-              <ProfileModal name={user.name + index} currUser={index} />
+              <ProfileModal name={user.name} currUser={user.id} />
             </li>
           ))}
         </ul>

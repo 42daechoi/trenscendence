@@ -12,16 +12,21 @@ import {LocalStrategy} from 'src/auth/strategy/local.startegy';
 import { AuthModule } from 'src/auth/auth.module';
 import {HttpModule} from '@nestjs/axios';
 import { JwtModule } from '@nestjs/jwt';
+import {ConfigModule} from '@nestjs/config';
+import { ConfigService } from '@nestjs/config';
 
 @Module({
   imports: [
 	  TypeOrmModule.forFeature([User]),
 		forwardRef(() => AuthModule),
 		HttpModule,
-		JwtModule.register({
-			secret: 'SECRET_KEY',
-			signOptions: {expiresIn: '300s'},
-		})
+		JwtModule.registerAsync({
+			useFactory: async (configService: ConfigService) => ({
+			secret: configService.get<string>('JWT_SECRET_KEY'), // Retrieve secret from environment
+			signOptions: { expiresIn: '1h' }, // Optional: Set expiration time
+      }),
+		  inject: [ConfigService], // Inject the ConfigService
+    }),
 
   ],
   controllers: [UsersController, AuthController],

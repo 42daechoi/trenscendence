@@ -17,7 +17,9 @@ import {
   getFriendList,
   getId,
   modifyAvatar,
+  getGameLog,
 } from "../utils/ApiRequest";
+import { resolveTypeReferenceDirective } from "typescript";
 
 interface ProfileNode {
   currUser: number;
@@ -47,23 +49,10 @@ let myInfo: profileInfo = {
   isMyProfile: false,
   isFriendly: false,
 };
-const initLog: string[] = [
-  "daechoi vs king 2:1 win",
-  "eunji vs hello 1:2 lose",
-  "gyyu vs test 2:3 lose",
-];
 
-export default function Profile(pn: ProfileNode) {
-  const [gameLog, setGameLog] = useState<string[]>(initLog);
-  // const [gameLog, setGameLog] = useState<string[]>([]);
-  const [info, setInfo] = useState<profileInfo>({
-    id: -1,
-    nickname: "unknown",
-    avatar: "unknown",
-    rank: "unknown",
-    isMyProfile: false,
-    isFriendly: false,
-  });
+function Profile(pn: ProfileNode) {
+  const [gameLog, setGameLog] = useState<string[]>([]);
+  const [info, setInfo] = useState<profileInfo>(myInfo);
   useEffect(() => {
     getWhoami()
       .then((result) => {
@@ -84,8 +73,8 @@ export default function Profile(pn: ProfileNode) {
         newInfo.avatar = buffer.toString("base64");
 
         myInfo = newInfo;
-        console.log(typeof result.data.profilePicture);
         setInfo(myInfo);
+        loadGameLog(myInfo.id, myInfo.nickname);
       })
       .catch((err) => {});
   }, []);
@@ -171,7 +160,6 @@ export default function Profile(pn: ProfileNode) {
             />
           </form>
           <form method="dialog" className="modal-backdrop">
-            {/* close의 용도? */}
             <button>close</button>
           </form>
         </dialog>
@@ -239,36 +227,30 @@ export default function Profile(pn: ProfileNode) {
     const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
       const files = event.target.files;
       if (files && files.length > 0) {
+        const fileSizeKB = files[0].size / 1024;
+        console.log(fileSizeKB);
+        if (fileSizeKB > 6000) {
+          // 100KB를 초과하면
+          alert("첨부 파일 크기가 허용 제한을 초과했습니다.");
+          image.current.value = null;
+          return;
+        }
         setSelectedFile(files[0]);
       }
     };
 
     const handleFileUpload = () => {
       if (selectedFile) {
+        modifyAvatar(selectedFile);
         const reader = new FileReader();
         reader.onload = function (event) {
-          const result = event.target?.result;
-          if (result) {
-            const arrayBuffer = new Uint8Array(result as ArrayBuffer);
-            axios
-              .patch(`http://localhost:3001/users/${myInfo.id}`, {
-                headers: {
-                  "Content-Type": "application/json",
-                },
-                profilePicture: Array.from(arrayBuffer),
-              })
-              .then((result) => {
-                console.log("ooooooooooo");
-              })
-              .catch((err) => {
-                console.log("xxxxxxxxxxx");
-              });
-
-            // console.log(arrayBuffer);
-            // modifyAvatar(arrayBuffer);
+          const result = event.target.result;
+          if (typeof result === "string") {
+            setInfo({ ...info, avatar: result.split(",")[1] });
+            image.current.value = null;
           }
         };
-        reader.readAsArrayBuffer(selectedFile);
+        reader.readAsDataURL(selectedFile);
       }
     };
 
@@ -297,7 +279,11 @@ export default function Profile(pn: ProfileNode) {
             alert("닉네임은 영문과 숫자만 가능합니다!!");
             return;
           }
-          modifyNickname(textbox.current.value);
+          if (textbox.current.value.length > 13) {
+            alert("닉네임은 13 글자를 초과할 수 없습니다.");
+            return;
+          }
+          modifyNickname(textbox.current.value, false);
           setInfo({ ...info, nickname: textbox.current.value });
           textbox.current.value = "";
         }
@@ -306,12 +292,49 @@ export default function Profile(pn: ProfileNode) {
     return (
       <>
         <h3 className="font-bold text-lg">닉네임 수정</h3>
-        <input type="text" ref={textbox} />
+        <input type="text" maxLength={13} ref={textbox} />
         <button className="avatar-upload" onClick={handleFileUpload}>
           수정하기
         </button>
       </>
     );
+  }
+  function loadGameLog(userId: number, userNick) {
+    getGameLog(userId)
+      .then((result) => {
+        let newGameLog: string[] = [];
+        result.data.games.forEach((element) => {
+          if (userNick === element.loser) {
+            const log: string =
+              info.nickname +
+              " vs " +
+              element.winner +
+              " " +
+              element.scoreLoser +
+              " : " +
+              element.scoreWinner +
+              " lose";
+            console.log(log);
+            newGameLog = [...newGameLog, log];
+          } else if (userNick === element.winner) {
+            const log: string =
+              userNick +
+              " vs " +
+              element.loser +
+              " " +
+              element.scoreWinner +
+              " : " +
+              element.scoreLoser +
+              " win";
+            console.log(log);
+            newGameLog = [...newGameLog, log];
+          }
+        });
+        setGameLog(newGameLog);
+      })
+      .catch((err) => {
+        console.log(err);
+      });
   }
 
   function LoadUserInfo() {
@@ -326,28 +349,17 @@ export default function Profile(pn: ProfileNode) {
     useEffect(() => {
       getWhoami()
         .then((response) => {
-          // console.log(response.data.profilePicture);
           if (pn.currUser === response.data.id) {
             if (!response.data.twoFA) setTwoFA("false");
             else setTwoFA("true");
             setInfo(myInfo);
-            // if (info.nickname !== response.data.nickname)
-            //   newInfo.nickname = response.data.nickname;
-            // if (info.rank !== response.data.rank)
-            //   newInfo.rank = response.data.rank;
-            // newInfo.isMyProfile = true;
-            // const bufferData: number[] = response.data.profilePicture.data;
-            // const buffer: Buffer = Buffer.from(bufferData);
-            // newInfo.avatar = buffer.toString("base64");
-            // setInfo(newInfo);
+            loadGameLog(info.id, info.nickname);
           } else {
             if (pn.currUser !== 0) {
               getId(String(pn.currUser))
                 .then((response) => {
-                  if (info.nickname !== response.data.nickname)
-                    newInfo.nickname = response.data.nickname;
-                  if (info.rank !== response.data.rank)
-                    newInfo.rank = response.data.rank;
+                  newInfo.nickname = response.data.nickname;
+                  newInfo.rank = response.data.rank;
                   newInfo.isMyProfile = false;
                   const bufferData: number[] =
                     response.data.profilePicture.data;
@@ -359,9 +371,9 @@ export default function Profile(pn: ProfileNode) {
                       res.data.forEach((element) => {
                         if (element.id === pn.currUser)
                           newInfo.isFriendly = true;
-                        // else newInfo.isFriendly = false;
                       });
                       setInfo(newInfo);
+                      loadGameLog(info.id, info.nickname);
                     })
                     .catch((err) => {
                       console.log(err);
@@ -445,3 +457,7 @@ export default function Profile(pn: ProfileNode) {
     </div>
   );
 }
+
+const MemoProfile = React.memo(Profile);
+
+export default MemoProfile;
