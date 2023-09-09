@@ -3,6 +3,7 @@ import Modal from "./Modal";
 import "../css/ChannelList.css";
 import { useSocket } from "../component/SocketContext";
 import { whoami } from "../utils/whoami";
+import { channel } from "diagnostics_channel";
 
 interface IChannel {
   channelname: string;
@@ -15,7 +16,7 @@ interface IChannel {
   password?: string | null;
 }
 
-export default function ChannelsList(props: { channelList: IChannel[] }) {
+function ChannelsList(props: { channelList: IChannel[] }) {
   const [channelList, setChannelList] = useState<IChannel[]>([]);
   const [currChannel, setCurrChannel] = useState<number | null>(null);
   const socket = useSocket();
@@ -61,22 +62,21 @@ export default function ChannelsList(props: { channelList: IChannel[] }) {
   const closeModal = (): void => {
     setModalOpen(false);
   };
+
   function ChannelConfigure() {
     const [isPasswordDisplay, setPasswordDisplay] = useState(false);
-    const togglePassDisplay = () => {
-      setPasswordDisplay(!isPasswordDisplay);
-    };
-  
+
+
+
     useEffect(() => {
       if (currChannel !== null && channelList[currChannel]?.option === "protected") {
-        togglePassDisplay();
+        setPasswordDisplay(true);
       }
     }, [currChannel, channelList]);
-  
-    if (currChannel === null || !channelList[currChannel]) {
-      return null;
-    }
-  
+
+    if (currChannel === null || !channelList[currChannel])
+      return ;
+
     return (
       <>
         <div className="channel-access" style={{ padding: "10px" }}>
@@ -100,7 +100,7 @@ export default function ChannelsList(props: { channelList: IChannel[] }) {
             onClick={() => {
               if (currChannel !== null) {
                 let password:string;
-                if (passwordRef.current === null)
+                if (!passwordRef.current)
                   password = null;
                 else
                   password = passwordRef.current.value;
@@ -161,3 +161,7 @@ export default function ChannelsList(props: { channelList: IChannel[] }) {
     </div>
   );
 }
+
+const MemoChannelsList = React.memo(ChannelsList);
+
+export default  MemoChannelsList;
