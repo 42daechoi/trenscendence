@@ -61,15 +61,22 @@ export default function ChannelsList(props: { channelList: IChannel[] }) {
   const closeModal = (): void => {
     setModalOpen(false);
   };
-
   function ChannelConfigure() {
     const [isPasswordDisplay, setPasswordDisplay] = useState(false);
-
+    const togglePassDisplay = () => {
+      setPasswordDisplay(!isPasswordDisplay);
+    };
+  
     useEffect(() => {
-      if (currChannel !== null && channelList[currChannel].option === "protected") {
-        setPasswordDisplay(true);
+      if (currChannel !== null && channelList[currChannel]?.option === "protected") {
+        togglePassDisplay();
       }
     }, [currChannel, channelList]);
+  
+    if (currChannel === null || !channelList[currChannel]) {
+      return null;
+    }
+  
 
     return (
       <>
