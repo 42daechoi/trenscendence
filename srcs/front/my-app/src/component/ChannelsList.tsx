@@ -77,7 +77,6 @@ export default function ChannelsList(props: { channelList: IChannel[] }) {
       return null;
     }
   
-
     return (
       <>
         <div className="channel-access" style={{ padding: "10px" }}>
@@ -99,8 +98,13 @@ export default function ChannelsList(props: { channelList: IChannel[] }) {
           <button
             className="join-button"
             onClick={() => {
-              if (currChannel !== null && passwordRef.current !== null) {
-                joinChannel(passwordRef.current.value, currChannel);
+              if (currChannel !== null) {
+                let password:string;
+                if (passwordRef.current === null)
+                  password = null;
+                else
+                  password = passwordRef.current.value;
+                joinChannel(password, currChannel);
               }
             }}
           >
