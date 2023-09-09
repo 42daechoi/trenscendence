@@ -23,7 +23,7 @@ export default function ChannelsList(props) {
   const [channelList, setChannelList] = useState<IChannel[]>([]);
   const [currChannel, setCurrChannel] = useState<string>("");
   const socket = useSocket();
-  let password;
+  const passwordRef = useRef(null);
 
   useEffect(() => {
     setChannelList([]);
@@ -64,18 +64,25 @@ export default function ChannelsList(props) {
     setModalOpen(false);
   };
 
+
+  
   function ChannelConfigure() {
     const [isPasswordDisplay, setPasswordDisplay] = useState(false);
     const togglePassDisplay = () => {
       setPasswordDisplay(!isPasswordDisplay);
     };
 
-    if (channelList[currChannel].option === "protected") togglePassDisplay();
+    useEffect(() => {
+      if (channelList[currChannel].option === "protected") {
+        togglePassDisplay();
+      }
+    }, [channelList[currChannel].option]);
+
     return (
       <>
         <div className="channel-access" style={{ padding: "10px" }}>
           <h1 style={{ fontSize: "20px" }}>
-            {channelList[currChannel].channelname + " 의 채팅방"}
+            {channelList[currChannel].channelname + " 의 채널"}
           </h1>
           <h1>방 설정</h1>
           <div>{channelList[currChannel].option}</div>
@@ -86,13 +93,13 @@ export default function ChannelsList(props) {
           {isPasswordDisplay && (
             <h1 style={{ padding: "10px" }}>
               password
-              <input style={{ margin: "10px" }}></input>
+              <input ref={passwordRef} style={{ margin: "10px" }}></input>
             </h1>
           )}
           <button
             className="join-button"
             onClick={() => {
-              joinChannel(password, currChannel);
+              joinChannel(passwordRef.current.value, currChannel);
             }}
           >
             join
@@ -127,7 +134,7 @@ export default function ChannelsList(props) {
         <li key={"channelList" + index}>
           <a className="chat_btn" onClick={() => openModal(index)}>
             {renderOption(index)}
-            <div>{channel.channelname}</div>
+            <div>{channel.channelname}'s channel</div>
             <div className="chat_memeber_count">
               {channel.member} / {channel.maxmember}
             </div>
