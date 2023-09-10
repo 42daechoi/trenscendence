@@ -193,23 +193,7 @@ export class ChatGateway
 
     let user_check = this.chatService.findUserById(id);
     if (user_check) {
-      this.handleDisconnect(socket);
-      // clearInterval(user_check.interval);
-
-      // // //home으로 이동.
-      // this.handlehome(user_check.id, user_check.socket);
-
-      // //home에서 제거.
-      // let home = this.chatService.getChannels()[0];
-      // home.member--;
-      // const removeIdx = home.users.indexOf(user_check.id);
-      // if (removeIdx !== -1) {
-      //   home.users.splice(removeIdx, 1);
-      // }
-      // socket.broadcast.to(home.channelname).emit('update', false); //퇴장 메시지
-
-      // const userIndex = this.chatService.getUsers().indexOf(user_check);
-      // this.chatService.getUsers().splice(userIndex, 1);
+      await this.handleDisconnect(socket);
     }
 
     this.connectedSockets.set(id, socket);
