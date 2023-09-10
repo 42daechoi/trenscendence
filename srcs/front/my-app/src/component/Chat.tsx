@@ -109,6 +109,10 @@ function Chat(props) {
         );
       }
     });
+    socket.on("oneOnOne", () => {
+      initMessages();
+      console.log("initmsg");
+    });
     socket.on("kick", (data) => {
       console.log("kick");
       if (data) {
@@ -142,6 +146,7 @@ function Chat(props) {
       if (channel.flag) initMessages();
     });
     return () => {
+      socket.off("oneOnOne");
       socket.off("chat");
       socket.off("kick");
       socket.off("join");
@@ -490,6 +495,7 @@ function Chat(props) {
           let chname: string = channel.channelname;
           if (channel.channelname === "$home") chname = "Home";
           addMessage(
+
             {
               name: "SERVER",
               profile: null,
@@ -592,6 +598,7 @@ function Chat(props) {
             </li>
           ))}
         </ul>
+        {(props.type !== "game_waiting") && (
         <div className="chat-member-button">
           <button onClick={goHome}>home</button>
           <button onClick={kick}>kick</button>
@@ -615,7 +622,7 @@ function Chat(props) {
           >
             채팅방 설정
           </button>
-        </div>
+        </div>)}
         {isModalOpen && (
           <div className="chat-set-modal">
             <Modal

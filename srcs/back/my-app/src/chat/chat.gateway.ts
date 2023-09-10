@@ -218,7 +218,7 @@ export class ChatGateway
 
     console.log('----------------------------------------');
     console.log('-----------------BIND USER--------------');
-    console.log(user);
+    // console.log(user);
     console.log('----------------------------------------');
   }
 
@@ -776,11 +776,12 @@ export class ChatGateway
     let user = this.chatService.findUserById(id);
     if (!user) return;
 
+
     // 이전 채널 정보 업데이트
     let beforeChannel = this.chatService.findChannelByChannelname(
       user.channelname,
     );
-
+    console.log("before",beforeChannel);
     if (beforeChannel.channelname === '$home') {
       console.log('----------------------------------------');
       console.log('         you are alread home            ');
@@ -880,11 +881,11 @@ export class ChatGateway
   //******************************  game  *******************************//
   //*********************************************************************//
   @SubscribeMessage('gamechatroom')
-  async handlegameset(@MessageBody() gamers: gameDTO) {
+  async handlegameset( @MessageBody() gamers: gameDTO) {
     console.log('----------------------------------------');
     console.log('-----------------GAME SET---------------');
-    console.log('hostId : ', gamers.host);
-    console.log('targetId : ', gamers.target);
+    // console.log('hostId : ', gamers.host);
+    // console.log('targetId : ', gamers.target);
     console.log('----------------------------------------');
 
     let host = this.chatService.findUserById(gamers.host);
@@ -906,7 +907,7 @@ export class ChatGateway
       },
       host.socket,
     );
-
+    host.socket.emit("oneOnOne", "");
     const host_user: User = await this.usersService.findUserById(host.id);
 
     this.handlejoin(
@@ -914,6 +915,7 @@ export class ChatGateway
         id: target.id,
         channelname: host_user.nickname,
         password: null,
+
       },
       target.socket,
     );

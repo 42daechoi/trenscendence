@@ -1,8 +1,10 @@
+import { useContext, useEffect, useState } from "react";
 import "../css/Modal.css";
-
+import { useCurPage, CurPageContext } from "./SocketContext";
 // closeModal = Functions required to close modal window
 // ConfigureModal = Functions required to decorate modal window
 export default function Modal({
+
   closeModal,
   ConfigureModal,
   children,
@@ -11,6 +13,16 @@ export default function Modal({
   ConfigureModal: () => JSX.Element;
   children?: JSX.Element | JSX.Element[];
 }) {
+
+
+  const {match} = useContext(CurPageContext);
+  useEffect(()=>{
+  if (match === "match")
+  {
+    closeModal();
+  }},[match]);
+
+
   const stopPropagation = (event: React.MouseEvent) => {
     event.stopPropagation();
   };

@@ -58,14 +58,14 @@ export class UsersService {
   async findUserByIntraId(findIntraId: string): Promise<User | null> {
     //find all of entities with query
     //return array
-    console.log('finding Intra ID in service : ' + findIntraId);
+    ////console.log('finding Intra ID in service : ' + findIntraId);
     const user = await this.userRepository.findOneBy({ intraId: findIntraId });
     if (!user) return null;
     return user;
   }
 
   async findUserByNick(findNick: string): Promise<User | null> {
-    console.log('finding User by nickname in use service');
+    //console.log('finding User by nickname in use service');
     const user = await this.userRepository.findOneBy({ nickname: findNick });
     if (!user) return null;
     return user;
@@ -86,16 +86,16 @@ export class UsersService {
       delete attrs.profilePicture;
     }
     if (attrs.profilePicture) {
-      console.log('#########       PROFILE BUFFER INPUT        #########');
-      console.log(attrs.profilePicture.length);
+      //console.log('#########       PROFILE BUFFER INPUT        #########');
+      //console.log(attrs.profilePicture.length);
       const buffer = Buffer.from(attrs.profilePicture);
       user.profilePicture = buffer;
-      console.log(user.profilePicture);
+      //console.log(user.profilePicture);
     }
     // ######## IMPORTANT ########
-    console.log('======before====');
-    console.log(user.profilePicture);
-    console.log('======after====');
+    //console.log('======before====');
+    //console.log(user.profilePicture);
+    //console.log('======after====');
 
     Object.assign(user, attrs);
     return this.userRepository.save(user);
@@ -127,12 +127,12 @@ export class UsersService {
     const friend: User = await this.findUserById(fri_id);
     if (friend && user.friends) {
       user.friends.push(friend);
-      console.log('added friend id : ' + fri_id);
-      console.log(user.friends);
+      //console.log('added friend id : ' + fri_id);
+      //console.log(user.friends);
     } else {
       user.friends = [friend];
-      console.log('no fri arr, made new one : ' + fri_id);
-      console.log(user.friends);
+      //console.log('no fri arr, made new one : ' + fri_id);
+      //console.log(user.friends);
     }
     await this.userRepository.save(user);
     return user;
@@ -151,7 +151,7 @@ export class UsersService {
     if (friend && user.friends) {
       for (var i = user.friends.length - 1; i >= 0; i--) {
         if (user.friends[i].id === friend.id) {
-          console.log('found removing user : ' + friend.id);
+          //console.log('found removing user : ' + friend.id);
           user.friends.splice(i, 1);
           break;
         }
@@ -171,7 +171,7 @@ export class UsersService {
       throw new NotFoundException('User not found');
     }
     const friends: User[] = user.friends;
-    console.log(friends);
+    //console.log(friends);
     return friends;
   }
 
@@ -190,12 +190,12 @@ export class UsersService {
     const target: User = await this.findUserById(block_id);
     if (target && user.blocks) {
       user.blocks.push(target);
-      console.log('added blocks id : ' + block_id);
-      console.log(user.blocks);
+      //console.log('added blocks id : ' + block_id);
+      //console.log(user.blocks);
     } else {
       user.blocks = [target];
-      console.log('no blocks arr, made new one : ' + block_id);
-      console.log(user.blocks);
+      //console.log('no blocks arr, made new one : ' + block_id);
+      //console.log(user.blocks);
     }
     await this.userRepository.save(user);
     return user;
@@ -213,7 +213,7 @@ export class UsersService {
     if (target && user.friends) {
       for (var i = user.blocks.length - 1; i >= 0; i--) {
         if (user.blocks[i].id === target.id) {
-          console.log('found removing user : ' + target.id);
+          //console.log('found removing user : ' + target.id);
           user.blocks.splice(i, 1);
           break;
         }
@@ -231,7 +231,7 @@ export class UsersService {
       throw new NotFoundException('User not found');
     }
     const blocks: User[] = user.blocks;
-    console.log(blocks);
+    //console.log(blocks);
     return blocks;
   }
 

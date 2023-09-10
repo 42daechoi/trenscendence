@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { Buffer } from "buffer";
+import {useCurPage, useGameSocket} from "./SocketContext";
 import {
   apiRequest,
   getWhoami,
@@ -24,6 +25,7 @@ import { resolveTypeReferenceDirective } from "typescript";
 interface ProfileNode {
   currUser: number;
   isMe: Boolean;
+  match?:Boolean;
 }
 
 let mAM: string = "modifyAvatarModal";
@@ -31,6 +33,8 @@ let mNM: string = "modifyNicknameModal";
 let aFM: string = "addFriendModal";
 let dFM: string = "deleteFriendModal";
 let iGM: string = "inviteGameModal";
+let myM: string = "matchAcceptModal"
+let mnM: string = "matchdenyModal"
 
 type profileInfo = {
   id: number;
@@ -49,6 +53,10 @@ let myInfo: profileInfo = {
 };
 
 function Profile(pn: ProfileNode) {
+  const {match, set} = useCurPage();
+  const gamesocket = useGameSocket();
+  const socket = useGameSocket();
+  // const [gameLog, setGameLog] = useState<string[]>([]);
   const [gameLog, setGameLog] = useState<string[]>([]);
   const [info, setInfo] = useState<profileInfo>(myInfo);
   useEffect(() => {
@@ -102,6 +110,26 @@ function Profile(pn: ProfileNode) {
             });
             props.callback("false");
           }
+          else if (props.modalType === myM)
+          {
+            if (gamesocket)
+            {
+              socket.emit("acceptOneOnOne","", response =>{
+                if (response === true)
+                  set("accept");
+                else
+                  set("deny");
+              });
+            }
+          }
+          else if (props.modalType === mnM)
+          {
+            if (gamesocket)
+            {
+              socket.emit("denyOneOnOne", "");
+              set("deny");
+            }
+          }
         }}
         className="btn-fix glass"
         ref={typeRef}
@@ -118,7 +146,13 @@ function Profile(pn: ProfileNode) {
           ? "게임 초대"
           : props.modalType === "true"
           ? "OTP 해제"
-          : "OTP 설정"}
+          : props.modalType === "false"
+          ? "OTP 설정"
+          : props.modalType === myM 
+          ? "수락"
+          : props.modalType == mnM
+          ? "거절"
+          : "몰루"}
       </button>
     );
   }
@@ -214,7 +248,19 @@ function Profile(pn: ProfileNode) {
   }
 
   function InviteGameSetting(props: { num: number }) {
-    return <div>InviteGame</div>;
+    return <div style={{ flexDirection: "row", justifyContent: "center"}}>게임을 신청하시겠습니까?
+        <br/>
+        <button style={{width:"10px", padding: "10px", margin: "0 10px"}} onClick={() => { socket.emit("OneOnOne",{targetId: props.num}, response => {
+          if (response === -1)
+          {
+            alert("게임 초대 실패");
+            return;
+          }
+          set("accept");
+          
+        });}}>yes</button>
+        <button style={{width:"10px", padding: "10px",  margin: "0 10px"}}>no</button>
+      </div>;
   }
 
   function ModifyAvatarSetting() {
@@ -404,7 +450,7 @@ function Profile(pn: ProfileNode) {
             <>
               <div className="modal-avatar">
                 <ModifyModalButton
-                  modalType={
+                  modalType={ pn.match ? myM :
                     info.isMyProfile ? mAM : info.isFriendly ? dFM : aFM
                   }
                   callback={changeTwoFA}
@@ -417,7 +463,7 @@ function Profile(pn: ProfileNode) {
               </div>
               <div className="modal-nickname">
                 <ModifyModalButton
-                  modalType={info.isMyProfile ? mNM : iGM}
+                  modalType={ pn.match ? mnM : info.isMyProfile ? mNM : iGM}
                   callback={changeTwoFA}
                 />
                 <ModalWindow modalType={info.isMyProfile ? mNM : iGM} />

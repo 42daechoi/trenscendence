@@ -9,16 +9,24 @@ import {Games} from 'src/typeorm/game.entity';
 import { GamePlayer } from 'src/typeorm/gamePlayer.entity';
 import { User } from 'src/typeorm';
 import {JwtModule} from '@nestjs/jwt';
+import { ChatModule } from 'src/chat/chat.module';
+import { ConfigService } from '@nestjs/config';
 
 @Module({
 	imports: [
-			  	JwtModule.register({
-			secret: 'SECRET_KEY',
-			signOptions: {expiresIn: '3000s'},
+		JwtModule.registerAsync({
+			useFactory: async (configService: ConfigService) => ({
+			secret: configService.get<string>('JWT_SECRET_KEY'), // Retrieve secret from environment
+			signOptions: { expiresIn: '1h' }, // Optional: Set expiration time
+      }),
+		  inject: [ConfigService], // Inject the ConfigService
 		}),
 		forwardRef(() => AuthModule),
 		forwardRef(() => UsersModule),
-	  	TypeOrmModule.forFeature([Games, GamePlayer, User])],
+	  	TypeOrmModule.forFeature([Games, GamePlayer, User]),
+		ChatModule,
+	],
+
 	controllers: [GameController],
 	providers: [GameService, GameGateway]
 })

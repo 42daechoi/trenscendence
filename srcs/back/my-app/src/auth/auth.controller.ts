@@ -45,13 +45,13 @@ export class AuthController {
   @Get('loginfortytwo/callback')
   async login42(@Req() req: Request, @Res({ passthrough: true }) res: any) {
     //we will get auth CODE for accessing public intra data.
-    console.log('auth/loginfortytwo/callback');
+    //console.log('auth/loginfortytwo/callback');
     const intraId: string = res.req.user.login;
     const nickname: string = res.req.user.login;
     let find_user: User = await this.usersService.findUserByIntraId(intraId);
     if (!find_user) {
       //default image
-      console.log('new user logged in!');
+      //consolelog('new user logged in!');
       //this gonna be create user dto soon.
       find_user = await this.usersService.createUser({ intraId, nickname });
     }
@@ -95,7 +95,7 @@ export class AuthController {
       //else redirect to main page
       else {
         const test_url = `${this.configService.get('REDIRECT_URL')}/main`;
-        console.log('@@@@@@    test URL    @@@@@@@@@', test_url);
+        //console.log('@@@@@@    test URL    @@@@@@@@@', test_url);
         return res.redirect(`${this.configService.get('REDIRECT_URL')}/main`);
         // return res.redirect('http://localhost:3000/main');
       }
@@ -107,7 +107,7 @@ export class AuthController {
   async createUser(@Body() body: any) {
     const user_intraId = body.intraId;
     const user_nickname = body.intraId;
-    console.log('In auth controller finding userid: ' + user_intraId);
+    //console.log('In auth controller finding userid: ' + user_intraId);
     //create new user
     const new_user = await this.authService.signup({
       intraId: user_intraId,
@@ -119,14 +119,14 @@ export class AuthController {
 
   @Post('/signin')
   async signin(@Body() body: any, @Res() res: Response) {
-    console.log('singin in Controller');
+    //console.log('singin in Controller');
     let find_user: User = await this.usersService.findUserByIntraId(
       body.intraId,
     );
     const intraId: string = body.intraId;
     const nickname: string = body.intraId;
     if (!find_user) {
-      console.log('new user logged in!');
+      //console.log('new user logged in!');
       //this gonna be create user dto soon.
       find_user = await this.usersService.createUser({ intraId, nickname });
     }
@@ -164,7 +164,7 @@ export class AuthController {
   @Get('/authentication')
   @UseGuards(JwtAuthGuard)
   async isAuth(@Req() req: Request, @Res() res: Response): Promise<any> {
-    console.log('checking Authentication user in request');
+    //console.log('checking Authentication user in request');
     const user: any = req.user;
     res.json(user);
     return user;

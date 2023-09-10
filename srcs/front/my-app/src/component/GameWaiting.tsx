@@ -15,6 +15,7 @@ export default function GameWaiting(prop) {
   const padRef1 = useRef(null);
   const padRef2 = useRef(null);
   const socket = useGameSocket();
+  const chatSocket = useSocket();
   const navigate = useNavigate();
   const [Ready, setReady] = useState(false);
   const [State, setState] = useState(false);
@@ -249,15 +250,27 @@ export default function GameWaiting(prop) {
     }
   },[]);
   useEffect(() => {
-    if (socket)
+    if (socket && prop.type !== true)
     {
       socket.emit("match", "");
     };
+    if (socket && prop.type === true)
+    {
+      socket.emit("amiHost", response => {
+        if (response === 1)
+          socket.emit("oneOnOneMade","");
+      });
+    }
     return() =>{
+      console.log("tmp", tmp);
       if (tmp === -1)
       {
         socket.emit('gameRoomOut',"");
       }
+      socket.emit("whoamiGateway", "", response => {
+        console.log("join");
+        chatSocket.emit('home', response);
+      });     
     }
 }, [socket]);
   useEffect(() => {
@@ -298,14 +311,18 @@ export default function GameWaiting(prop) {
         setSpeedNum(data.Speed);
         setMapNum(data.Map);
       });
-      socket.on('client', data => {
-        setclient(data);
-        console.log(data);
-      });
       socket.on("matching waiting", data => {
         console.log(data);
       });
       socket.on("matchInfo", data => {
+        socket.emit('amiHost', "", response => {
+          setclient(response);
+          if (response === 0)
+          {
+            console.log("gamechatroom");
+            chatSocket.emit("gamechatroom", {host : data.host.id, target: data.guest.id});
+          }
+        });
         setState(true);
         socket.emit('other', "", response => {
           if (response.length > 5)
@@ -365,7 +382,6 @@ export default function GameWaiting(prop) {
               gameset.pad[i].width *= 2;
             }
             socket.emit('gameSetting', gameset);
-
           }
 
         });
@@ -386,7 +402,7 @@ export default function GameWaiting(prop) {
     }
     clearInterval(gameset.intervalId);
     }
-  },[PadNum, SpeedNum, BallNum, MapNum, client, socket]);
+  },[PadNum, SpeedNum, BallNum, MapNum, client, socket, chatSocket]);
 
   useEffect(() => {
       console.log(State,Ready);

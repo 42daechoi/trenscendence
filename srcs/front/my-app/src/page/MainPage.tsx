@@ -8,18 +8,51 @@ import FriendsList from "../component/FriendsList";
 import MemoChannelsList from "../component/ChannelsList";
 import MemoChat from "../component/Chat";
 import { getWhoami } from "../utils/ApiRequest";
-import { useSocket } from "../component/SocketContext";
+import Modal from "../component/Modal";
+import { useSocket, useGameSocket, useCurPage} from "../component/SocketContext";
 import { apiRequest } from "../utils/ApiRequest";
 
 export default function MainPage() {
+  const [isMatch, setIsMatch] = useState(false);
+  const [play, setPlay] = useState(false);
+  const [matchInfo, setMatchInfo] = useState(null);
+  const sideRef = useRef(null);
+  const gameSocket = useGameSocket();
   const [curPage, setCurPage] = useState("my_profile");
   const [channelList, setChannelList] = useState([]);
   const [memberList, setMemberList] = useState([]);
   const socket = useSocket();
   const [myId, setMyId] = useState(0);
-
+  const {match, set} = useCurPage();
+  useEffect(()=>{if (curPage !== "game_waiting")setPlay(false);},[curPage]);
+  useEffect(()=> {
+    if (match === "match")
+    {
+      sideRef.current.checked = false;
+      setIsMatch(true);
+    }
+    if (match === "accept")
+    {
+      setIsMatch(false);
+      setPlay(true);
+      setCurPage("game_waiting");
+    }
+    if (match === "deny")
+    {
+      setPlay(false);
+      setIsMatch(false);
+    }
+    return () => {set("")};
+  }, [match]);
+  
   useEffect(() => {
     if (!socket) return;
+    gameSocket.on("OneOnOneNoti", data =>{
+      set("match");
+      setMatchInfo(data.id);
+      sideRef.current.checked = false;
+      setIsMatch(true);
+    });
     socket.on("allinfo", (data) => {
       getWhoami()
         .then((response) => {
@@ -40,9 +73,10 @@ export default function MainPage() {
         });
     });
     return () => {
+      gameSocket.off("OneOnOneNoti");
       socket.off("allinfo");
     };
-  }, [socket]);
+  }, [socket, match]);
 
   useEffect(() => {
     apiRequest<any>("get", "http://localhost:3001/users/whoami").then(
@@ -50,6 +84,8 @@ export default function MainPage() {
         setMyId(response.data.id);
       }
     );
+    return ()=>{
+    }
   }, []);
 
   const renderPage = () => {
@@ -57,7 +93,7 @@ export default function MainPage() {
       case "my_profile":
         return <MemoProfile currUser={myId} isMe={true} />;
       case "game_waiting":
-        return <GameWaiting leavefun={leaveGameWaiting} />;
+        return <GameWaiting leavefun={leaveGameWaiting} type={play}/>;
       case "leaderboard":
         return <LeaderBoard />;
     }
@@ -70,6 +106,7 @@ export default function MainPage() {
   const leaveGameWaiting = () => {
     setCurPage("my_profile");
   };
+
   const handleButtonClick = (side) => {
     if (side === "friends_list") {
       setCurSide("friends_list");
@@ -90,10 +127,24 @@ export default function MainPage() {
     }
   };
 
+  const closeMatch = (): void => {
+    setIsMatch(false);
+    if (gameSocket)
+      socket.emit("denyOneOnOne","");
+  };
+
   return (
     <div className="background">
+      {matchInfo && isMatch && (
+                <Modal
+                  closeModal={closeMatch}
+                  ConfigureModal={() => (
+                    <MemoProfile currUser={matchInfo} isMe={false} match={isMatch} />
+                  )}
+                />
+              )}
       <div className="drawer drawer-end">
-        <input id="my-drawer-4" type="checkbox" className="drawer-toggle" />
+        <input id="my-drawer-4" type="checkbox" className="drawer-toggle" ref={sideRef} />
         <div className="drawer-content">
           <section className="btn-container">
             <button
@@ -118,7 +169,7 @@ export default function MainPage() {
             </button>
           </section>
           <section className="chat-container">
-            <MemoChat memberList={memberList} />
+            <MemoChat memberList={memberList} type={curPage}/>
           </section>
           <section className="swap-container">{renderPage()}</section>
           <label
