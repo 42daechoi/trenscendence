@@ -177,7 +177,7 @@ export class ChatGateway
       clearInterval(user_check.interval);
 
       // //home으로 이동.
-      // this.handlehome(user_check.id, user_check.socket);
+      this.handlehome(user_check.id, user_check.socket);
 
       //home에서 제거.
       let home = this.chatService.getChannels()[0];

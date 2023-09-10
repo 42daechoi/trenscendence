@@ -201,9 +201,9 @@ function Chat(props) {
       setUsers(newUsers);
     };
 
-    if (isSameList()) {
-      return;
-    }
+    // if (isSameList()) {
+    //   return;
+    // }
     fetchData();
   }, [props.memberList]);
 
