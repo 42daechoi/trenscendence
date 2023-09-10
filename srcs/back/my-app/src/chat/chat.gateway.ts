@@ -193,9 +193,7 @@ export class ChatGateway
 
     let user_check = this.chatService.findUserById(id);
     if (user_check) {
-
       await this.handleDisconnect(socket);
-
     }
 
     this.connectedSockets.set(id, socket);
