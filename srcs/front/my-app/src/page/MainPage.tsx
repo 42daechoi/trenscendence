@@ -45,18 +45,12 @@ export default function MainPage() {
   }, [match]);
   
   useEffect(() => {
-    console.log(match);
-    if (sideRef)
-        console.log(sideRef);
     if (!socket) return;
     gameSocket.on("OneOnOneNoti", data =>{
       set("match");
       setMatchInfo(data.id);
       sideRef.current.checked = false;
       setIsMatch(true);
-      // set("");
-      // setCurPage("game_waiting");
-      // socket.emit("acceptOneOnOne","");
     });
     socket.on("allinfo", (data) => {
       getWhoami()

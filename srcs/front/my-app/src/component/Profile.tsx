@@ -256,11 +256,7 @@ function Profile(pn: ProfileNode) {
             alert("게임 초대 실패");
             return;
           }
-          console.log("asd");
-          set("match"); 
-          setTimeout(() => {
-              set("accept");
-            }, 500);
+          set("accept");
           
         });}}>yes</button>
         <button style={{width:"10px", padding: "10px",  margin: "0 10px"}}>no</button>

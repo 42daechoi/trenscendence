@@ -48,7 +48,7 @@ export class GameService {
 //			this.logger.log("cannot find user is not online");
 //		}
 		this.queue.set(clientSocket.id, clientSocket);
-		client_user.status = UserStatus.GAME;
+		await this.updateUserStatusInGame(clientSocket);
 		this.logger.log("cur size : " + this.queue.size);
 		console.log("pushing in queue user id : " + client_user.id);
 	}
@@ -64,7 +64,7 @@ export class GameService {
 		if (this.queue.get(clientSocket.id))
 		{
 			this.queue.delete(clientSocket.id);
-			client_user.status = UserStatus.ONLINE;
+			await this.updateUserStatusOnline(clientSocket);
 			console.log("poping in queue user id : " + client_user.id);
 		}
 	}
@@ -78,6 +78,7 @@ export class GameService {
 		gameInfo.gameStatus = GameStatus.Waiting;
 		gameInfo.gameID = user1.socketId;
 		gameInfo.gameService = this;
+		
 		client1.join(gameInfo.gameID);
 		client2.join(gameInfo.gameID);
 		nsp.to(user1.socketId).emit('client', 0);
@@ -136,7 +137,7 @@ export class GameService {
 		//update user1 , user2 as in Game
 	}
 
-	async matchUp(player1 : Socket, player2 : Socket, nsp: Namespace){
+	async  matchUp(player1 : Socket, player2 : Socket, nsp: Namespace){
 		await this.setUpGame(
 			this.queue.get(Array.from(this.queue.keys())[0]),
 			this.queue.get(Array.from(this.queue.keys())[1]),
@@ -192,19 +193,26 @@ export class GameService {
 
 	}
 
-	async updateUserStatusInGame(client: Socket){
+	async updateUserStatusInGame(client: Socket | null){
+		if (client !== null)
+		{
 
-		const user : User = await this.usersService.findUserBySocketId(client.id);
-		if (!user)
-			return ;
-		this.usersService.update(user.id, {status: UserStatus.GAME})
+			const user : User = await this.usersService.findUserBySocketId(client.id);
+			if (!user)
+				return ;
+			this.usersService.update(user.id, {status: UserStatus.GAME})
+		}
 	}
 
-	async updateUserStatusOnline(client: Socket){
-		const user : User = await this.usersService.findUserBySocketId(client.id);
-		if (!user)
-			return ;
-		this.authService.updateUserStatusOnline(user);
+	async updateUserStatusOnline(client: Socket | null){
+		if (client !== null)
+		{
+			console.log("asdasd",client);
+			const user : User = await this.usersService.findUserBySocketId(client.id);
+			if (!user)
+				return ;
+			this.authService.updateUserStatusOnline(user);
+		}
 	}
 
 	  async getGameStatForPlayer(userID: number): Promise<Result[]> {
@@ -228,7 +236,7 @@ export class GameService {
       .getMany();
 
     let results: Result[] = [];
-	console.log("gameStats", gameStats);
+	// console.log("gameStats", gameStats);
 
     for (let i: number = 0; i < gameStats.length - 1; i++) {
       if (gameStats[i].game.id == gameStats[i + 1].game.id) {
@@ -286,8 +294,8 @@ export class GameService {
 			return ;
 		nsp.to(cur_game_id).emit('client', 0);
 		nsp.to(cur_game_id).emit('client', 1);
-		const srcUser = await this.usersService.findUserBySocketId(cur_game.player1.socketID);
-		const targetUser = await this.usersService.findUserBySocketId(cur_game.player2.socketID);
+		const srcUser : User = await this.usersService.findUserBySocketId(cur_game.player1.socketID);
+		const targetUser : User = await this.usersService.findUserBySocketId(cur_game.player2.socketID);
 		nsp.to(cur_game.gameID).emit('matchInfo', {gameId: cur_game.gameID, host : srcUser, guest: targetUser});
 		this.logger.log("accepted One on One : " + this.gameSessions.size);
 	}
@@ -489,10 +497,11 @@ export class GameService {
 		let winnerPlayer : Player1 | Player2;
 		//aborting game
 		if (cur_game.gameStatus === GameStatus.Playing){
+			console.log("Playing");
 			const outPlayer : Player1 | Player2 = 
 				cur_game.player1.socketID === client.id ? cur_game.player1 : cur_game.player2;
 			const remainPlayer : Player1 | Player2 = 
-				cur_game.player2.socketID !== client.id ? cur_game.player1 : cur_game.player2;
+				cur_game.player2.socketID === client.id ? cur_game.player1 : cur_game.player2;
 			loserPlayer = outPlayer;
 			winnerPlayer = remainPlayer;
 		}
@@ -516,19 +525,21 @@ export class GameService {
 		 const hostSocket : Socket = this.usersSockets.get(host.socketID);		
 		//const guestSocket : Socket = this.usersSockets.get(guest.socketID); 
 		//const hostSocket : Socket = this.usersSockets.get(host.socketID);
-
 		await this.updateUserStatusOnline(guestSocket);
 		await this.updateUserStatusOnline(hostSocket);
 
 		//disjoin guest socket
-		guestSocket.leave(cur_game_id);
 		clearInterval(cur_game.count_intervalId);
 		//this.logger.log("destoyed game : " + JSON.stringify(this.gameSessions.get(cur_game_id)));
+		console.log("----------------------------------------–");
 		if (cur_game.gameStatus !== GameStatus.Waiting)
 		{
+			console.log("----------------------------------------–");
 			await this.recordGame(cur_game);
 			console.log("=================win1========================");
+			console.log("1");
 			nsp.to(loserPlayer.socketID).emit("Win",winnerPlayer);
+			console.log("2");
 			nsp.to(winnerPlayer.socketID).emit("Win",winnerPlayer);
 		}
 		else
@@ -540,6 +551,7 @@ export class GameService {
 		}
 		console.log("----------------------------------------------------");
 		this.gameSessions.delete(cur_game.gameID);
+		guestSocket.leave(cur_game_id);
 
 		//destory gameSession
 
@@ -573,7 +585,7 @@ export class GameService {
 			const outPlayer : Player1 | Player2 = 
 				cur_game.player1.socketID === client.id ? cur_game.player1 : cur_game.player2;
 			const remainPlayer : Player1 | Player2 = 
-				cur_game.player2.socketID !== client.id ? cur_game.player1 : cur_game.player2;
+				cur_game.player2.socketID === client.id ? cur_game.player1 : cur_game.player2;
 			loserPlayer = outPlayer;
 			winnerPlayer = remainPlayer;
 		}
@@ -594,12 +606,12 @@ export class GameService {
 		const guest : Player2 = cur_game.guest;
 		const host : Player1  = cur_game.host;
 		const guestSocket : Socket = this.usersSockets.get(guest.socketID); 
-		// const hostSocket : Socket = this.usersSockets.get(host.socketID);		
-		//const guestSocket : Socket = this.usersSockets.get(guest.socketID); 
-		//const hostSocket : Socket = this.usersSockets.get(host.socketID);
+		const hostSocket : Socket = this.usersSockets.get(host.socketID);		
 
-		//await this.updateUserStatusOnline(guestSocket);
-		//await this.updateUserStatusOnline(hostSocket);
+		if (guestSocket)
+			await this.updateUserStatusOnline(guestSocket);
+		if (hostSocket)
+			await this.updateUserStatusOnline(hostSocket);
 
 		//disjoin guest socket
 		guestSocket.leave(roomId);
@@ -673,14 +685,14 @@ export class GameService {
 
 
 	async winnerUpdate(winner : Player1 | Player2){
-		const winner_user : User = await this.usersService.findUserBySocketId(winner.socketID);
+		const winner_user : User = await this.usersService.findUserById(winner.userID);
 		const wins_update: number = winner_user.wins + 1;
 		const xp_update : number = winner_user.xp + 5;
 		await this.usersService.update(winner_user.id, {wins : wins_update, xp: xp_update});
 	}
 
 	async loserUpdate(loser : Player1 | Player2){
-		const loser_user : User = await this.usersService.findUserBySocketId(loser.socketID);
+		const loser_user : User = await this.usersService.findUserById(loser.userID);
 		const loses_update: number = loser_user.loses + 1;
 		await this.usersService.update(loser_user.id, {loses : loses_update});
 	}

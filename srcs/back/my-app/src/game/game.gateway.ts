@@ -169,6 +169,16 @@ export class GameGateway
     return ret;
   }
 
+  @SubscribeMessage('gameInfo')
+  async gameInfo(@ConnectedSocket() socket: Socket) {
+    const gameRoomId = await this.gameService.getCurGameRoomId(socket);
+    const ret = this.gameService.gameSessions.has(gameRoomId);
+    console.log(ret);
+
+    return ret;
+  }
+
+
   @SubscribeMessage('gameRoomCreate')
   async gameRoomCreate(@ConnectedSocket() socket: Socket) {
     const user: User = await this.usersService.findUserBySocketId(socket.id);
@@ -279,7 +289,7 @@ export class GameGateway
   @SubscribeMessage('gameRoomOut')
   async gameRoomOut(@ConnectedSocket() socket: Socket) {
     //set user's status Online not InGame
-    console.log('aaasaasdasdasdasdsadasdassad', socket.id);
+    console.log("gameRoomOut");
     await this.gameService.destroyGame(socket, this.nsp);
   }
 

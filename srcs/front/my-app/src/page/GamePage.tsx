@@ -28,6 +28,7 @@ export default function GamePage() {
   let ball = useRef<ballItem>(new ballItem(0,0,0,0,0,0));
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const gameRef = useRef<HTMLDivElement>(null);
+  const returnRef = useRef<boolean>(false);
   let client = useRef<number>(-1);
   let pad = useRef<padItem[]>([]);
   let obstacle = useRef<htmlItem[]>([]);
@@ -116,11 +117,12 @@ export default function GamePage() {
 
     if (socket) {
       socket.emit('inGame', "", response => {
-        console.log(response, "client", client.current);
         if (response === false) {navigate.current('/main');}
         else if (response === true) {
           socket.on("Win", (data) => {
+            console.log("asd");
             const winnerBox = document.getElementById("winner-box");
+            returnRef.current = true;
             if (winnerBox) {
               winnerBox.hidden = false;
               winnerBox.querySelector("p")!.innerText = data.nickname + "가 이겼습니다";
@@ -248,6 +250,11 @@ export default function GamePage() {
       }
       if (socket)
       {
+        if (returnRef)
+        {
+          console.log("return");
+          socket.emit('gameRoomOut', "");
+        }
         socket.off('hostScore');
         socket.off('gameset');
         socket.off("Win");

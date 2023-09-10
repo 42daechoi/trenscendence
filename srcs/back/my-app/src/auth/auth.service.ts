@@ -52,16 +52,16 @@ export class AuthService {
   //find user and make his token
   async validateUser(intraId: string, type: TokenType): Promise<any | null> {
     const user = await this.usersService.findUserByIntraId(intraId);
-    console.log('checking user : ' + user);
+    //console.log('checking user : ' + user);
     if (user) {
-      console.log('checking existing : ' + user.intraId);
+      //console.log('checking existing : ' + user.intraId);
       const { intraId, ...rest } = user;
       const payload: TokenPayload = {
         id: user.id,
         intraId: user.intraId,
         type: type,
       };
-      console.log('attaching Token\n' + JSON.stringify(payload));
+      //console.log('attaching Token\n' + JSON.stringify(payload));
       return { accessToken: this.jwtService.sign(payload) };
     } else return null;
   }
@@ -76,10 +76,8 @@ export class AuthService {
       maxAge: 24 * 60 * 60 * 1000,
       //domain: this.configService.get<string>('LOCALHOST'),
     });
-    console.log(
-      '#############     Attaching Token in Cookie!!!    ############# ',
-    );
-    console.log('#############     cookie :     ############# ');
+    //console.log('#############     Attaching Token in Cookie!!!    ############# ',);
+    //console.log('#############     cookie :     ############# ');
   }
 
   async destoryJwtCookie(res: Response): Promise<Response> {
@@ -100,7 +98,7 @@ export class AuthService {
     const payload: any = this.jwtService.decode(token);
     if (!payload) return;
     const user = this.usersService.findUserById(payload.id);
-    console.log('decoding token : ' + JSON.stringify(payload));
+    //console.log('decoding token : ' + JSON.stringify(payload));
     return user;
   }
 
@@ -114,9 +112,9 @@ export class AuthService {
 
   async existUser(intraId: string): Promise<any | null> {
     const user = await this.usersService.findUserByIntraId(intraId);
-    console.log('checking user : ' + user);
+    //console.log('checking user : ' + user);
     if (user) {
-      console.log('checking existing : ' + user.intraId);
+      //console.log('checking existing : ' + user.intraId);
       const { intraId, ...rest } = user;
       return user;
     } else return null;

@@ -109,6 +109,10 @@ function Chat(props) {
         );
       }
     });
+    socket.on("oneOnOne", () => {
+      initMessages();
+      console.log("initmsg");
+    });
     socket.on("kick", (data) => {
       console.log("kick");
       if (data) {
@@ -142,6 +146,7 @@ function Chat(props) {
       if (channel.flag) initMessages();
     });
     return () => {
+      socket.off("oneOnOne");
       socket.off("chat");
       socket.off("kick");
       socket.off("join");
@@ -488,6 +493,7 @@ function Chat(props) {
           let chname: string = channel.channelname;
           if (channel.channelname === "$home") chname = "Home";
           addMessage(
+
             {
               name: "SERVER",
               profile: null,
