@@ -9,7 +9,7 @@ export default function FullTFA() {
   const [curState, setState] = useState(true);
   useEffect(() => {
     axios
-      .get("http://localhost:3001/OTPwhoami", { withCredentials: true })
+      .get("http://localhost:3001/users/whoami", { withCredentials: true })
       .then((response) => {
         response.data.twoFASecret === null
           ? setCurPage("otp_set")
@@ -17,6 +17,7 @@ export default function FullTFA() {
         if (response.data.twoFASecret && !response.data.twoFA)
           setCurPage("otp_set");
         response.data.twoFA === true ? setState(true) : setState(false);
+        console.log(response.data.twoFA);
       })
       .catch((error) => {
         console.log(error);
