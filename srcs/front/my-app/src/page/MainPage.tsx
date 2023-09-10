@@ -5,7 +5,7 @@ import MemoProfile from "../component/Profile";
 import GameWaiting from "../component/GameWaiting";
 import LeaderBoard from "../component/LeaderBoard";
 import FriendsList from "../component/FriendsList";
-import ChannelsList from "../component/ChannelsList";
+import MemoChannelsList from "../component/ChannelsList";
 import MemoChat from "../component/Chat";
 import { getWhoami } from "../utils/ApiRequest";
 import Modal from "../component/Modal";
@@ -122,7 +122,7 @@ export default function MainPage() {
       case "friends_list":
         return <FriendsList />;
       case "channels_list":
-        return <ChannelsList channelList={channelList} />;
+        return <MemoChannelsList channelList={channelList} />;
     }
   };
 

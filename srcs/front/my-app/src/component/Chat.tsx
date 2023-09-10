@@ -35,7 +35,7 @@ const initTmpMessages: IMessage[] = [
   {
     user: { name: "SERVER", profile: null, id: 1, isChecked: false },
     sender: "chat chat-start",
-    text: "Home 채널에 참가하셨습니다",
+    text: "Home 채널에 참가하셨습니다.",
     time: new Date().toLocaleTimeString(),
     avatar: null,
   },
@@ -206,9 +206,9 @@ function Chat(props) {
       setUsers(newUsers);
     };
 
-    if (isSameList()) {
-      return;
-    }
+    // if (isSameList()) {
+    //   return;
+    // }
     fetchData();
   }, [props.memberList]);
 
@@ -346,6 +346,8 @@ function Chat(props) {
         return;
       } else if (chat[0] === "/" && chat[1] === "/") {
         const firstSpaceIdx = chat.indexOf(" ");
+        if (firstSpaceIdx === -1)
+          return ;
         const target_name: string = chat.substring(2, firstSpaceIdx);
         const msg: string = chat.substring(firstSpaceIdx + 1, chat.length);
 

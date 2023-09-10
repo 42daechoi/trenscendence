@@ -24,7 +24,7 @@ export default function CreateChat(props) {
               socket.emit("create", {
                 id: data.id,
                 maxmember: selectedValue,
-                option: "public",
+                option: isChecked,
                 password: password,
               });
               props.entryChannel();

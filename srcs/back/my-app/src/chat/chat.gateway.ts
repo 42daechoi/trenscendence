@@ -130,13 +130,32 @@ export class ChatGateway
             }
             //만약 호스트였을 때
             if (channel.host === user.id) {
-              //방장 위임.
+              //채널 목록에서 삭제
+              const removeChannelIdx = this.chatService
+                .getChannels()
+                .findIndex((c) => c.channelname === channel.channelname);
+              if (removeChannelIdx !== -1) {
+                this.chatService.getChannels().splice(removeChannelIdx, 1);
+              }
+
               channel.host = channel.users[0];
-              let newhost = this.chatService.findUserById(channel.host);
-              const newhost_user: User = this.usersService.findUserById(
+              let newhost = this.chatService.findUserById(channel.users[0]);
+              const newhost_user: User = await this.usersService.findUserById(
                 newhost.id,
               );
-              channel.channelname = newhost_user.nickname; // 방 이름 변경.
+              channel.channelname = newhost_user.nickname;
+              socket.broadcast
+                .to(channel.channelname)
+                .emit('update', false); //퇴장 메시지
+
+              //채널 목록에 다시 추가
+              this.chatService.getChannels().push(channel);
+
+              //방에 남은 유저들 전부에게 user.channelname 바꿔줘야함
+              for (const checkid of channel.users) {
+                let user = this.chatService.findUserById(checkid);
+                user.channelname = channel.channelname;
+              }
             }
             socket.broadcast.to(channel.channelname).emit('update', false); //퇴장 메시지
           }
@@ -174,23 +193,7 @@ export class ChatGateway
 
     let user_check = this.chatService.findUserById(id);
     if (user_check) {
-        await this.handleDisconnect(socket);
-      // clearInterval(user_check.interval);
-
-      // //home으로 이동.
-      // this.handlehome(user_check.id, user_check.socket);
-
-      //home에서 제거.
-      // let home = this.chatService.getChannels()[0];
-      // home.member--;
-      // const removeIdx = home.users.indexOf(user_check.id);
-      // if (removeIdx !== -1) {
-      //   home.users.splice(removeIdx, 1);
-      // }
-      // socket.broadcast.to(home.channelname).emit('update', false); //퇴장 메시지
-
-      // const userIndex = this.chatService.getUsers().indexOf(user_check);
-      // this.chatService.getUsers().splice(userIndex, 1);
+      await this.handleDisconnect(socket);
     }
 
     this.connectedSockets.set(id, socket);

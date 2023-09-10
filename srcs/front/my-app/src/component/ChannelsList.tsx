@@ -3,8 +3,7 @@ import Modal from "./Modal";
 import "../css/ChannelList.css";
 import { useSocket } from "../component/SocketContext";
 import { whoami } from "../utils/whoami";
-import { getUserByNickname } from "../utils/ApiRequest";
-const initChannels: string[] = ["a", "b", "c"];
+import { channel } from "diagnostics_channel";
 
 interface IChannel {
   channelname: string;
@@ -17,25 +16,23 @@ interface IChannel {
   password?: string | null;
 }
 
-export default function ChannelsList(props) {
-  // 초기 채널 설정
-  // const [channelList, setChannelList] = useState<string[]>(props.channelList);//props.channelList
+function ChannelsList(props: { channelList: IChannel[] }) {
   const [channelList, setChannelList] = useState<IChannel[]>([]);
-  const [currChannel, setCurrChannel] = useState<string>("");
+  const [currChannel, setCurrChannel] = useState<number | null>(null);
   const socket = useSocket();
-  let password;
+  const passwordRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     setChannelList([]);
 
     for (let i = 1; i < props.channelList.length; i++) {
-      if (props.channelList[i].option != "private") {
+      if (props.channelList[i].option !== "private") {
         addChannelList(props.channelList[i]);
       }
     }
   }, [props.channelList]);
 
-  const joinChannel = async (password, index) => {
+  const joinChannel = async (password: string, index: number) => {
     const data = await whoami();
 
     socket.emit("join", {
@@ -49,13 +46,15 @@ export default function ChannelsList(props) {
   function addChannelList(channel: IChannel) {
     setChannelList((prevChannelList) => [...prevChannelList, channel]);
   }
+
   const [isModalOpen, setModalOpen] = useState(false);
-  const openModal = (index): void => {
+
+  const openModal = (index: number): void => {
     setModalOpen(true);
     setCurrChannel(index);
   };
 
-  const renderOption = (index) => {
+  const renderOption = (index: number) => {
     if (channelList[index].option === "public") return <>🔓</>;
     else return <>🔐</>;
   };
@@ -66,33 +65,47 @@ export default function ChannelsList(props) {
 
   function ChannelConfigure() {
     const [isPasswordDisplay, setPasswordDisplay] = useState(false);
-    const togglePassDisplay = () => {
-      setPasswordDisplay(!isPasswordDisplay);
-    };
 
-    if (channelList[currChannel].option === "protected") togglePassDisplay();
+
+
+    useEffect(() => {
+      if (currChannel !== null && channelList[currChannel]?.option === "protected") {
+        setPasswordDisplay(true);
+      }
+    }, [currChannel, channelList]);
+
+    if (currChannel === null || !channelList[currChannel])
+      return ;
+
     return (
       <>
         <div className="channel-access" style={{ padding: "10px" }}>
           <h1 style={{ fontSize: "20px" }}>
-            {channelList[currChannel].channelname + " 의 채팅방"}
+            {currChannel !== null && channelList[currChannel].channelname + " 의 채널"}
           </h1>
           <h1>방 설정</h1>
-          <div>{channelList[currChannel].option}</div>
+          <div>{currChannel !== null && channelList[currChannel].option}</div>
           <div>
-            {channelList[currChannel].member} /{" "}
-            {channelList[currChannel].maxmember}
+            {currChannel !== null && channelList[currChannel].member} /{" "}
+            {currChannel !== null && channelList[currChannel].maxmember}
           </div>
           {isPasswordDisplay && (
             <h1 style={{ padding: "10px" }}>
               password
-              <input style={{ margin: "10px" }}></input>
+              <input ref={passwordRef} style={{ margin: "10px" }}></input>
             </h1>
           )}
           <button
             className="join-button"
             onClick={() => {
-              joinChannel(password, currChannel);
+              if (currChannel !== null) {
+                let password:string;
+                if (!passwordRef.current)
+                  password = null;
+                else
+                  password = passwordRef.current.value;
+                joinChannel(password, currChannel);
+              }
             }}
           >
             join
@@ -101,16 +114,18 @@ export default function ChannelsList(props) {
       </>
     );
   }
-  const searchText = useRef(null);
-  const [currUser, setCurrUser] = useState(null);
+
+  const searchText = useRef<HTMLInputElement | null>(null);
 
   function searchChannel() {
-    const searchChannelName = searchText.current.value;
-    for (let i = 0; i < channelList.length; i++) {
-      if (searchChannelName === channelList[i].channelname) {
-        openModal(i);
-        searchText.current.value = "";
-        return;
+    if (searchText.current !== null) {
+      const searchChannelName = searchText.current.value;
+      for (let i = 0; i < channelList.length; i++) {
+        if (searchChannelName === channelList[i].channelname) {
+          openModal(i);
+          searchText.current.value = "";
+          return;
+        }
       }
     }
   }
@@ -127,7 +142,7 @@ export default function ChannelsList(props) {
         <li key={"channelList" + index}>
           <a className="chat_btn" onClick={() => openModal(index)}>
             {renderOption(index)}
-            <div>{channel.channelname}</div>
+            <div>{channel.channelname}'s channel</div>
             <div className="chat_memeber_count">
               {channel.member} / {channel.maxmember}
             </div>
@@ -146,3 +161,7 @@ export default function ChannelsList(props) {
     </div>
   );
 }
+
+const MemoChannelsList = React.memo(ChannelsList);
+
+export default  MemoChannelsList;
