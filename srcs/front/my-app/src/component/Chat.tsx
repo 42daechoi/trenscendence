@@ -341,6 +341,8 @@ function Chat(props) {
         return;
       } else if (chat[0] === "/" && chat[1] === "/") {
         const firstSpaceIdx = chat.indexOf(" ");
+        if (firstSpaceIdx === -1)
+          return ;
         const target_name: string = chat.substring(2, firstSpaceIdx);
         const msg: string = chat.substring(firstSpaceIdx + 1, chat.length);
 
