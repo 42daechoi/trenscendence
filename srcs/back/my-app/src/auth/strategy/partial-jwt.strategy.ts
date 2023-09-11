@@ -27,7 +27,7 @@ export class PartialJwtStrategy extends PassportStrategy(
   async validate(payload: TokenPayload) {
     // this.logger.log(`Validating partial JWT token for user ${payload.sub}`);
     const user = await this.authService.tokenValidateUser(payload);
-    console.log(payload.intraId);
+//    console.log(payload.intraId);
     if (!user) {
       this.logger.log("Unauthorized access caught by PartialJwtStrategy");
       throw new UnauthorizedException({

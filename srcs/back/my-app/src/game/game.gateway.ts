@@ -67,7 +67,7 @@ export class GameGateway
     this.nsp.adapter.on('leave-room', (room, id) => {
       this.logger.log(`"Socket:${id}" has left "Room:${room}".`);
       const clientSocket = this.nsp.sockets.get(id);
-
+	  this.logger.log("leaving socket's room : " + JSON.stringify(clientSocket.rooms));
       this.gameService.destroySession(clientSocket, this.nsp);
       this.gameService.destroyRoom(room, clientSocket, this.nsp);
     });
@@ -79,7 +79,7 @@ export class GameGateway
     this.logger.log('WebSocketServer init ✅');
   }
   //execute right after connection
-  @UseGuards(WsJwtGuard)
+  //@UseGuards(WsJwtGuard)
   async handleConnection(@ConnectedSocket() socket: Socket) {
     this.logger.log(`${socket.id} socket connected`);
     //broadcast
@@ -106,9 +106,9 @@ export class GameGateway
     this.logger.log(`${socket.id} socket disconnected ❌`);
     const out_user = await this.usersService.findUserBySocketId(socket.id);
     if (!out_user) return;
-    this.logger.log(JSON.stringify(socket.rooms));
     this.gameService.userOutNsp(socket);
     await this.usersService.update(out_user.id, { socketId: null });
+	await this.authService.updateUserStatusOnline(out_user);
   }
 
   //	@UseGuards(WsJwtGuard)
