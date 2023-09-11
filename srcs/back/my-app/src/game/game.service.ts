@@ -315,7 +315,8 @@ export class GameService {
     }
     //cannot find socket
     const targetSocket: Socket = this.usersSockets.get(targetUser.socketId);
-    if (targetSocket) targetSocket.emit('OneOnOneNoti', srcUser);
+    if (targetSocket) {this.logger.log("OneOnOneNoti");
+	targetSocket.emit('OneOnOneNoti', srcUser);}
   }
 
   async acceptOneOnOne(client: Socket, nsp: Namespace) {
@@ -522,7 +523,6 @@ export class GameService {
     //normal termiation
     const cur_game_id = await this.getCurGameRoomId(client);
     let cur_game: Game = this.gameSessions.get(cur_game_id);
-
     if (!cur_game) {
       return;
     }
@@ -580,6 +580,7 @@ export class GameService {
     }
     console.log('----------------------------------------------------');
     this.gameSessions.delete(cur_game.gameID);
+	console.log("destroyGaem");
     guestSocket.leave(cur_game_id);
 
     //destory gameSession

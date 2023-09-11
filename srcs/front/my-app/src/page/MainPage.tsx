@@ -24,7 +24,7 @@ export default function MainPage() {
   const socket = useSocket();
   const [myId, setMyId] = useState(0);
   const {match, set} = useCurPage();
-  useEffect(()=>{if (curPage !== "game_waiting")setPlay(false);},[curPage]);
+  useEffect(()=>{if (curPage !== "game_waiting")setPlay(false); set("");},[curPage]);
   useEffect(()=> {
     if (match === "match")
     {
@@ -33,14 +33,15 @@ export default function MainPage() {
     }
     if (match === "accept")
     {
+      sideRef.current.checked = false;
       setIsMatch(false);
       setPlay(true);
       setCurPage("game_waiting");
     }
     if (match === "deny")
     {
+      closeMatch();
       setPlay(false);
-      setIsMatch(false);
     }
     return () => {set("")};
   }, [match]);
@@ -48,10 +49,9 @@ export default function MainPage() {
   useEffect(() => {
     if (!socket) return;
     gameSocket.on("OneOnOneNoti", data =>{
+      console.log("게임초대");
       set("match");
       setMatchInfo(data.id);
-      sideRef.current.checked = false;
-      setIsMatch(true);
     });
     socket.on("allinfo", (data) => {
       getWhoami()
@@ -76,7 +76,7 @@ export default function MainPage() {
       gameSocket.off("OneOnOneNoti");
       socket.off("allinfo");
     };
-  }, [socket, match]);
+  }, [socket]);
 
   useEffect(() => {
     apiRequest<any>("get", "http://localhost:3001/users/whoami").then(
@@ -129,8 +129,9 @@ export default function MainPage() {
 
   const closeMatch = (): void => {
     setIsMatch(false);
-    if (gameSocket)
-      socket.emit("denyOneOnOne","");
+    console.log("closeMatch");
+    if (gameSocket && match === "deny")
+      gameSocket.emit("denyOneOnOne","");
   };
 
   return (

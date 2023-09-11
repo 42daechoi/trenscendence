@@ -898,7 +898,7 @@ export class ChatGateway
       this.handlehome(target.id, target.socket);
     }
 
-    this.handlecreate(
+    await this.handlecreate(
       {
         id: host.id,
         maxmember: 2,
@@ -910,7 +910,7 @@ export class ChatGateway
     host.socket.emit("oneOnOne", "");
     const host_user: User = await this.usersService.findUserById(host.id);
 
-    this.handlejoin(
+    await this.handlejoin(
       {
         id: target.id,
         channelname: host_user.nickname,
@@ -920,7 +920,7 @@ export class ChatGateway
       target.socket,
     );
 
-    this.handlemodify(
+    await this.handlemodify(
       {
         id: host.id,
         maxmember: 2,

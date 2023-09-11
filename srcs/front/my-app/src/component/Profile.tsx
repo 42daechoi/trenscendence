@@ -115,17 +115,14 @@ function Profile(pn: ProfileNode) {
             props.callback("false");
           } else if (props.modalType === myM) {
             if (gamesocket) {
-              socket.emit("acceptOneOnOne", "", (response) => {
+              gamesocket.emit("acceptOneOnOne", "", (response) => {
                 if (response === true) set("accept");
                 else set("deny");
               });
             }
           } else if (props.modalType === mnM) {
-            if (gamesocket) {
-              socket.emit("denyOneOnOne", "");
               set("deny");
             }
-          }
         }}
         className="btn-fix glass"
         ref={typeRef}
@@ -256,6 +253,7 @@ function Profile(pn: ProfileNode) {
                 alert("게임 초대 실패");
                 return;
               }
+              console.log("게임초대");
               set("accept");
             });
           }}

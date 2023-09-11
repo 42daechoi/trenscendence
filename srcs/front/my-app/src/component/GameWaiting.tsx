@@ -265,6 +265,7 @@ export default function GameWaiting(prop) {
       console.log("tmp", tmp);
       if (tmp === -1)
       {
+        socket.emit('matchQueueOut',"");
         socket.emit('gameRoomOut',"");
       }
       socket.emit("whoamiGateway", "", response => {
@@ -449,7 +450,7 @@ export default function GameWaiting(prop) {
         >
           READY
         </button>
-        <button className="btn-leave btn-outline btn-error">LEAVE</button>
+        <button className="btn-leave btn-outline btn-error" onClick={prop.leavefun}>LEAVE</button>
       </div>
     </div>
   );
