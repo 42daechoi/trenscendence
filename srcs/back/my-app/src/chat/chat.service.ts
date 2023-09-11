@@ -13,30 +13,30 @@ export class ChatService {
     private users: userDTO[] = [];
     private channels: channelDTO[] = [];
 
-    getUsers(): userDTO[] {
+    async getUsers(): Promise<userDTO[]> {
         return this.users;
     }
 
-    findUserById(@MessageBody() id: number): userDTO {
+    async findUserById(@MessageBody() id: number): Promise<userDTO> {
         let user = this.users.find(u => u.id === id);
         return (user);
     }
 
-    findUserBySocketId(@MessageBody() skid: string) : userDTO {
+    async findUserBySocketId(@MessageBody() skid: string) : Promise<userDTO> {
         let user = this.users.find(u => u.socketid === skid);
         return (user);
     }
 
-    getChannels(): channelDTO[] {
+    async getChannels(): Promise<channelDTO [] > {
         return this.channels;
     }
 
-    findChannelByChannelname(@MessageBody() chname: string) : channelDTO {
+    async findChannelByChannelname(@MessageBody() chname: string) : Promise<channelDTO> {
         let channel = this.channels.find(c => c.channelname === chname);
         return channel;
     }
   
-    async getUserBlocklist(@MessageBody() id: number) {
+    async getUserBlocklist(@MessageBody() id: number) : Promise<Map<number, string>>  {
         const block_users : User[] = await this.usersService.getUserBlocks(id);
         let   block_list : Map<number, string> = new Map();
 

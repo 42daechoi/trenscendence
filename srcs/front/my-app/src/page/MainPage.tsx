@@ -130,7 +130,7 @@ export default function MainPage() {
   const closeMatch = (): void => {
     setIsMatch(false);
     console.log("closeMatch");
-    if (gameSocket && match === "deny")
+    if (gameSocket && match !== "accept")
       gameSocket.emit("denyOneOnOne","");
   };
 

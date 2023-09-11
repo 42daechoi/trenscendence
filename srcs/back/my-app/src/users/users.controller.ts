@@ -45,19 +45,6 @@ export class UsersController {
     return user;
   }
 
-  @UseGuards(PartialJwtGuard)
-  @Get('/OTPwhoami')
-  whoAmIforOTP(@CurrentUser() user: User, @Res() res: Response) {
-    //user CurrentUser Decorator -> extract user from request
-    res.json(user);
-    return user;
-  }
-
-  @Post('/test')
-  test() {
-    console.log('test post users/test/');
-  }
-
   @Get('id/:id')
   async findUserById(@Param('id') id: string, @Req() req: Request) {
     //		console.log(req);

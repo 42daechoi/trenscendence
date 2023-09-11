@@ -23,6 +23,7 @@ import { UsersService } from 'src/users/users.service';
 import { Inject } from '@nestjs/common';
 import { User } from 'src/typeorm';
 import { ChatService } from './chat.service';
+import { UserDto } from 'src/users/dtos/users.dto';
 
 @WebSocketGateway({
   namespace: 'chat',
@@ -45,15 +46,16 @@ export class ChatGateway
   }
 
   async startSendingAllInfo(user: userDTO) {
+    const channels : channelDTO[] =  await this.chatService.getChannels();
     user.interval = setInterval(() => {
-      this.sendDataToSocket(user.socket, this.chatService.getChannels());
+      this.sendDataToSocket(user.socket, channels);
     }, 1000);
   }
 
   //**********************************************************************//
   //****************************** init **********************************//
   //**********************************************************************//
-  afterInit() {
+  async afterInit() {
     console.log('----------------------------------------');
     console.log('-------------------ININT----------------');
     console.log('----------------------------------------');
@@ -68,7 +70,9 @@ export class ChatGateway
       option: 'public',
       password: null,
     };
-    this.chatService.getChannels().push(channel);
+    const channels : channelDTO[] =  await this.chatService.getChannels();
+    
+    channels.push(channel);
   }
 
   //**********************************************************************//
@@ -91,7 +95,7 @@ export class ChatGateway
     console.log('Client connected: ', socket.id);
     console.log('----------------------------------------');
 
-    let user = this.chatService.findUserBySocketId(socket.id);
+    let user = await this.chatService.findUserBySocketId(socket.id);
 
     if (user) {
       //2초마다 보내는 socket에서 해제
@@ -99,20 +103,22 @@ export class ChatGateway
       this.connectedSockets.delete(user.id);
 
       //users에서 지우기.
-      const userIndex = this.chatService.getUsers().indexOf(user);
-
-      this.chatService.getUsers().splice(userIndex, 1);
+      const Users :userDTO[] = await this.chatService.getUsers();
+      const userIndex = Users.indexOf(user);
+      const Users1 :userDTO[] = await this.chatService.getUsers();
+      Users1.splice(userIndex, 1);
 
       if (user.channelname !== '$home') {
-        let channel = this.chatService.findChannelByChannelname(
+        let channel = await this.chatService.findChannelByChannelname(
           user.channelname,
         );
         if (channel) {
           channel.member--;
           if (channel.member === 0) {
-            const removeIdx = this.chatService.getChannels().indexOf(channel);
+            const channels :channelDTO[] = await this.chatService.getChannels();
+            const removeIdx = channels.indexOf(channel);
             if (removeIdx !== -1) {
-              this.chatService.getChannels().splice(removeIdx, 1);
+              channels.splice(removeIdx, 1);
             }
             channel = null; //마지막 인원이었을 경우 객체 삭제.
           } else {
@@ -135,11 +141,12 @@ export class ChatGateway
                 .getChannels()
                 .findIndex((c) => c.channelname === channel.channelname);
               if (removeChannelIdx !== -1) {
-                this.chatService.getChannels().splice(removeChannelIdx, 1);
+                const channels :channelDTO[] = await this.chatService.getChannels();
+                channels.splice(removeChannelIdx, 1);
               }
 
               channel.host = channel.users[0];
-              let newhost = this.chatService.findUserById(channel.users[0]);
+              let newhost = await this.chatService.findUserById(channel.users[0]);
               const newhost_user: User = await this.usersService.findUserById(
                 newhost.id,
               );
@@ -149,11 +156,12 @@ export class ChatGateway
                 .emit('update', false); //퇴장 메시지
 
               //채널 목록에 다시 추가
-              this.chatService.getChannels().push(channel);
+              const channels :channelDTO[] = await this.chatService.getChannels();
+              channels.push(channel);
 
               //방에 남은 유저들 전부에게 user.channelname 바꿔줘야함
               for (const checkid of channel.users) {
-                let user = this.chatService.findUserById(checkid);
+                let user = await this.chatService.findUserById(checkid);
                 user.channelname = channel.channelname;
               }
             }
@@ -161,7 +169,8 @@ export class ChatGateway
           }
         }
       } else {
-        let home = this.chatService.getChannels()[0];
+        const channels :channelDTO[] = await this.chatService.getChannels();
+        let home = channels[0];
         home.member--;
         const removeIdx = home.users.indexOf(user.id);
         if (removeIdx !== -1) {
@@ -191,7 +200,7 @@ export class ChatGateway
     console.log('SocketId: ', socket.id);
     console.log('----------------------------------------');
 
-    let user_check = this.chatService.findUserById(id);
+    let user_check = await this.chatService.findUserById(id);
     if (user_check) {
       await this.handleDisconnect(socket);
     }
@@ -209,9 +218,11 @@ export class ChatGateway
       blocklist: block_list,
     };
 
-    this.chatService.getUsers().push(user);
-    this.chatService.getChannels()[0].users.push(user.id);
-    this.chatService.getChannels()[0].member++;
+    const Users : userDTO[] = await this.chatService.getUsers();
+    Users.push(user);
+    const channels : channelDTO [] = await this.chatService.getChannels();
+    channels[0].users.push(user.id);
+    channels[0].member++;
     this.startSendingAllInfo(user);
     socket.join(user.channelname);
     socket.broadcast.to(user.channelname).emit('update', true); //$home 채널 입장 시 정보 업데이트
@@ -226,7 +237,7 @@ export class ChatGateway
   //****************************  chat   ********************************//
   //*********************************************************************//
   @SubscribeMessage('chat')
-  handlechat(
+  async handlechat(
     @MessageBody() chatobj: chatDTO,
     @ConnectedSocket() socket: Socket,
   ) {
@@ -243,8 +254,10 @@ export class ChatGateway
       chatobj.msg,
     );
     console.log('----------------------------------------');
-
-    const user = this.chatService.getUsers().find((u) => u.id === chatobj.id);
+      
+    // console.log("123");
+    const users : userDTO[] = await this.chatService.getUsers()
+    const user = users.find((u) => u.id === chatobj.id);
     if (!user) return;
     if (chatobj.flag == 'broad') {
       //* 유저가 속한 채널에 채팅.
@@ -252,13 +265,13 @@ export class ChatGateway
       console.log('             broad chat part            ');
       console.log('----------------------------------------');
 
-      const channel = this.chatService.findChannelByChannelname(
+      const channel = await this.chatService.findChannelByChannelname(
         user.channelname,
       );
       for (const tmp_userid of channel.users) {
         if (tmp_userid === user.id) continue;
 
-        const userchecking = this.chatService.findUserById(tmp_userid);
+        const userchecking = await this.chatService.findUserById(tmp_userid);
         if (userchecking.blocklist.get(user.id) === undefined) {
           socket.to(userchecking.socketid).emit('chat', chatobj);
         }
@@ -269,11 +282,11 @@ export class ChatGateway
       console.log('             dm chat part               ');
       console.log('----------------------------------------');
 
-      const target = this.chatService.findUserById(chatobj.target);
+      const target = await this.chatService.findUserById(chatobj.target);
       if (!target) return;
 
       console.log('----------------------------------------');
-      console.log('target check :', target);
+      console.log('target check :', target.id);
       console.log('----------------------------------------');
 
       const blocks = target.blocklist;
@@ -296,7 +309,7 @@ export class ChatGateway
   //****************************  where  ********************************//
   //*********************************************************************//
   @SubscribeMessage('where')
-  handlewhere(
+  async handlewhere(
     @MessageBody() userid: number,
     @ConnectedSocket() socket: Socket,
   ) {
@@ -306,9 +319,9 @@ export class ChatGateway
     console.log('----------------------------------------');
 
     //이후 유저 어디서 체크 & 유저가 있는 위치 확인 후 리플라이 전달.
-    let user = this.chatService.findUserById(userid);
+    let user = await this.chatService.findUserById(userid);
     if (!user) return;
-    let channel = this.chatService.findChannelByChannelname(user.channelname);
+    let channel = await this.chatService.findChannelByChannelname(user.channelname);
     console.log('----------------------------------------');
     console.log('-----------------WHERE------------------');
     console.log(JSON.stringify(channel, null, 2));
@@ -330,7 +343,7 @@ export class ChatGateway
     console.log('----------------------------------------');
 
     // 유저 확인
-    let user = this.chatService.findUserById(room.id);
+    let user = await this.chatService.findUserById(room.id);
     if (!user) {
       console.log('----------------------------------------');
       console.log('            can not find user           ');
@@ -338,7 +351,7 @@ export class ChatGateway
       return;
     }
     // home이 아닐 경우 생성 불가.(왜냐면 방 이름이 곧 닉네임이기에)
-    let checkChannel = this.chatService.findChannelByChannelname(
+    let checkChannel = await this.chatService.findChannelByChannelname(
       user.channelname,
     );
     if (checkChannel.channelname !== '$home') {
@@ -365,11 +378,12 @@ export class ChatGateway
     if (newChannel.option === 'public' || newChannel.option === 'private') {
       newChannel.password = null;
     }
-    this.chatService.getChannels().push(newChannel);
+    const channels : channelDTO[] = await this.chatService.getChannels();
+    channels.push(newChannel);
     //this.channelnames.push(newChannel.channelname);
 
     // 이전 채널 객체 정보 업데이트
-    let home = this.chatService.findChannelByChannelname('$home');
+    let home = await this.chatService.findChannelByChannelname('$home');
     home.member--;
     const removeIdx = home.users.indexOf(user.id);
     if (removeIdx !== -1) {
@@ -392,7 +406,7 @@ export class ChatGateway
   //***************************  modify  ********************************//
   //*********************************************************************//
   @SubscribeMessage('modify')
-  handlemodify(
+  async handlemodify(
     @MessageBody() room: roomDTO,
     @ConnectedSocket() socket: Socket,
   ) {
@@ -400,10 +414,10 @@ export class ChatGateway
     console.log('-----------------MODIFY-----------------');
     console.log(room);
     console.log('----------------------------------------');
-
-    let user = this.chatService.getUsers().find((u) => u.id === room.id);
+    const users :userDTO[] = await this.chatService.getUsers();
+    let user = users.find((u) => u.id === room.id); //last check
     if (!user) return;
-    let modifyingchannel = this.chatService.findChannelByChannelname(
+    let modifyingchannel = await this.chatService.findChannelByChannelname(
       user.channelname,
     );
     if (!modifyingchannel) return;
@@ -458,11 +472,11 @@ export class ChatGateway
     console.log('----------------------------------------');
 
     // 유저 확인
-    let user = this.chatService.findUserById(joinobj.id);
+    let user = await this.chatService.findUserById(joinobj.id);
     if (!user) return;
 
     // 해당 채널이 없거나, 이미 해당 채널일 경우 못들어감.
-    const channel = this.chatService.findChannelByChannelname(
+    const channel = await this.chatService.findChannelByChannelname(
       joinobj.channelname,
     );
     if (!channel) {
@@ -494,7 +508,7 @@ export class ChatGateway
     // 방 입장.
     if (channel.maxmember - channel.member >= 1) {
       // 이전 채널 정보 업데이트
-      let beforeChannel = this.chatService.findChannelByChannelname(
+      let beforeChannel = await this.chatService.findChannelByChannelname(
         user.channelname,
       );
       if (beforeChannel) {
@@ -514,7 +528,7 @@ export class ChatGateway
               .getChannels()
               .findIndex((c) => c.channelname === beforeChannel.channelname);
             if (removeChannelIdx !== -1) {
-              this.chatService.getChannels().splice(removeChannelIdx, 1);
+              (await this.chatService.getChannels()).splice(removeChannelIdx, 1); //11111111111111111
             }
           }
 
@@ -554,11 +568,11 @@ export class ChatGateway
               .getChannels()
               .findIndex((c) => c.channelname === beforeChannel.channelname);
             if (removeChannelIdx !== -1) {
-              this.chatService.getChannels().splice(removeChannelIdx, 1);
+              (await this.chatService.getChannels()).splice(removeChannelIdx, 1); // 11111111111111111
             }
 
             beforeChannel.host = beforeChannel.users[0];
-            let newhost = this.chatService.findUserById(beforeChannel.users[0]);
+            let newhost = await this.chatService.findUserById(beforeChannel.users[0]);
             const newhost_user: User = await this.usersService.findUserById(
               newhost.id,
             );
@@ -568,11 +582,12 @@ export class ChatGateway
               .emit('update', false); //퇴장 메시지
 
             //채널 목록에 다시 추가
-            this.chatService.getChannels().push(beforeChannel);
+            const channels :channelDTO[] = await this.chatService.getChannels();
+            channels.push(beforeChannel);
 
             //방에 남은 유저들 전부에게 user.channelname 바꿔줘야함
             for (const checkid of beforeChannel.users) {
-              let user = this.chatService.findUserById(checkid);
+              let user = await this.chatService.findUserById(checkid);
               user.channelname = beforeChannel.channelname;
             }
           }
@@ -602,7 +617,7 @@ export class ChatGateway
     //전체 채널 객체 뽑아서 확인하기
     console.log('----------------------------------------');
     console.log('---------------ALL CHANNELS-------------');
-    console.log(this.chatService.getChannels()); //  마지막에 채널들 다 잘 수정되었는지 확인
+    console.log ( await this.chatService.getChannels()); //  마지막에 채널들 다 잘 수정되었는지 확인
     console.log('----------------------------------------');
   }
 
@@ -610,18 +625,18 @@ export class ChatGateway
   //*****************************  op  **********************************//
   //*********************************************************************//
   @SubscribeMessage('op')
-  handleop(@MessageBody() op: opDTO) {
+  async handleop(@MessageBody() op: opDTO) {
     console.log('----------------------------------------');
     console.log('----------------- OP -------------------');
     console.log('userId: ', op.id, ' targetId: ', op.target);
     console.log('----------------------------------------');
 
-    let user = this.chatService.findUserById(op.id);
+    let user = await this.chatService.findUserById(op.id);
     if (!user) return;
 
     // 호스트와 op 인지 체크.
     // 호스트 & operator가 op 권한 줄 수 있도록.
-    let channel = this.chatService.findChannelByChannelname(user.channelname);
+    let channel = await this.chatService.findChannelByChannelname(user.channelname);
     if (!channel) return;
     if (channel.host !== user.id) {
       if (!channel.operator.includes(user.id)) {
@@ -656,7 +671,7 @@ export class ChatGateway
       return;
     }
 
-    let target = this.chatService.findUserById(op.target);
+    let target = await this.chatService.findUserById(op.target);
     channel.operator.push(target.id);
     target.socket.emit('op', true);
 
@@ -669,19 +684,19 @@ export class ChatGateway
   //************************  allchannel   ******************************//
   //*********************************************************************//
   @SubscribeMessage('allchannel')
-  handleallchannel(@ConnectedSocket() socket: Socket) {
+  async handleallchannel(@ConnectedSocket() socket: Socket) {
     console.log('----------------------------------------');
     console.log('--------------ALLCHANNEL----------------');
     console.log('----------------------------------------');
 
-    socket.emit('allchannel', this.chatService.getChannels());
+    socket.emit('allchannel', await this.chatService.getChannels());
   }
 
   //*********************************************************************//
   //****************************  kick   ********************************//
   //*********************************************************************//
   @SubscribeMessage('kick')
-  handlekick(
+  async handlekick(
     @MessageBody() kickobj: kickDTO,
     @ConnectedSocket() socket: Socket,
   ) {
@@ -690,10 +705,10 @@ export class ChatGateway
     console.log('userId: ', kickobj.id, ' targetId: ', kickobj.target);
     console.log('----------------------------------------');
 
-    let user = this.chatService.findUserById(kickobj.id);
+    let user = await this.chatService.findUserById(kickobj.id);
     if (!user) return;
 
-    let channel = this.chatService.findChannelByChannelname(user.channelname);
+    let channel = await this.chatService.findChannelByChannelname(user.channelname);
     if (!channel) return;
 
     // 유저가 호스트 혹은 오퍼레이터가 아닐 경우
@@ -707,7 +722,7 @@ export class ChatGateway
     }
 
     // 타겟이 존재하는지, 추방 대상이 현재 채널에 존재하는지.
-    let target = this.chatService.findUserById(kickobj.target);
+    let target = await this.chatService.findUserById(kickobj.target);
 
     if (!target) return;
     if (user.channelname !== target.channelname) {
@@ -749,7 +764,7 @@ export class ChatGateway
       target.channelname = '$home'; // 추방된 사용자는 home 채널로 이동
       target.socket.join(target.channelname);
 
-      let home = this.chatService.findChannelByChannelname(target.channelname);
+      let home = await this.chatService.findChannelByChannelname(target.channelname);
       home.member++;
       home.users.push(target.id);
       target.socket.emit('kick', true);
@@ -773,12 +788,12 @@ export class ChatGateway
     console.log('----------------------------------------');
 
     // 유저 확인
-    let user = this.chatService.findUserById(id);
+    let user = await this.chatService.findUserById(id);
     if (!user) return;
 
 
     // 이전 채널 정보 업데이트
-    let beforeChannel = this.chatService.findChannelByChannelname(
+    let beforeChannel = await this.chatService.findChannelByChannelname(
       user.channelname,
     );
     console.log("before",beforeChannel);
@@ -791,11 +806,12 @@ export class ChatGateway
 
     beforeChannel.member--;
     if (beforeChannel.member === 0) {
-      const removeIdx = this.chatService.getChannels().indexOf(beforeChannel);
+      const channels : channelDTO[] = await this.chatService.getChannels();
+      const removeIdx = channels.indexOf(beforeChannel);
       if (removeIdx !== -1) {
-        this.chatService.getChannels().splice(removeIdx, 1);
+        (await this.chatService.getChannels()).splice(removeIdx, 1); // 111111111111111
       }
-      console.log(this.chatService.getChannels());
+      console.log (await this.chatService.getChannels());
       socket.leave(user.channelname);
       beforeChannel = null;
     } else {
@@ -817,11 +833,12 @@ export class ChatGateway
           .getChannels()
           .findIndex((c) => c.channelname === beforeChannel.channelname);
         if (removeChannelIdx !== -1) {
-          this.chatService.getChannels().splice(removeChannelIdx, 1);
+           const channels :channelDTO[] = await this.chatService.getChannels();
+           channels.splice(removeChannelIdx, 1);
         }
 
         beforeChannel.host = beforeChannel.users[0];
-        let newhost = this.chatService.findUserById(beforeChannel.users[0]);
+        let newhost = await this.chatService.findUserById(beforeChannel.users[0]);
         const newhost_user: User = await this.usersService.findUserById(
           newhost.id,
         );
@@ -829,18 +846,19 @@ export class ChatGateway
         socket.broadcast.to(beforeChannel.channelname).emit('update', false); //퇴장 메시지
 
         //채널 목록에 다시 추가
-        this.chatService.getChannels().push(beforeChannel);
+        const channels = await this.chatService.getChannels();
+        channels.push(beforeChannel);
 
         //방에 남은 유저들 전부에게 user.channelname 바꿔줘야함
         for (const checkid of beforeChannel.users) {
-          let user = this.chatService.findUserById(checkid);
+          let user = await this.chatService.findUserById(checkid);
           user.channelname = beforeChannel.channelname;
         }
       }
       socket.leave(user.channelname);
     }
 
-    let channel = this.chatService.findChannelByChannelname('$home');
+    let channel = await this.chatService.findChannelByChannelname('$home');
 
     user.channelname = channel.channelname;
     socket.join(user.channelname);
@@ -857,7 +875,7 @@ export class ChatGateway
 
     console.log('----------------------------------------');
     console.log('---------------ALL CHANNELS-------------');
-    console.log(this.chatService.getChannels()); //  마지막에 채널들 다 잘 수정되었는지 확인
+    console.log (await this.chatService.getChannels()); //  마지막에 채널들 다 잘 수정되었는지 확인
     console.log('----------------------------------------');
   }
 
@@ -870,7 +888,7 @@ export class ChatGateway
     console.log('---------MUTE LIST UPDATE---------------');
     console.log('----------------------------------------');
 
-    let user = this.chatService.findUserById(id);
+    let user = await this.chatService.findUserById(id);
     if (!user) return;
 
     user.blocklist = null;
@@ -888,14 +906,14 @@ export class ChatGateway
     // console.log('targetId : ', gamers.target);
     console.log('----------------------------------------');
 
-    let host = this.chatService.findUserById(gamers.host);
-    let target = this.chatService.findUserById(gamers.target);
+    let host = await this.chatService.findUserById(gamers.host);
+    let target = await this.chatService.findUserById(gamers.target);
 
     if (host.channelname !== '$home') {
-      this.handlehome(host.id, host.socket);
+      await this.handlehome(host.id, host.socket);
     }
     if (target.channelname !== '$home') {
-      this.handlehome(target.id, target.socket);
+      await this.handlehome(target.id, target.socket);
     }
 
     await this.handlecreate(

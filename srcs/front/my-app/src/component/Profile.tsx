@@ -352,9 +352,9 @@ function Profile(pn: ProfileNode) {
           // if (index % 2) {
           if (userNick === element.loserNickName) {
             const log: string =
-              element.loser +
+              element.loserNickName +
               " vs " +
-              element.winner +
+              element.winnerNickName +
               " " +
               element.scoreLoser +
               " : " +
@@ -363,9 +363,9 @@ function Profile(pn: ProfileNode) {
             newGameLog = [...newGameLog, log];
           } else if (userNick === element.winnerNickName) {
             const log: string =
-              element.winner +
+              element.winnerNickName +
               " vs " +
-              element.loser +
+              element.loserNickName +
               " " +
               element.scoreWinner +
               " : " +
@@ -413,6 +413,7 @@ function Profile(pn: ProfileNode) {
                   getFriendList(pn.currUser)
                     .then((res) => {
                       res.data.forEach((element) => {
+                        console.log(element);
                         if (element.id === pn.currUser)
                           newInfo.isFriendly = true;
                       });
