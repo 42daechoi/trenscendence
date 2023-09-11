@@ -10,7 +10,9 @@ export interface Result {
   key: number;
   date: string;
   winner: string;
+  winnerNickName: string;
   loser: string;
+  loserNickName: string;
   scoreWinner: number;
   scoreLoser: number;
 }
