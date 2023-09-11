@@ -34,12 +34,12 @@ function ChannelsList(props: { channelList: IChannel[] }) {
 
   const joinChannel = async (password: string, index: number) => {
     const data = await whoami();
-
-    socket.emit("join", {
-      id: data.id,
-      channelname: channelList[index].channelname,
-      password: password,
-    });
+    if (socket)
+      socket.emit("join", {
+        id: data.id,
+        channelname: channelList[index].channelname,
+        password: password,
+      });
     closeModal();
   };
 
@@ -101,7 +101,7 @@ function ChannelsList(props: { channelList: IChannel[] }) {
               if (currChannel !== null) {
                 let password:string;
                 if (!passwordRef.current)
-                  password = null;
+                  password = "";
                 else
                   password = passwordRef.current.value;
                 joinChannel(password, currChannel);

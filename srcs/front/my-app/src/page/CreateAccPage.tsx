@@ -69,7 +69,8 @@ export default function CreateAccPage() {
       if (fileSizeKB > 6000) {
         // 100KB를 초과하면
         alert("첨부 파일 크기가 허용 제한을 초과했습니다.");
-        image.current.value = null;
+		if (image.current)
+        	image.current.value = "";
         return;
       }
       const selectedFile = files[0];
@@ -80,7 +81,7 @@ export default function CreateAccPage() {
         const result = event.target.result;
         if (typeof result === "string") {
           setAvatar(result.split(",")[1]);
-          image.current.value = null;
+          image.current.value = "";
         }
       };
       reader.readAsDataURL(selectedFile);

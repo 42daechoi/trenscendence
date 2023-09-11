@@ -29,10 +29,10 @@ export default function FullTFA() {
       case "otp_set":
         return <OtpSet onChangePage={changePage} />;
       case "google_auth":
-        return <GoogleAuth state={curState} />;
+        return <GoogleAuth/>;
     }
   };
-  const changePage = (nextPage) => {
+  const changePage = (nextPage:string) => {
     setCurPage(nextPage);
   };
   return (

@@ -6,7 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { Buffer } from "buffer";
-import {useCurPage, useGameSocket} from "./SocketContext";
+import { useCurPage, useGameSocket } from "./SocketContext";
 import {
   apiRequest,
   getWhoami,
@@ -24,8 +24,8 @@ import { resolveTypeReferenceDirective } from "typescript";
 
 interface ProfileNode {
   currUser: number;
-  isMe: Boolean;
-  match?:Boolean;
+  isMe: boolean;
+  match?: boolean; // Add match prop
 }
 
 let mAM: string = "modifyAvatarModal";
@@ -33,8 +33,8 @@ let mNM: string = "modifyNicknameModal";
 let aFM: string = "addFriendModal";
 let dFM: string = "deleteFriendModal";
 let iGM: string = "inviteGameModal";
-let myM: string = "matchAcceptModal"
-let mnM: string = "matchdenyModal"
+let myM: string = "matchAcceptModal"; 
+let mnM: string = "matchdenyModal"; 
 
 type profileInfo = {
   id: number;
@@ -53,12 +53,12 @@ let myInfo: profileInfo = {
 };
 
 function Profile(pn: ProfileNode) {
-  const {match, set} = useCurPage();
+  const { match, set } = useCurPage();
   const gamesocket = useGameSocket();
   const socket = useGameSocket();
-  // const [gameLog, setGameLog] = useState<string[]>([]);
   const [gameLog, setGameLog] = useState<string[]>([]);
   const [info, setInfo] = useState<profileInfo>(myInfo);
+
   useEffect(() => {
     getWhoami()
       .then((result) => {
@@ -69,6 +69,7 @@ function Profile(pn: ProfileNode) {
           isMyProfile: true,
           isFriendly: false,
         };
+
         newInfo.id = result.data.id;
         newInfo.nickname = result.data.nickname;
 
@@ -82,7 +83,8 @@ function Profile(pn: ProfileNode) {
       })
       .catch((err) => {});
   }, []);
-  function ModifyModalButton(props: { modalType: string; callback }) {
+
+  function ModifyModalButton(props: { modalType: string; callback: (s: string) => void }) {
     const navigate = useNavigate();
     const typeRef = useRef(null);
 
@@ -109,24 +111,18 @@ function Profile(pn: ProfileNode) {
               autoClose: 1500,
             });
             props.callback("false");
-          }
-          else if (props.modalType === myM)
-          {
-            if (gamesocket)
-            {
-              socket.emit("acceptOneOnOne","", response =>{
-                if (response === true)
-                  set("accept");
-                else
-                  set("deny");
-              });
+          } else if (props.modalType === myM) {
+            if (gamesocket) {
+              if (socket)
+                socket.emit("acceptOneOnOne", "", (response:boolean) => {
+                  if (response === true) set("accept");
+                  else set("deny");
+                });
             }
-          }
-          else if (props.modalType === mnM)
-          {
-            if (gamesocket)
-            {
-              socket.emit("denyOneOnOne", "");
+          } else if (props.modalType === mnM) {
+            if (gamesocket) {
+              if (socket)
+                socket.emit("denyOneOnOne", "");
               set("deny");
             }
           }
@@ -148,7 +144,7 @@ function Profile(pn: ProfileNode) {
           ? "OTP 해제"
           : props.modalType === "false"
           ? "OTP 설정"
-          : props.modalType === myM 
+          : props.modalType === myM
           ? "수락"
           : props.modalType == mnM
           ? "거절"
@@ -184,10 +180,7 @@ function Profile(pn: ProfileNode) {
       return (
         <dialog id={props.modalType === aFM ? aFM : dFM} className="modal">
           <form method="dialog" className="modal-box">
-            <FriendButtonSetting
-              targetId={pn.currUser}
-              modalType={props.modalType}
-            />
+            <FriendButtonSetting targetId={pn.currUser} modalType={props.modalType} />
           </form>
           <form method="dialog" className="modal-backdrop">
             <button>close</button>
@@ -214,10 +207,8 @@ function Profile(pn: ProfileNode) {
           onClick={() => {
             patchAddFriend(props.targetId)
               .then((result) => {
-                // if (result.data) {
                 setInfo({ ...info, isFriendly: true });
                 alert("친구 추가 성공!");
-                // } else alert("친구 추가 실패");
               })
               .catch((err) => {
                 alert("친구 추가 실패");
@@ -248,30 +239,39 @@ function Profile(pn: ProfileNode) {
   }
 
   function InviteGameSetting(props: { num: number }) {
-    return <div style={{ flexDirection: "row", justifyContent: "center"}}>게임을 신청하시겠습니까?
-        <br/>
-        <button style={{width:"10px", padding: "10px", margin: "0 10px"}} onClick={() => { socket.emit("OneOnOne",{targetId: props.num}, response => {
-          if (response === -1)
-          {
-            alert("게임 초대 실패");
-            return;
-          }
-          set("accept");
-          
-        });}}>yes</button>
-        <button style={{width:"10px", padding: "10px",  margin: "0 10px"}}>no</button>
-      </div>;
+    return (
+      <div style={{ flexDirection: "row", justifyContent: "center" }}>
+        게임을 신청하시겠습니까?
+        <br />
+        <button
+          style={{ width: "10px", padding: "10px", margin: "0 10px" }}
+          onClick={() => {
+            if (socket)
+              socket.emit("OneOnOne", { targetId: props.num }, (response:number) => {
+                if (response === -1) {
+                  alert("게임 초대 실패");
+                  return;
+                }
+                set("accept");
+              });
+          }}
+        >
+          yes
+        </button>
+        <button style={{ width: "10px", padding: "10px", margin: "0 10px" }}>no</button>
+      </div>
+    );
   }
 
   function ModifyAvatarSetting() {
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const image = useRef<HTMLInputElement>(null);
+
     const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
       const files = event.target.files;
       if (files && files.length > 0) {
         const fileSizeKB = files[0].size / 1024;
         if (fileSizeKB > 6000) {
-          // 100KB를 초과하면
           alert("첨부 파일 크기가 허용 제한을 초과했습니다.");
           image.current.value = null;
           return;
@@ -288,7 +288,8 @@ function Profile(pn: ProfileNode) {
           const result = event.target.result;
           if (typeof result === "string") {
             setInfo({ ...info, avatar: result.split(",")[1] });
-            image.current.value = null;
+            if (image.current)
+              image.current.value = "";
           }
         };
         reader.readAsDataURL(selectedFile);
@@ -298,12 +299,7 @@ function Profile(pn: ProfileNode) {
     return (
       <>
         <h3 className="font-bold text-lg">아바타 수정</h3>
-        <input
-          type="file"
-          accept=".jpg, .jpeg, .png"
-          onChange={handleFileChange}
-          ref={image}
-        />
+        <input type="file" accept=".jpg, .jpeg, .png" onChange={handleFileChange} ref={image} />
         <button className="avatar-upload" onClick={handleFileUpload}>
           수정하기
         </button>
@@ -312,10 +308,11 @@ function Profile(pn: ProfileNode) {
   }
 
   function ModifyNicknameSetting() {
-    const textbox = useRef(null);
+    const textbox = useRef<HTMLInputElement>(null);
+
     const handleFileUpload = () => {
-      if (textbox.current.value) {
-        {
+      if (textbox.current) {
+        if (textbox.current.value) {
           if (textbox.current.value.search(/[^a-zA-Z0-9!@#$]/g) > -1) {
             alert("닉네임은 영문과 숫자만 가능합니다!!");
             return;
@@ -327,9 +324,10 @@ function Profile(pn: ProfileNode) {
           modifyNickname(textbox.current.value, false);
           setInfo({ ...info, nickname: textbox.current.value });
           textbox.current.value = "";
-        }
-      } else alert("닉네임 수정 실패");
+        } else alert("닉네임 수정 실패");
+      }
     };
+
     return (
       <>
         <h3 className="font-bold text-lg">닉네임 수정</h3>
@@ -340,6 +338,7 @@ function Profile(pn: ProfileNode) {
       </>
     );
   }
+
   function loadGameLog(userId: number, userNick: string) {
     getGameLog(userId)
       .then((result) => {
@@ -386,6 +385,7 @@ function Profile(pn: ProfileNode) {
       isMyProfile: false,
       isFriendly: false,
     };
+
     useEffect(() => {
       getWhoami()
         .then((my) => {
@@ -407,8 +407,7 @@ function Profile(pn: ProfileNode) {
                   getFriendList(pn.currUser)
                     .then((res) => {
                       res.data.forEach((element) => {
-                        if (element.id === pn.currUser)
-                          newInfo.isFriendly = true;
+                        if (element.id === pn.currUser) newInfo.isFriendly = true;
                       });
                       setInfo(newInfo);
                       loadGameLog(target.data.id, target.data.nickname);
@@ -430,10 +429,13 @@ function Profile(pn: ProfileNode) {
   }
 
   const [twoFA, setTwoFA] = useState("false");
-  const changeTwoFA = (s) => {
+
+  const changeTwoFA = (s: string) => {
     setTwoFA(s);
   };
+
   LoadUserInfo();
+
   return (
     <div className="my-profile-container">
       <div className="avatar-button-div">
@@ -450,20 +452,18 @@ function Profile(pn: ProfileNode) {
             <>
               <div className="modal-avatar">
                 <ModifyModalButton
-                  modalType={ pn.match ? myM :
-                    info.isMyProfile ? mAM : info.isFriendly ? dFM : aFM
+                  modalType={
+                    pn.match ? myM : info.isMyProfile ? mAM : info.isFriendly ? dFM : aFM
                   }
                   callback={changeTwoFA}
                 />
                 <ModalWindow
-                  modalType={
-                    info.isMyProfile ? mAM : info.isFriendly ? dFM : aFM
-                  }
+                  modalType={info.isMyProfile ? mAM : info.isFriendly ? dFM : aFM}
                 />
               </div>
               <div className="modal-nickname">
                 <ModifyModalButton
-                  modalType={ pn.match ? mnM : info.isMyProfile ? mNM : iGM}
+                  modalType={pn.match ? mnM : info.isMyProfile ? mNM : iGM}
                   callback={changeTwoFA}
                 />
                 <ModalWindow modalType={info.isMyProfile ? mNM : iGM} />

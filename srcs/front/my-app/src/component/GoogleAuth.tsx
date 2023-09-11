@@ -1,19 +1,20 @@
 import axios from "axios";
-import { response } from "express";
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, ChangeEvent } from "react";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useNavigate } from "react-router-dom";
 
-export default function GoogleAuth(props) {
+export default function GoogleAuth() {
   const [otp, setOtp] = useState("");
   const [otp2, setOtp2] = useState("");
   const navigate = useNavigate();
-  const handleOtpChange = (event) => {
+
+  const handleOtpChange = (event: ChangeEvent<HTMLInputElement>) => {
     const inputOtp = event.target.value;
     setOtp(inputOtp);
   };
-  const handleOtpChange2 = (event) => {
+
+  const handleOtpChange2 = (event: ChangeEvent<HTMLInputElement>) => {
     const inputOtp = event.target.value;
     setOtp2(inputOtp);
   };
@@ -29,7 +30,7 @@ export default function GoogleAuth(props) {
       .then((response) => {
         if (response.data) navigate("/main");
       })
-      .catch((error) => {
+      .catch(() => {
         setOtp("");
         setOtp2("");
         toast.error("인증번호가 일치하지 않습니다.", {
@@ -44,27 +45,28 @@ export default function GoogleAuth(props) {
       });
   };
 
-  const firstOtpRef = useRef(null);
-  const secondOtpRef = useRef(null);
-  const buttonRef = useRef(null);
+  const firstOtpRef = useRef<HTMLInputElement | null>(null);
+  const secondOtpRef = useRef<HTMLInputElement | null>(null);
+  const buttonRef = useRef<HTMLButtonElement | null>(null);
 
-  const handleInput = (event) => {
-    const maxLength = firstOtpRef.current.maxLength;
-    const currentLength = event.target.value.length;
+  const handleInput = () => {
+    const maxLength = firstOtpRef.current?.maxLength || 0;
+    const currentLength = otp.length;
 
     if (currentLength >= maxLength) {
-      secondOtpRef.current.focus();
+      secondOtpRef.current?.focus();
     }
   };
 
-  const handleInput2 = (event) => {
-    const maxLength = secondOtpRef.current.maxLength;
-    const currentLength = event.target.value.length;
+  const handleInput2 = () => {
+    const maxLength = secondOtpRef.current?.maxLength || 0;
+    const currentLength = otp2.length;
 
     if (currentLength >= maxLength) {
-      buttonRef.current.focus();
+      buttonRef.current?.focus();
     }
   };
+
   return (
     <div>
       <div style={{ fontSize: "20px", marginTop: "50px" }}>
