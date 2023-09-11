@@ -108,6 +108,7 @@ export class GameGateway
     if (!out_user) return;
     this.gameService.userOutNsp(socket);
     await this.usersService.update(out_user.id, { socketId: null });
+	await this.authService.updateUserStatusOnline(out_user);
   }
 
   //	@UseGuards(WsJwtGuard)

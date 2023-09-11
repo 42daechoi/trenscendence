@@ -53,6 +53,8 @@ export class GameService {
 	}
 
 	async popQueue(clientSocket: Socket){
+		if (!clientSocket)
+			return ;
 		const client_user : User | null = await this.usersService.findUserBySocketId(clientSocket.id); 
 		//cannot find socket id User.
 		if (!client_user){
@@ -415,7 +417,7 @@ async getGameStatForPlayer(userID: number): Promise<Result[]> {
 		cur_game.gameStatus = GameStatus.Playing;
 		guest.playerStatus = PlayerStatus.Playing;
 		host.playerStatus = PlayerStatus.Playing;
-		console.log(game_info);
+		//console.log(game_info.game);
 		//const guestSocket : Socket = await this.socketGetter(guest.socketID); 
 		//const hostSocket : Socket = await this.socketGetter(host.socketID);
 
@@ -439,9 +441,9 @@ async getGameStatForPlayer(userID: number): Promise<Result[]> {
 			cur_game.obstacles[i].isEqual(game_info.obs[i]);
 		}
 
-		console.log(cur_game.obstacles);
-		console.log(cur_game.ball);
-		console.log(cur_game.pad);
+//		console.log(cur_game.obstacles);
+//		console.log(cur_game.ball);
+//		console.log(cur_game.pad);
 		//update ball direction.
 		cur_game.updatedirection(cur_game.ball);
 		console.log("setting");
@@ -506,6 +508,8 @@ async getGameStatForPlayer(userID: number): Promise<Result[]> {
 	async destroyGame(client: Socket, nsp: Namespace){
 
 		//aboriting
+		if (!client)
+			return;
 		
 		//normal termiation
 		const cur_game_id = await this.getCurGameRoomId(client);
