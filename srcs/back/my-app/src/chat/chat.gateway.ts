@@ -273,7 +273,7 @@ export class ChatGateway
       if (!target) return;
 
       console.log('----------------------------------------');
-      console.log('target check :', target);
+      console.log('target check :', target.id);
       console.log('----------------------------------------');
 
       const blocks = target.blocklist;

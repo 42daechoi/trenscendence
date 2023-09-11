@@ -196,7 +196,6 @@ export class GameService {
 	async updateUserStatusInGame(client: Socket | null){
 		if (client !== null)
 		{
-
 			const user : User = await this.usersService.findUserBySocketId(client.id);
 			if (!user)
 				return ;
@@ -207,7 +206,6 @@ export class GameService {
 	async updateUserStatusOnline(client: Socket | null){
 		if (client !== null)
 		{
-			console.log("asdasd",client);
 			const user : User = await this.usersService.findUserBySocketId(client.id);
 			if (!user)
 				return ;
@@ -493,6 +491,8 @@ export class GameService {
 		if (!cur_game){
 			return;
 		}
+		clearInterval(cur_game.intervalId);
+		clearInterval(cur_game.count_intervalId);
 		let loserPlayer : Player1 | Player2;
 		let winnerPlayer : Player1 | Player2;
 		//aborting game
@@ -529,7 +529,6 @@ export class GameService {
 		await this.updateUserStatusOnline(hostSocket);
 
 		//disjoin guest socket
-		clearInterval(cur_game.count_intervalId);
 		//this.logger.log("destoyed game : " + JSON.stringify(this.gameSessions.get(cur_game_id)));
 		console.log("----------------------------------------–");
 		if (cur_game.gameStatus !== GameStatus.Waiting)
@@ -562,7 +561,6 @@ export class GameService {
 		//if in queue, pop out queue
 		await this.popQueue(client);
 
-
 		//if in game, destroy game
 		await this.destroyGame(client, nsp);
 
@@ -578,6 +576,8 @@ export class GameService {
 		if (!cur_game){
 			return;
 		}
+		clearInterval(cur_game.intervalId);
+		clearInterval(cur_game.count_intervalId);
 		let loserPlayer : Player1 | Player2;
 		let winnerPlayer : Player1 | Player2;
 		//aborting game
@@ -615,7 +615,6 @@ export class GameService {
 
 		//disjoin guest socket
 		guestSocket.leave(roomId);
-		clearInterval(cur_game.count_intervalId);
 		//this.logger.log("destoyed game : " + JSON.stringify(this.gameSessions.get(cur_game_id)));
 		if (cur_game.gameStatus !== GameStatus.Waiting)
 		{
