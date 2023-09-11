@@ -350,11 +350,8 @@ function Profile(pn: ProfileNode) {
     getGameLog(userId)
       .then((result) => {
         let newGameLog: string[] = [];
-        result.data.games.forEach((element, index) => {
-          // console.log(element);
-          // console.log(userNick);
+        result.data.games.forEach((element) => {
           // if (index % 2) {
-          console.log(element);
           if (userNick === element.loserNickName) {
             const log: string =
               element.loser +
@@ -403,7 +400,7 @@ function Profile(pn: ProfileNode) {
             if (!my.data.twoFA) setTwoFA("false");
             else setTwoFA("true");
             setInfo(myInfo);
-            loadGameLog(info.id, info.intra);
+            loadGameLog(info.id, info.nickname);
           } else {
             if (pn.currUser !== 0) {
               getId(String(pn.currUser))
@@ -414,7 +411,7 @@ function Profile(pn: ProfileNode) {
                   const buffer: Buffer = Buffer.from(bufferData);
                   newInfo.avatar = buffer.toString("base64");
                   setInfo(newInfo);
-                  loadGameLog(target.data.id, target.data.intra);
+                  loadGameLog(target.data.id, target.data.nickname);
                   getFriendList(pn.currUser)
                     .then((res) => {
                       res.data.forEach((element) => {

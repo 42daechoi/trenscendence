@@ -85,4 +85,9 @@
 .my-profile-container .history ul {
   border: none;
   height: 100%;
+  overflow-y: scroll;
+}
+
+.my-profile-container .history ul::-webkit-scrollbar {
+  display: none;
 }
