@@ -22,7 +22,7 @@ import { WsJwtGuard } from './guards/ws.jwt.guard';
 import { AuthService } from 'src/auth/auth.service';
 import { CurrentUserWs } from './decorators/ws.current-user.decorator';
 import { ConfigService } from '@nestjs/config';
-import {ChatService} from 'src/chat/chat.service';
+import { ChatService } from 'src/chat/chat.service';
 import { UserStatus } from 'src/typeorm/user.entity';
 const ORIGIN = process.env.CORS_ORIGIN;
 
@@ -42,8 +42,8 @@ export class GameGateway
     @Inject(AuthService) private authService: AuthService,
     @Inject(GameService) private gameService: GameService,
     @Inject(JwtService) private jwtService: JwtService,
-	@Inject(ConfigService) private readonly configService: ConfigService,
-	@Inject(ChatService) private readonly chatService: ChatService,
+    @Inject(ConfigService) private readonly configService: ConfigService,
+    @Inject(ChatService) private readonly chatService: ChatService,
   ) {}
   //@WebSocketServer 데코레이터 부분을 주목해주세요.
 
@@ -56,7 +56,7 @@ export class GameGateway
   //execute right after init
   afterInit() {
     this.nsp.adapter.on('create-room', (room) => {
-	  this.logger.log("ORIGIN : " + process.env.CORS_ORIGIN);
+      this.logger.log('ORIGIN : ' + process.env.CORS_ORIGIN);
       this.logger.log(`"Room:${room}" has been created.`);
     });
 
@@ -67,7 +67,9 @@ export class GameGateway
     this.nsp.adapter.on('leave-room', (room, id) => {
       this.logger.log(`"Socket:${id}" has left "Room:${room}".`);
       const clientSocket = this.nsp.sockets.get(id);
-	  this.logger.log("leaving socket's room : " + JSON.stringify(clientSocket.rooms));
+      this.logger.log(
+        "leaving socket's room : " + JSON.stringify(clientSocket.rooms),
+      );
       this.gameService.destroySession(clientSocket, this.nsp);
       this.gameService.destroyRoom(room, clientSocket, this.nsp);
     });
@@ -109,7 +111,7 @@ export class GameGateway
     if (!out_user) return;
     this.gameService.userOutNsp(socket);
     await this.usersService.update(out_user.id, { socketId: null });
-	  await this.authService.updateUserStatusOffline(out_user);
+    await this.authService.updateUserStatusOffline(out_user);
   }
 
   //	@UseGuards(WsJwtGuard)
@@ -179,7 +181,6 @@ export class GameGateway
     return ret;
   }
 
-
   @SubscribeMessage('gameRoomCreate')
   async gameRoomCreate(@ConnectedSocket() socket: Socket) {
     const user: User = await this.usersService.findUserBySocketId(socket.id);
@@ -207,45 +208,47 @@ export class GameGateway
 
   @SubscribeMessage('OneOnOne')
   async OneOnOne(@ConnectedSocket() socket: Socket, @MessageBody() body: any) {
-  const src: User = await this.usersService.findUserBySocketId(socket.id);
-	const target : User = await this.usersService.findUserById(parseInt(body.targetId));
-	const blocks : Map <number, string> = await this.chatService.getUserBlocklist(target.id);
-  const cur_game_id = await this.gameService.getCurGameRoomId(socket);
-  if (this.gameService.gameSessions.get(cur_game_id))
-    return -1;
-	//src is blocked by target
-	if (blocks.get(src.id) || target.status !== UserStatus.ONLINE)
-		return -1;
-	else{
-		const targetSocket = this.nsp.sockets.get(target.socketId);
-		const srcSocket = socket;
-		await this.gameService.halfSetUpGame(srcSocket, targetSocket, this.nsp);
-    return 1;
-	}
+    const src: User = await this.usersService.findUserBySocketId(socket.id);
+    const target: User = await this.usersService.findUserById(
+      parseInt(body.targetId),
+    );
+    const blocks: Map<number, string> = await this.chatService.getUserBlocklist(
+      target.id,
+    );
+    const cur_game_id = await this.gameService.getCurGameRoomId(socket);
+    if (this.gameService.gameSessions.get(cur_game_id)) return -1;
+    //src is blocked by target
+    if (
+      blocks.get(src.id) ||
+      target.status !== UserStatus.ONLINE ||
+      src.status !== UserStatus.ONLINE
+    )
+      return -1;
+    else {
+      const targetSocket = this.nsp.sockets.get(target.socketId);
+      const srcSocket = socket;
+      await this.gameService.halfSetUpGame(srcSocket, targetSocket, this.nsp);
+      //await this.gameService.updateUserStatusOnline(socket);
+      return 1;
+    }
   }
 
   @SubscribeMessage('oneOnOneMade')
   async oneOnOneMade(@ConnectedSocket() socket: Socket) {
-    return (await this.gameService.oneOnOneMade(
-      socket,
-      this.nsp,
-    ));
+    return await this.gameService.oneOnOneMade(socket, this.nsp);
   }
 
   @SubscribeMessage('acceptOneOnOne')
   async acceptOneOnOne(@ConnectedSocket() socket: Socket) {
-    return (await this.gameService.acceptOneOnOne(
-      socket,
-      this.nsp,
-    ));
+    return await this.gameService.acceptOneOnOne(socket, this.nsp);
   }
 
   @SubscribeMessage('denyOneOnOne')
-  async denyOneOnOne(@ConnectedSocket() socket: Socket, @MessageBody() body: any) {
-    await this.gameService.denyOneOnOne(
-      socket,
-      this.nsp,
-    );
+  async denyOneOnOne(
+    @ConnectedSocket() socket: Socket,
+    @MessageBody() body: any,
+  ) {
+    await this.gameService.denyOneOnOne(socket, this.nsp);
   }
 
   //#############################################################
@@ -290,7 +293,7 @@ export class GameGateway
   @SubscribeMessage('gameRoomOut')
   async gameRoomOut(@ConnectedSocket() socket: Socket) {
     //set user's status Online not InGame
-    console.log("gameRoomOut");
+    console.log('gameRoomOut');
     await this.gameService.destroyGame(socket, this.nsp);
   }
 
