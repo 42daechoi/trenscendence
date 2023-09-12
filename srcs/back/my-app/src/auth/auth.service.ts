@@ -90,6 +90,7 @@ export class AuthService {
     });
   }
 
+  async expireJwtCookie() {}
   async setJwtHeader(res: Response, token: string): Promise<void> {
     res.setHeader('Authorization', 'Bearer ' + token);
   }
@@ -104,10 +105,12 @@ export class AuthService {
 
   async updateUserStatusOnline(user: User) {
     await this.usersService.update(user.id, { status: UserStatus.ONLINE });
+    console.log('ONLINE');
   }
 
   async updateUserStatusOffline(user: User) {
     await this.usersService.update(user.id, { status: UserStatus.OFFLINE });
+    console.log('OFFLINE');
   }
 
   async existUser(intraId: string): Promise<any | null> {

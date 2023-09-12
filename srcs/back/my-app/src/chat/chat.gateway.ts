@@ -24,6 +24,7 @@ import { Inject } from '@nestjs/common';
 import { User } from 'src/typeorm';
 import { ChatService } from './chat.service';
 import { UserDto } from 'src/users/dtos/users.dto';
+import { UserStatus } from 'src/typeorm/user.entity';
 
 @WebSocketGateway({
   namespace: 'chat',
@@ -202,9 +203,23 @@ export class ChatGateway
     console.log('SocketId: ', socket.id);
     console.log('----------------------------------------');
 
+    // const user_double = await this.usersService.findUserById(id);
+    // if (user_double.status !== UserStatus.OFFLINE) {
+    //   return;
+    // }
+
     let user_check = await this.chatService.findUserById(id);
     if (user_check) {
+      let check_id = user_check.id;
       await this.handleDisconnect(socket);
+      // const double_check = await this.chatService.findUserById(id);
+      // if (double_check) return;
+      const users: userDTO[] = await this.chatService.getUsers();
+      const user = users.find((u) => u.id === check_id);
+      if (user) {
+        socket.emit('exit');
+        await this.handleDisconnect(user.socket);
+      }
     }
 
     this.connectedSockets.set(id, socket);

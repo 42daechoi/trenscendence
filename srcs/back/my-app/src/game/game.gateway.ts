@@ -1,4 +1,10 @@
-import { Logger, Inject, UseGuards, Req } from '@nestjs/common';
+import {
+  Logger,
+  Inject,
+  UseGuards,
+  Req,
+  ForbiddenException,
+} from '@nestjs/common';
 import {
   WebSocketServer,
   SubscribeMessage,
@@ -63,7 +69,6 @@ export class GameGateway
     this.nsp.adapter.on('join-room', (room, id) => {
       this.logger.log(`"Socket:${id}" has joined "Room:${room}".`);
     });
-
     this.nsp.adapter.on('leave-room', (room, id) => {
       this.logger.log(`"Socket:${id}" has left "Room:${room}".`);
       const clientSocket = this.nsp.sockets.get(id);
@@ -97,7 +102,16 @@ export class GameGateway
       this.logger.log('found jwt in cookie : ' + jwtCookie);
       //binding user and socket id
       if (!user) return;
+
+      // await this.gameService.asySleep(1000);
+      // if (user.status !== UserStatus.OFFLINE) {
+      //   socket.emit('exit');
+      //   this.logger.log(`${socket.id} socket blocked ❌`);
+      //   return;
+      //   // return new ForbiddenException('Forbidden access');
+      // }
       this.logger.log('binding socket id with user id ' + user.intraId);
+
       await this.authService.updateUserStatusOnline(user);
       await this.usersService.update(user.id, { socketId: socket.id });
       await this.gameService.userComeNsp(socket);

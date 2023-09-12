@@ -1,9 +1,9 @@
 import React, { useRef, useState, useEffect } from "react";
-import { useSocket, useGameSocket } from './SocketContext';
+import { useSocket, useGameSocket } from "./SocketContext";
 import "../css/GameWaiting.css";
 import { useNavigate } from "react-router-dom";
 import { apiRequest } from "../utils/ApiRequest";
-import "../css/GamePage.css"
+import "../css/GamePage.css";
 import { ballItem, padItem, htmlItem, game } from "../utils/Game.Class";
 let tmp = -1;
 
@@ -26,10 +26,10 @@ export default function GameWaiting(prop) {
   const [other, setOther] = useState("");
   const [PadNum, setPadNum] = useState(2);
   const [client, setclient] = useState(-1);
-  const gameset = new game([], 0, 0, new ballItem(0,0,0,0,0,0), []);
+  const gameset = new game([], 0, 0, new ballItem(0, 0, 0, 0, 0, 0), []);
   const pad = [];
   const obstacle = [];
-  const ball = new ballItem(0,0,0,0,0,0);
+  const ball = new ballItem(0, 0, 0, 0, 0, 0);
   let board_x;
   let board_y;
   let ctx;
@@ -66,7 +66,6 @@ export default function GameWaiting(prop) {
     ball.dx *= Math.random() < 0.5 ? -1 : 1;
     ball.dy *= Math.random() < 0.5 ? -1 : 1;
   }
-  
 
   function bounce() {
     if (ball.x + ball.r > board_x) {
@@ -77,13 +76,13 @@ export default function GameWaiting(prop) {
       ball.dx *= -1;
       ball.x += ball.dx * ball.v;
       ball.temp = -1;
-    } else if (ball.y + ball.r > board_y|| ball.y - ball.r < 0) {
+    } else if (ball.y + ball.r > board_y || ball.y - ball.r < 0) {
       ball.dy *= -1;
       ball.y += ball.dy * ball.v;
       ball.temp = -1;
-      }
     }
-    function pong() {
+  }
+  function pong() {
     ball.x += ball.dx * ball.v;
     ball.y += ball.dy * ball.v;
     bounce();
@@ -94,48 +93,63 @@ export default function GameWaiting(prop) {
 
   function bounce_obstacle(obs) {
     for (let i = 0; i < obs.length; i++) {
-      if (ball.temp != i)
-      {
-        if (ball.x > obs[i].x && ball.x < obs[i].x + obs[i].width)
-        {
-          if (ball.y > obs[i].y - ball.r && ball.y < obs[i].y + obs[i].height + ball.r)
-          {
+      if (ball.temp != i) {
+        if (ball.x > obs[i].x && ball.x < obs[i].x + obs[i].width) {
+          if (
+            ball.y > obs[i].y - ball.r &&
+            ball.y < obs[i].y + obs[i].height + ball.r
+          ) {
             ball.dy *= -1;
             ball.y += ball.dy * ball.v;
             ball.temp = i;
           }
-        }
-        else if (ball.y > obs[i].y && ball.y < obs[i].y + obs[i].height)
-        {
-          if (ball.x > obs[i].x - ball.r && ball.x < obs[i].x + obs[i].width + ball.r)
-          {
+        } else if (ball.y > obs[i].y && ball.y < obs[i].y + obs[i].height) {
+          if (
+            ball.x > obs[i].x - ball.r &&
+            ball.x < obs[i].x + obs[i].width + ball.r
+          ) {
             ball.dx *= -1;
             ball.x += ball.dx * ball.v;
             ball.temp = i;
           }
-        }
-        else
-        {
-          if (Math.sqrt((ball.x - obs[i].x) * (ball.x - obs[i].x) + (ball.y - obs[i].y) * (ball.y - obs[i].y)) < ball.r)
-          {
+        } else {
+          if (
+            Math.sqrt(
+              (ball.x - obs[i].x) * (ball.x - obs[i].x) +
+                (ball.y - obs[i].y) * (ball.y - obs[i].y)
+            ) < ball.r
+          ) {
             ball.dx *= -1;
             ball.x += ball.dx * ball.v;
             ball.temp = i;
-          }
-          else if (Math.sqrt((ball.x - obs[i].x - obs[i].width) * (ball.x - obs[i].x - obs[i].width) + (ball.y - obs[i].y) * (ball.y - obs[i].y)) < ball.r)
-          {
+          } else if (
+            Math.sqrt(
+              (ball.x - obs[i].x - obs[i].width) *
+                (ball.x - obs[i].x - obs[i].width) +
+                (ball.y - obs[i].y) * (ball.y - obs[i].y)
+            ) < ball.r
+          ) {
             ball.dx *= -1;
             ball.x += ball.dx * ball.v;
             ball.temp = i;
-          }
-          else if (Math.sqrt((ball.x - obs[i].x) * (ball.x - obs[i].x) + (ball.y - obs[i].y - obs[i].height) * (ball.y - obs[i].y - obs[i].height)) < ball.r)
-          {
+          } else if (
+            Math.sqrt(
+              (ball.x - obs[i].x) * (ball.x - obs[i].x) +
+                (ball.y - obs[i].y - obs[i].height) *
+                  (ball.y - obs[i].y - obs[i].height)
+            ) < ball.r
+          ) {
             ball.dx *= -1;
             ball.x += ball.dx * ball.v;
             ball.temp = i;
-          }
-          else if (Math.sqrt((ball.x - obs[i].x - obs[i].width) * (ball.x - obs[i].x - obs[i].width) + (ball.y - obs[i].y - obs[i].height) * (ball.y - obs[i].y) - obs[i].height) < ball.r)
-          {
+          } else if (
+            Math.sqrt(
+              (ball.x - obs[i].x - obs[i].width) *
+                (ball.x - obs[i].x - obs[i].width) +
+                (ball.y - obs[i].y - obs[i].height) * (ball.y - obs[i].y) -
+                obs[i].height
+            ) < ball.r
+          ) {
             ball.dx *= -1;
             ball.x += ball.dx * ball.v;
             ball.temp = i;
@@ -145,40 +159,43 @@ export default function GameWaiting(prop) {
     }
   }
   const handleButtonClick = () => {
-    if (State)
-    {
+    if (State) {
       setReady(!Ready);
       const element = document.getElementById("check-box");
-      if (!Ready)
-        element.style.backgroundColor = 'rgb(77, 246, 100)';
-      else
-        element.style.backgroundColor = "";
+      if (!Ready) element.style.backgroundColor = "rgb(77, 246, 100)";
+      else element.style.backgroundColor = "";
     }
   };
-  function gameSettingbutton(list :string, num:number, set: React.Dispatch<React.SetStateAction<number>>){
-    function gameSettingNum(num :number){
-      if (client === 0)
-      {
-        if (num === 5)
-          set(1);
-        else if(num === 0)
-          set(4);
-        else 
-          set(num);
+  function gameSettingbutton(
+    list: string,
+    num: number,
+    set: React.Dispatch<React.SetStateAction<number>>
+  ) {
+    function gameSettingNum(num: number) {
+      if (client === 0) {
+        if (num === 5) set(1);
+        else if (num === 0) set(4);
+        else set(num);
       }
     }
     return (
       <div className="game-setting-button">
-      <div className="key">{list}</div>
-      <div className="value">
-        <button className="arrow left" onClick={() => gameSettingNum(num - 1)}></button>
-        <div>{num}</div>
-        <button className="arrow right" onClick={() => gameSettingNum(num + 1)}></button>
+        <div className="key">{list}</div>
+        <div className="value">
+          <button
+            className="arrow left"
+            onClick={() => gameSettingNum(num - 1)}
+          ></button>
+          <div>{num}</div>
+          <button
+            className="arrow right"
+            onClick={() => gameSettingNum(num + 1)}
+          ></button>
+        </div>
       </div>
-    </div>
-    )
-  };
-  function init(){
+    );
+  }
+  function init() {
     const canvas = canvasRef.current;
     ctx = canvas.getContext("2d");
     board_x = gameRef.current.clientWidth;
@@ -192,7 +209,9 @@ export default function GameWaiting(prop) {
         padRef1.current.offsetWidth,
         padRef1.current.offsetHeight,
         "#d9d9d9",
-        parseInt(window.getComputedStyle(padRef1.current).borderBottomLeftRadius)
+        parseInt(
+          window.getComputedStyle(padRef1.current).borderBottomLeftRadius
+        )
       )
     );
 
@@ -203,7 +222,9 @@ export default function GameWaiting(prop) {
         padRef2.current.offsetWidth,
         padRef2.current.offsetHeight,
         "#ffe500",
-        parseInt(window.getComputedStyle(padRef2.current).borderBottomLeftRadius)
+        parseInt(
+          window.getComputedStyle(padRef2.current).borderBottomLeftRadius
+        )
       )
     );
     canvas.width = board_x;
@@ -226,221 +247,214 @@ export default function GameWaiting(prop) {
     ball.v = 4 * (SpeedNum - 1) + 2;
     obstacle.splice(MapNum - 1, 4 - MapNum);
     ball.r = 5 * (BallNum - 1) + 7;
-    if (client != -1)
-    {
-      gameset.intervalId = setInterval(()=>{
+    if (client != -1) {
+      gameset.intervalId = setInterval(() => {
         pong();
       }, 20);
     }
   }
   useEffect(() => {
-    tmp =-1;
+    tmp = -1;
     return () => {
       console.log("return tmp = " + tmp);
-      if (socket)
-      {
+      if (socket) {
         socket.off("leave");
-        socket.off('setupReply');
-        socket.off('client');
+        socket.off("setupReply");
+        socket.off("client");
         socket.off("matching waiting");
         socket.off("matchInfo");
         socket.off("goodtogo");
         socket.off("allReady");
       }
-    }
-  },[]);
-  useEffect(() => {
-    if (socket && prop.type !== true)
-    {
-      socket.emit("match", "");
     };
-    if (socket && prop.type === true)
-    {
-      socket.emit("amiHost", response => {
-        if (response === 1)
-          socket.emit("oneOnOneMade","");
+  }, []);
+  useEffect(() => {
+    if (socket && prop.type !== true) {
+      socket.emit("match", "");
+    }
+    if (socket && prop.type === true) {
+      socket.emit("amiHost", (response) => {
+        if (response === 1) socket.emit("oneOnOneMade", "");
       });
     }
-    return() =>{
+    return () => {
       console.log("tmp", tmp);
-      if (tmp === -1)
-      {
-        socket.emit('matchQueueOut',"");
-        socket.emit('gameRoomOut',"");
+      if (tmp === -1) {
+        socket.emit("matchQueueOut", "");
+        socket.emit("gameRoomOut", "");
       }
-      socket.emit("whoamiGateway", "", response => {
+      socket.emit("whoamiGateway", "", (response) => {
         console.log("join");
-        chatSocket.emit('home', response);
-      });     
-    }
-}, [socket]);
+        chatSocket.emit("home", response);
+      });
+    };
+  }, [socket]);
   useEffect(() => {
-    if (exit === 1)
-    {
+    if (exit === 1) {
       tmp = 1;
       prop.leavefun();
     }
-    if (exit === 2)
-    {
+    if (exit === 2) {
       tmp = 2;
-      setTimeout(() => {navigate("/game");}, 0);
+      setTimeout(() => {
+        navigate("/game");
+      }, 0);
     }
 
     return () => {
-      console.log("exit4",exit);
-    }
-  },[exit]);
+      console.log("exit4", exit);
+    };
+  }, [exit]);
   useEffect(() => {
     init();
-    if (socket)
-    {
-      socket.emit('myInfo',"",response => {
+    if (socket) {
+      socket.emit("myInfo", "", (response) => {
         console.log(response.length);
-        if (response.length > 5)
-        {
+        if (response.length > 5) {
           setMyInfo(response.substr(0, 5) + "...");
-        }
-        else
-          setMyInfo(response);
+        } else setMyInfo(response);
       });
-      socket.on('leave', ()=> {
+
+      socket.on("leave", () => {
         setExit(1);
-      })
-      socket.on('setupReply', data => {
+      });
+      socket.on("setupReply", (data) => {
         setBallNum(data.Ball);
         setPadNum(data.Pad);
         setSpeedNum(data.Speed);
         setMapNum(data.Map);
       });
-      socket.on("matching waiting", data => {
+      socket.on("matching waiting", (data) => {
         console.log(data);
       });
-      socket.on("matchInfo", data => {
-        socket.emit('amiHost', "", response => {
+      socket.on("matchInfo", (data) => {
+        socket.emit("amiHost", "", (response) => {
           setclient(response);
-          if (response === 0)
-          {
+          if (response === 0) {
             console.log("gamechatroom");
-            chatSocket.emit("gamechatroom", {host : data.host.id, target: data.guest.id});
+            chatSocket.emit("gamechatroom", {
+              host: data.host.id,
+              target: data.guest.id,
+            });
           }
         });
         setState(true);
-        socket.emit('other', "", response => {
-          if (response.length > 5)
-        {
-          setOther(response.substr(0, 5) + "...");
-        }
-        else
-          setOther(response);
+        socket.emit("other", "", (response) => {
+          if (response.length > 5) {
+            setOther(response.substr(0, 5) + "...");
+          } else setOther(response);
         });
-        console.log("State",State);
+        console.log("State", State);
       });
-      socket.on("goodtogo", ()=>{
+      socket.on("goodtogo", () => {
         setExit(2);
       });
-      socket.on("allReady",() => {
-        socket.emit('amiHost', "", (response) =>{
-          console.log(response)
-          if (response === 0)
-          {
+      socket.on("allReady", () => {
+        socket.emit("amiHost", "", (response) => {
+          console.log(response);
+          if (response === 0) {
             gameset.board_x = board_x * 2;
             gameset.board_y = board_y * 2;
 
             gameset.ball.isEqual(ball);
             console.log(obstacle);
-            for (let i = 0; i < obstacle.length; i++)
-            {
+            for (let i = 0; i < obstacle.length; i++) {
               console.log(obstacle[i]);
-              gameset.obs.push(new htmlItem(obstacle[i].x,
-                obstacle[i].y,
-                obstacle[i].width,
-                obstacle[i].height));
-                
+              gameset.obs.push(
+                new htmlItem(
+                  obstacle[i].x,
+                  obstacle[i].y,
+                  obstacle[i].width,
+                  obstacle[i].height
+                )
+              );
             }
-            for (let i = 0; i < pad.length; i++)
-            {
-              gameset.pad.push(new padItem(pad[i].x,
-                pad[i].y,
-                pad[i].width,
-                pad[i].height,
-                pad[i].color,
-                pad[i].radi)
+            for (let i = 0; i < pad.length; i++) {
+              gameset.pad.push(
+                new padItem(
+                  pad[i].x,
+                  pad[i].y,
+                  pad[i].width,
+                  pad[i].height,
+                  pad[i].color,
+                  pad[i].radi
+                )
               );
             }
             gameset.ball.r *= 1.6;
-            for (let i = 0; i < gameset.obs.length; i++)
-            {
+            for (let i = 0; i < gameset.obs.length; i++) {
               gameset.obs[i].height *= 2;
               gameset.obs[i].width *= 2;
               gameset.obs[i].x *= 2;
               gameset.obs[i].y *= 2;
             }
-            for (let i = 0; i < 2; i++)
-            {
+            for (let i = 0; i < 2; i++) {
               gameset.pad[i].x *= 2;
               gameset.pad[i].y *= 2;
               gameset.pad[i].height *= 2;
               gameset.pad[i].width *= 2;
             }
-            socket.emit('gameSetting', gameset);
+            socket.emit("gameSetting", gameset);
           }
-
         });
       });
-      socket.emit("setUp",{Pad: PadNum, Speed : SpeedNum, Ball : BallNum, Map : MapNum});
+      socket.emit("setUp", {
+        Pad: PadNum,
+        Speed: SpeedNum,
+        Ball: BallNum,
+        Map: MapNum,
+      });
     }
     return () => {
-      if (socket)
-      {
-        socket.off('setupReply');
-        socket.off('client');
+      if (socket) {
+        socket.off("setupReply");
+        socket.off("client");
         socket.off("matching waiting");
         socket.off("matchInfo");
         socket.off("goodtogo");
         socket.off("allReady");
-        socket.off('leave');
-    
-    }
-    clearInterval(gameset.intervalId);
-    }
-  },[PadNum, SpeedNum, BallNum, MapNum, client, socket, chatSocket]);
+        socket.off("leave");
+      }
+      clearInterval(gameset.intervalId);
+    };
+  }, [PadNum, SpeedNum, BallNum, MapNum, client, socket, chatSocket]);
 
   useEffect(() => {
-      console.log(State,Ready);
-      if (Ready && State)
-        socket.emit("ready", Ready);
-      else if (!Ready && State)
-        socket.emit("unReady", Ready);
+    console.log(State, Ready);
+    if (Ready && State) socket.emit("ready", Ready);
+    else if (!Ready && State) socket.emit("unReady", Ready);
   }, [Ready, State]);
   return (
     <div className="game-waiting-container">
       <div className="player">
         <div>{myinfo}</div>
         <div>vs</div>
-        {!State && (<div>
-          <div className="btn-loading btn-square">  
-            <span className="loading loading-spinner"></span>
+        {!State && (
+          <div>
+            <div className="btn-loading btn-square">
+              <span className="loading loading-spinner"></span>
+            </div>
           </div>
-        </div>)}
-        {State && (<div>{other}</div>)}
+        )}
+        {State && <div>{other}</div>}
       </div>
       <div className="game-setting">
         <div className="mini-map" ref={gameRef}>
-          <canvas id="canvas" ref={canvasRef}/>
+          <canvas id="canvas" ref={canvasRef} />
           <div className="pad1" ref={padRef1}></div>
           <div className="pad2" ref={padRef2}></div>
           <div className="obstacle" ref={obsRef}>
             <div id="obstacle1"></div>
             <div id="obstacle2"></div>
             <div id="obstacle3"></div>
+          </div>
         </div>
-      </div>
-      <div className="game-setting-list">
-        {gameSettingbutton("맵", MapNum, setMapNum)}
-        {gameSettingbutton("공 크기", BallNum, setBallNum)}
-        {gameSettingbutton("공 속도", SpeedNum, setSpeedNum)}
-        {gameSettingbutton("pad 크기", PadNum, setPadNum)}
-      </div>
+        <div className="game-setting-list">
+          {gameSettingbutton("맵", MapNum, setMapNum)}
+          {gameSettingbutton("공 크기", BallNum, setBallNum)}
+          {gameSettingbutton("공 속도", SpeedNum, setSpeedNum)}
+          {gameSettingbutton("pad 크기", PadNum, setPadNum)}
+        </div>
       </div>
       <div className="ready-button">
         <div id="check-box"></div>
@@ -450,7 +464,12 @@ export default function GameWaiting(prop) {
         >
           READY
         </button>
-        <button className="btn-leave btn-outline btn-error" onClick={prop.leavefun}>LEAVE</button>
+        <button
+          className="btn-leave btn-outline btn-error"
+          onClick={prop.leavefun}
+        >
+          LEAVE
+        </button>
       </div>
     </div>
   );
