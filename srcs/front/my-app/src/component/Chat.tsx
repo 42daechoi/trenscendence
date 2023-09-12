@@ -346,11 +346,11 @@ function Chat(props) {
         return;
       } else if (chat[0] === "/" && chat[1] === "/") {
         const firstSpaceIdx = chat.indexOf(" ");
-        if (firstSpaceIdx === -1)
-          return ;
+        if (firstSpaceIdx === -1) return;
         const target_name: string = chat.substring(2, firstSpaceIdx);
         const msg: string = chat.substring(firstSpaceIdx + 1, chat.length);
 
+        console.log(target_name);
         axios
           .get("http://localhost:3001/users/nickname/" + target_name, {
             withCredentials: true,
@@ -362,6 +362,9 @@ function Chat(props) {
               flag: "dm",
               msg: msg,
             });
+          })
+          .catch((err) => {
+            console.log(err);
           });
 
         addMessage(
@@ -495,7 +498,6 @@ function Chat(props) {
           let chname: string = channel.channelname;
           if (channel.channelname === "$home") chname = "Home";
           addMessage(
-
             {
               name: "SERVER",
               profile: null,
@@ -598,31 +600,32 @@ function Chat(props) {
             </li>
           ))}
         </ul>
-        {(props.type !== "game_waiting") && (
-        <div className="chat-member-button">
-          <button onClick={goHome}>home</button>
-          <button onClick={kick}>kick</button>
-          <button onClick={givePermission}>oper</button>
-          <button
-            style={{ width: "70%", marginTop: "5%" }}
-            onClick={() => {
-              setChatConfigure("create");
+        {props.type !== "game_waiting" && (
+          <div className="chat-member-button">
+            <button onClick={goHome}>home</button>
+            <button onClick={kick}>kick</button>
+            <button onClick={givePermission}>oper</button>
+            <button
+              style={{ width: "70%", marginTop: "5%" }}
+              onClick={() => {
+                setChatConfigure("create");
 
-              openModal();
-            }}
-          >
-            채팅방 생성
-          </button>
-          <button
-            style={{ width: "70%", marginTop: "5%" }}
-            onClick={() => {
-              setChatConfigure("setting");
-              openModal();
-            }}
-          >
-            채팅방 설정
-          </button>
-        </div>)}
+                openModal();
+              }}
+            >
+              채팅방 생성
+            </button>
+            <button
+              style={{ width: "70%", marginTop: "5%" }}
+              onClick={() => {
+                setChatConfigure("setting");
+                openModal();
+              }}
+            >
+              채팅방 설정
+            </button>
+          </div>
+        )}
         {isModalOpen && (
           <div className="chat-set-modal">
             <Modal

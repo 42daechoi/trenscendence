@@ -15,7 +15,6 @@ import { CreateGamePlayerDto } from './dtos/create-gamePlayer.dto';
 import { Result } from './interfaces/game.interface';
 import { response } from 'express';
 
-
 @Injectable()
 export class GameService {
 	private readonly logger = new Logger("GameService");
@@ -54,6 +53,8 @@ export class GameService {
 	}
 
 	async popQueue(clientSocket: Socket){
+		if (!clientSocket)
+			return ;
 		const client_user : User | null = await this.usersService.findUserBySocketId(clientSocket.id); 
 		//cannot find socket id User.
 		if (!client_user){
@@ -207,7 +208,6 @@ export class GameService {
 	async updateUserStatusOnline(client: Socket | null){
 		if (client !== null)
 		{
-			console.log("asdasd",client);
 			const user : User = await this.usersService.findUserBySocketId(client.id);
 			if (!user)
 				return ;
@@ -215,12 +215,20 @@ export class GameService {
 		}
 	}
 
-	  async getGameStatForPlayer(userID: number): Promise<Result[]> {
+async getGameStatForPlayer(userID: number): Promise<Result[]> {
     const gameStats: GamePlayer[] = await this.gamePlayerRepository
       .createQueryBuilder('gamePlayer')
       .leftJoinAndSelect('gamePlayer.user', 'user')
       .leftJoinAndSelect('gamePlayer.game', 'game')
-      .select(['gamePlayer.id', 'gamePlayer.score', 'gamePlayer.winner', 'user.intraId', 'game.id', 'game.date'])
+      .select([
+        'gamePlayer.id',
+        'gamePlayer.score',
+        'gamePlayer.winner',
+        'user.intraId',
+        'game.id',
+        'game.date',
+        'user.nickname',
+      ])
       .orderBy('game.date', 'ASC')
       .where((qb) => {
         const subQuery = qb
@@ -236,24 +244,39 @@ export class GameService {
       .getMany();
 
     let results: Result[] = [];
-	// console.log("gameStats", gameStats);
 
     for (let i: number = 0; i < gameStats.length - 1; i++) {
       if (gameStats[i].game.id == gameStats[i + 1].game.id) {
+        //console.log(gameStats[i].user);
         let result = {
           key: i,
           date: gameStats[i].game.date.toDateString(),
-          winner: gameStats[i].winner ? gameStats[i].user.intraId : gameStats[i + 1].user.intraId,
-          loser: gameStats[i].winner ? gameStats[i + 1].user.intraId : gameStats[i].user.intraId,
-          scoreWinner: gameStats[i].winner ? gameStats[i].score : gameStats[i + 1].score,
-          scoreLoser: gameStats[i].winner ? gameStats[i + 1].score : gameStats[i].score,
+          winner: gameStats[i].winner
+            ? gameStats[i].user.intraId
+            : gameStats[i + 1].user.intraId,
+          winnerNickName: gameStats[i].winner
+            ? gameStats[i].user.nickname
+            : gameStats[i + 1].user.nickname,
+          loser: gameStats[i].winner
+            ? gameStats[i + 1].user.intraId
+            : gameStats[i].user.intraId,
+          loserNickName: gameStats[i].winner
+            ? gameStats[i + 1].user.nickname
+            : gameStats[i].user.nickname,
+          scoreWinner: gameStats[i].winner
+            ? gameStats[i].score
+            : gameStats[i + 1].score,
+          scoreLoser: gameStats[i].winner
+            ? gameStats[i + 1].score
+            : gameStats[i].score,
         };
         results.push(result);
       }
     }
+    // console.log('results: ', results);
+
     return results;
   }
-
 
 	async OneOnOneNoti(srcUserId : number, targetUserId: number, nsp: Namespace){
 		const targetUser : User = await this.usersService.findUserById(targetUserId);
@@ -394,7 +417,7 @@ export class GameService {
 		cur_game.gameStatus = GameStatus.Playing;
 		guest.playerStatus = PlayerStatus.Playing;
 		host.playerStatus = PlayerStatus.Playing;
-		console.log(game_info);
+		//console.log(game_info.game);
 		//const guestSocket : Socket = await this.socketGetter(guest.socketID); 
 		//const hostSocket : Socket = await this.socketGetter(host.socketID);
 
@@ -418,9 +441,9 @@ export class GameService {
 			cur_game.obstacles[i].isEqual(game_info.obs[i]);
 		}
 
-		console.log(cur_game.obstacles);
-		console.log(cur_game.ball);
-		console.log(cur_game.pad);
+//		console.log(cur_game.obstacles);
+//		console.log(cur_game.ball);
+//		console.log(cur_game.pad);
 		//update ball direction.
 		cur_game.updatedirection(cur_game.ball);
 		console.log("setting");
@@ -485,6 +508,8 @@ export class GameService {
 	async destroyGame(client: Socket, nsp: Namespace){
 
 		//aboriting
+		if (!client)
+			return;
 		
 		//normal termiation
 		const cur_game_id = await this.getCurGameRoomId(client);
@@ -493,6 +518,8 @@ export class GameService {
 		if (!cur_game){
 			return;
 		}
+		clearInterval(cur_game.intervalId);
+		clearInterval(cur_game.count_intervalId);
 		let loserPlayer : Player1 | Player2;
 		let winnerPlayer : Player1 | Player2;
 		//aborting game
@@ -529,7 +556,6 @@ export class GameService {
 		await this.updateUserStatusOnline(hostSocket);
 
 		//disjoin guest socket
-		clearInterval(cur_game.count_intervalId);
 		//this.logger.log("destoyed game : " + JSON.stringify(this.gameSessions.get(cur_game_id)));
 		console.log("----------------------------------------–");
 		if (cur_game.gameStatus !== GameStatus.Waiting)
@@ -562,7 +588,6 @@ export class GameService {
 		//if in queue, pop out queue
 		await this.popQueue(client);
 
-
 		//if in game, destroy game
 		await this.destroyGame(client, nsp);
 
@@ -578,6 +603,8 @@ export class GameService {
 		if (!cur_game){
 			return;
 		}
+		clearInterval(cur_game.intervalId);
+		clearInterval(cur_game.count_intervalId);
 		let loserPlayer : Player1 | Player2;
 		let winnerPlayer : Player1 | Player2;
 		//aborting game
@@ -615,7 +642,6 @@ export class GameService {
 
 		//disjoin guest socket
 		guestSocket.leave(roomId);
-		clearInterval(cur_game.count_intervalId);
 		//this.logger.log("destoyed game : " + JSON.stringify(this.gameSessions.get(cur_game_id)));
 		if (cur_game.gameStatus !== GameStatus.Waiting)
 		{
