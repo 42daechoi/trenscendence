@@ -231,19 +231,20 @@ function Chat(props) {
       const data = await whoami();
       if (chat.substring(0, 7) === "/block ") {
         const target_name: string = chat.substring(7, chat.length);
-        socket.emit("blocklistupdate", data.id);
         axios
-          .get("http://localhost:3001/users/nickname/" + target_name, {
-            withCredentials: true,
-          })
-          .then((response) => {
-            axios
-              .patch(
-                "http://localhost:3001/users/blocks/add/" + response.data.id,
-                null,
-                { withCredentials: true }
-              )
-              .catch((error) => {
+        .get("http://localhost:3001/users/nickname/" + target_name, {
+          withCredentials: true,
+        })
+        .then((response) => {
+          axios
+          .patch(
+            "http://localhost:3001/users/blocks/add/" + response.data.id,
+            null,
+            { withCredentials: true }
+            ).then((res) => {
+              socket.emit("blocklistupdate", data.id);
+            })
+            .catch((error) => {
                 console.log(error);
               });
           })
@@ -253,7 +254,7 @@ function Chat(props) {
         chat = "";
         return;
       } else if (chat.substring(0, 9) === "/unblock ") {
-        socket.emit("blocklistupdate", data.id);
+
         const target_name: string = chat.substring(9, chat.length);
         axios
           .get("http://localhost:3001/users/nickname/" + target_name, {
@@ -261,11 +262,13 @@ function Chat(props) {
           })
           .then((response) => {
             axios
-              .patch(
-                "http://localhost:3001/users/blocks/remove/" + response.data.id,
-                null,
-                { withCredentials: true }
-              )
+            .patch(
+              "http://localhost:3001/users/blocks/remove/" + response.data.id,
+              null,
+              { withCredentials: true }
+              ).then((res) => {
+                socket.emit("blocklistupdate", data.id);
+              })
               .catch((error) => {
                 console.log(error);
               });
