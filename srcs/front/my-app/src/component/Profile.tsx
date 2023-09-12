@@ -115,17 +115,14 @@ function Profile(pn: ProfileNode) {
             props.callback("false");
           } else if (props.modalType === myM) {
             if (gamesocket) {
-              socket.emit("acceptOneOnOne", "", (response) => {
+              gamesocket.emit("acceptOneOnOne", "", (response) => {
                 if (response === true) set("accept");
                 else set("deny");
               });
             }
           } else if (props.modalType === mnM) {
-            if (gamesocket) {
-              socket.emit("denyOneOnOne", "");
               set("deny");
             }
-          }
         }}
         className="btn-fix glass"
         ref={typeRef}
@@ -256,6 +253,7 @@ function Profile(pn: ProfileNode) {
                 alert("게임 초대 실패");
                 return;
               }
+              console.log("게임초대");
               set("accept");
             });
           }}
@@ -354,9 +352,9 @@ function Profile(pn: ProfileNode) {
           // if (index % 2) {
           if (userNick === element.loserNickName) {
             const log: string =
-              element.loser +
+              element.loserNickName +
               " vs " +
-              element.winner +
+              element.winnerNickName +
               " " +
               element.scoreLoser +
               " : " +
@@ -365,9 +363,9 @@ function Profile(pn: ProfileNode) {
             newGameLog = [...newGameLog, log];
           } else if (userNick === element.winnerNickName) {
             const log: string =
-              element.winner +
+              element.winnerNickName +
               " vs " +
-              element.loser +
+              element.loserNickName +
               " " +
               element.scoreWinner +
               " : " +
@@ -415,6 +413,7 @@ function Profile(pn: ProfileNode) {
                   getFriendList(pn.currUser)
                     .then((res) => {
                       res.data.forEach((element) => {
+                        console.log(element);
                         if (element.id === pn.currUser)
                           newInfo.isFriendly = true;
                       });

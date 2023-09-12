@@ -17,7 +17,7 @@ export default function Modal({
 
   const {match} = useContext(CurPageContext);
   useEffect(()=>{
-  if (match === "match")
+  if (match === "match" || match === "accept")
   {
     closeModal();
   }},[match]);
