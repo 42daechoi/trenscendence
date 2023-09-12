@@ -269,13 +269,13 @@ function Chat(props) {
         const target_name: string = chat.substring(7, chat.length);
         socket.emit("mutelistupdate", data.id);
         axios
-          .get("http://localhost:3001/nickname/" + target_name, {
+          .get("http://localhost:3001/users/nickname/" + target_name, {
             withCredentials: true,
           })
           .then((response) => {
             axios
               .patch(
-                "http://localhost:3001/blocks/add/" + response.data.id,
+                "http://localhost:3001/users/blocks/add/" + response.data.id,
                 null,
                 { withCredentials: true }
               )
@@ -292,13 +292,13 @@ function Chat(props) {
         socket.emit("mutelistupdate", data.id);
         const target_name: string = chat.substring(9, chat.length);
         axios
-          .get("http://localhost:3001/nickname/" + target_name, {
+          .get("http://localhost:3001/users/nickname/" + target_name, {
             withCredentials: true,
           })
           .then((response) => {
             axios
               .patch(
-                "http://localhost:3001/blocks/remove/" + response.data.id,
+                "http://localhost:3001/users/blocks/remove/" + response.data.id,
                 null,
                 { withCredentials: true }
               )
@@ -313,7 +313,7 @@ function Chat(props) {
         return;
       } else if (chat.substring(0, 10) === "/blocklist") {
         axios
-          .get("http://localhost:3001/blocks/list", {
+          .get("http://localhost:3001/users/blocks/list", {
             withCredentials: true,
           })
           .then((response) => {
@@ -352,7 +352,7 @@ function Chat(props) {
         const msg: string = chat.substring(firstSpaceIdx + 1, chat.length);
 
         axios
-          .get("http://localhost:3001/nickname/" + target_name, {
+          .get("http://localhost:3001/users/nickname/" + target_name, {
             withCredentials: true,
           })
           .then((response) => {
