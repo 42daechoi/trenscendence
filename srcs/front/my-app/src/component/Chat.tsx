@@ -205,45 +205,9 @@ function Chat(props) {
 
       setUsers(newUsers);
     };
-
-    // if (isSameList()) {
-    //   return;
-    // }
     fetchData();
   }, [props.memberList]);
 
-  // useEffect(() => {
-  //   const fetchData = async (prevUsers) => {
-  //     for (let i = 0; i < props.memberList.length; i++) {
-  //       try {
-  //         const response = await axios.get(
-  //           "http://localhost:3001/" + props.memberList[i],
-  //           { withCredentials: true }
-  //         );
-  //         const data = response.data;
-  //         let isAdd = false;
-  //         for (let j = 0; j < prevUsers.length; j++) {
-  //           console.log(prevUsers[j].name, prevUsers[j].isChecked);
-  //           if (prevUsers[j].id === data.id && prevUsers[j].isChecked) {
-  //             addUsers(data.nickname, data.avatar, data.id, true);
-  //             isAdd = true;
-  //             break;
-  //           }
-  //         }
-  //         if (!isAdd) addUsers(data.nickname, data.avatar, data.id, false);
-  //       } catch (error) {
-  //         console.log(error);
-  //       }
-  //     }
-  //   };
-
-  //   if (isSameList()) {
-  //     return;
-  //   }
-  //   const prevUsers = JSON.parse(JSON.stringify(users));
-  //   setUsers([]);
-  //   fetchData(prevUsers);
-  // }, [props.memberList]);
 
   const addMessage = (
     user: IUsers,
@@ -267,19 +231,20 @@ function Chat(props) {
       const data = await whoami();
       if (chat.substring(0, 7) === "/block ") {
         const target_name: string = chat.substring(7, chat.length);
-        socket.emit("mutelistupdate", data.id);
         axios
-          .get("http://localhost:3001/nickname/" + target_name, {
-            withCredentials: true,
-          })
-          .then((response) => {
-            axios
-              .patch(
-                "http://localhost:3001/blocks/add/" + response.data.id,
-                null,
-                { withCredentials: true }
-              )
-              .catch((error) => {
+        .get("http://localhost:3001/users/nickname/" + target_name, {
+          withCredentials: true,
+        })
+        .then((response) => {
+          axios
+          .patch(
+            "http://localhost:3001/users/blocks/add/" + response.data.id,
+            null,
+            { withCredentials: true }
+            ).then((res) => {
+              socket.emit("blocklistupdate", data.id);
+            })
+            .catch((error) => {
                 console.log(error);
               });
           })
@@ -289,19 +254,21 @@ function Chat(props) {
         chat = "";
         return;
       } else if (chat.substring(0, 9) === "/unblock ") {
-        socket.emit("mutelistupdate", data.id);
+
         const target_name: string = chat.substring(9, chat.length);
         axios
-          .get("http://localhost:3001/nickname/" + target_name, {
+          .get("http://localhost:3001/users/nickname/" + target_name, {
             withCredentials: true,
           })
           .then((response) => {
             axios
-              .patch(
-                "http://localhost:3001/blocks/remove/" + response.data.id,
-                null,
-                { withCredentials: true }
-              )
+            .patch(
+              "http://localhost:3001/users/blocks/remove/" + response.data.id,
+              null,
+              { withCredentials: true }
+              ).then((res) => {
+                socket.emit("blocklistupdate", data.id);
+              })
               .catch((error) => {
                 console.log(error);
               });
@@ -313,7 +280,7 @@ function Chat(props) {
         return;
       } else if (chat.substring(0, 10) === "/blocklist") {
         axios
-          .get("http://localhost:3001/blocks/list", {
+          .get("http://localhost:3001/users/blocks/list", {
             withCredentials: true,
           })
           .then((response) => {

@@ -880,19 +880,24 @@ export class ChatGateway
   }
 
   //*********************************************************************//
-  //********************* mute list update  *****************************//
+  //********************* block list update  ****************************//
   //*********************************************************************//
-  @SubscribeMessage('mutelistupdate')
+  @SubscribeMessage('blocklistupdate')
   async handlemutelist(@MessageBody() id: number) {
     console.log('----------------------------------------');
-    console.log('---------MUTE LIST UPDATE---------------');
-    console.log('----------------------------------------');
+    console.log('---------BLOCK LIST UPDATE--------------');
+   
 
     let user = await this.chatService.findUserById(id);
     if (!user) return;
 
     user.blocklist = null;
     user.blocklist = await this.chatService.getUserBlocklist(id);
+
+
+    console.log(user.blocklist);
+    console.log('----------------------------------------');
+
   }
 
   //*********************************************************************//
