@@ -237,6 +237,10 @@ function Chat(props) {
             withCredentials: true,
           })
           .then((response) => {
+            if (response.data.id === undefined) {
+              alert('없는 유저입니다.');
+              return ;
+            }
             axios
               .patch(
                 "http://localhost:3001/users/blocks/add/" + response.data.id,
@@ -260,6 +264,10 @@ function Chat(props) {
             withCredentials: true,
           })
           .then((response) => {
+            if (response.data.id === undefined) {
+              alert('없는 유저입니다.');
+              return ;
+            }
             axios
               .patch(
                 "http://localhost:3001/users/blocks/remove/" + response.data.id,
