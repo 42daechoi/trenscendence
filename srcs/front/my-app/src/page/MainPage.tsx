@@ -9,7 +9,11 @@ import MemoChannelsList from "../component/ChannelsList";
 import MemoChat from "../component/Chat";
 import { getWhoami } from "../utils/ApiRequest";
 import Modal from "../component/Modal";
-import { useSocket, useGameSocket, useCurPage} from "../component/SocketContext";
+import {
+  useSocket,
+  useGameSocket,
+  useCurPage,
+} from "../component/SocketContext";
 import { apiRequest } from "../utils/ApiRequest";
 
 export default function MainPage() {
@@ -23,32 +27,34 @@ export default function MainPage() {
   const [memberList, setMemberList] = useState([]);
   const socket = useSocket();
   const [myId, setMyId] = useState(0);
-  const {match, set} = useCurPage();
-  useEffect(()=>{if (curPage !== "game_waiting")setPlay(false); set("");},[curPage]);
-  useEffect(()=> {
-    if (match === "match")
-    {
+  const { match, set } = useCurPage();
+  useEffect(() => {
+    if (curPage !== "game_waiting") setPlay(false);
+    set("");
+  }, [curPage]);
+  useEffect(() => {
+    if (match === "match") {
       sideRef.current.checked = false;
       setIsMatch(true);
     }
-    if (match === "accept")
-    {
+    if (match === "accept") {
       sideRef.current.checked = false;
       setIsMatch(false);
       setPlay(true);
       setCurPage("game_waiting");
     }
-    if (match === "deny")
-    {
+    if (match === "deny") {
       closeMatch();
       setPlay(false);
     }
-    return () => {set("")};
+    return () => {
+      set("");
+    };
   }, [match]);
-  
+
   useEffect(() => {
     if (!socket) return;
-    gameSocket.on("OneOnOneNoti", data =>{
+    gameSocket.on("OneOnOneNoti", (data) => {
       console.log("게임초대");
       set("match");
       setMatchInfo(data.id);
@@ -84,8 +90,7 @@ export default function MainPage() {
         setMyId(response.data.id);
       }
     );
-    return ()=>{
-    }
+    return () => {};
   }, []);
 
   const renderPage = () => {
@@ -93,7 +98,7 @@ export default function MainPage() {
       case "my_profile":
         return <MemoProfile currUser={myId} isMe={true} />;
       case "game_waiting":
-        return <GameWaiting leavefun={leaveGameWaiting} type={play}/>;
+        return <GameWaiting leavefun={leaveGameWaiting} type={play} />;
       case "leaderboard":
         return <LeaderBoard />;
     }
@@ -130,22 +135,26 @@ export default function MainPage() {
   const closeMatch = (): void => {
     setIsMatch(false);
     console.log("closeMatch");
-    if (gameSocket && match !== "accept")
-      gameSocket.emit("denyOneOnOne","");
+    if (gameSocket && match !== "accept") gameSocket.emit("denyOneOnOne", "");
   };
 
   return (
     <div className="background">
       {matchInfo && isMatch && (
-                <Modal
-                  closeModal={closeMatch}
-                  ConfigureModal={() => (
-                    <MemoProfile currUser={matchInfo} isMe={false} match={isMatch} />
-                  )}
-                />
-              )}
+        <Modal
+          closeModal={closeMatch}
+          ConfigureModal={() => (
+            <MemoProfile currUser={matchInfo} isMe={false} match={isMatch} />
+          )}
+        />
+      )}
       <div className="drawer drawer-end">
-        <input id="my-drawer-4" type="checkbox" className="drawer-toggle" ref={sideRef} />
+        <input
+          id="my-drawer-4"
+          type="checkbox"
+          className="drawer-toggle"
+          ref={sideRef}
+        />
         <div className="drawer-content">
           <section className="btn-container">
             <button
@@ -170,7 +179,7 @@ export default function MainPage() {
             </button>
           </section>
           <section className="chat-container">
-            <MemoChat memberList={memberList} type={curPage}/>
+            <MemoChat memberList={memberList} type={curPage} />
           </section>
           <section className="swap-container">{renderPage()}</section>
           <label
