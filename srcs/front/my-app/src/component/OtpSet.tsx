@@ -1,14 +1,11 @@
 import React, { useEffect, useRef } from "react";
-import axios from "axios";
+import { postRegister, post2faEnable } from "../utils/ApiRequest";
 
 export default function OtpSet(props) {
   const img_src = useRef(null);
 
   useEffect(() => {
-    axios
-      .post("http://localhost:3001/2fa/register", null, {
-        withCredentials: true,
-      })
+    postRegister()
       .then((response) => {
         img_src.current.src = response.data;
       })
@@ -18,11 +15,9 @@ export default function OtpSet(props) {
   }, []);
 
   const btnOnClick = () => {
-    axios
-      .post("http://localhost:3001/2fa/enable", null, { withCredentials: true })
-      .catch((error) => {
-        console.log(error);
-      });
+    post2faEnable().catch((error) => {
+      console.log(error);
+    });
     props.onChangePage("google_auth");
   };
   return (

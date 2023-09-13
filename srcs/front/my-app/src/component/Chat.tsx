@@ -11,10 +11,16 @@ import Modal from "../component/Modal";
 import { whoami } from "../utils/whoami";
 import "../css/Chat.css";
 import { where } from "../utils/where";
-import axios from "axios";
 import CreateChat from "./CreateChat";
 import SettingChat from "./SettingChat";
 import { Buffer } from "buffer";
+import {
+  getId,
+  getUserByNickname,
+  patchBlockAdd,
+  patchBlockRemove,
+  getBlockList,
+} from "../utils/ApiRequest";
 
 interface IUsers {
   name: string;
@@ -40,10 +46,6 @@ const initTmpMessages: IMessage[] = [
     avatar: null,
   },
 ];
-// const bufferData: number[] = data.profilePicture.data;
-// const buffer: Buffer = Buffer.from(bufferData);
-// const img: string = buffer.toString("base64");
-// const serverImg: string = "";
 
 function Chat(props) {
   const [users, setUsers] = useState<IUsers[]>([]);
@@ -65,27 +67,23 @@ function Chat(props) {
   const receiveMessage = () => {
     socket.on("chat", (receiveData) => {
       if (!receiveData) return;
-      axios
-        .get("http://localhost:3001/users/id/" + receiveData.id, {
-          withCredentials: true,
-        })
-        .then((response) => {
-          if (!response.data) return;
-          const bufferData: number[] = response.data.profilePicture.data;
-          const buffer: Buffer = Buffer.from(bufferData);
-          const img: string = buffer.toString("base64");
-          addMessage(
-            {
-              name: response.data.nickname,
-              profile: response.data.avatar,
-              id: response.data.id,
-              isChecked: false,
-            },
-            receiveData.msg,
-            "chat chat-start",
-            img
-          );
-        });
+      getId(receiveData.id).then((response) => {
+        if (!response.data) return;
+        const bufferData: number[] = response.data.profilePicture.data;
+        const buffer: Buffer = Buffer.from(bufferData);
+        const img: string = buffer.toString("base64");
+        addMessage(
+          {
+            name: response.data.nickname,
+            profile: response.data.avatar,
+            id: response.data.id,
+            isChecked: false,
+          },
+          receiveData.msg,
+          "chat chat-start",
+          img
+        );
+      });
     });
   };
 
@@ -170,10 +168,7 @@ function Chat(props) {
 
       for (let i = 0; i < props.memberList.length; i++) {
         try {
-          const response = await axios.get(
-            "http://localhost:3001/users/id/" + props.memberList[i],
-            { withCredentials: true }
-          );
+          const response = await getId(props.memberList[i]);
           const data = response.data;
           let isAdd = false;
 
@@ -208,7 +203,6 @@ function Chat(props) {
     fetchData();
   }, [props.memberList]);
 
-
   const addMessage = (
     user: IUsers,
     text: string,
@@ -231,20 +225,13 @@ function Chat(props) {
       const data = await whoami();
       if (chat.substring(0, 7) === "/block ") {
         const target_name: string = chat.substring(7, chat.length);
-        axios
-        .get("http://localhost:3001/users/nickname/" + target_name, {
-          withCredentials: true,
-        })
-        .then((response) => {
-          axios
-          .patch(
-            "http://localhost:3001/users/blocks/add/" + response.data.id,
-            null,
-            { withCredentials: true }
-            ).then((res) => {
-              socket.emit("blocklistupdate", data.id);
-            })
-            .catch((error) => {
+        getUserByNickname(target_name)
+          .then((response) => {
+            patchBlockAdd(response.data.id)
+              .then((res) => {
+                socket.emit("blocklistupdate", data.id);
+              })
+              .catch((error) => {
                 console.log(error);
               });
           })
@@ -254,19 +241,11 @@ function Chat(props) {
         chat = "";
         return;
       } else if (chat.substring(0, 9) === "/unblock ") {
-
         const target_name: string = chat.substring(9, chat.length);
-        axios
-          .get("http://localhost:3001/users/nickname/" + target_name, {
-            withCredentials: true,
-          })
+        getUserByNickname(target_name)
           .then((response) => {
-            axios
-            .patch(
-              "http://localhost:3001/users/blocks/remove/" + response.data.id,
-              null,
-              { withCredentials: true }
-              ).then((res) => {
+            patchBlockRemove(response.data.id)
+              .then((res) => {
                 socket.emit("blocklistupdate", data.id);
               })
               .catch((error) => {
@@ -279,10 +258,7 @@ function Chat(props) {
         chat = "";
         return;
       } else if (chat.substring(0, 10) === "/blocklist") {
-        axios
-          .get("http://localhost:3001/users/blocks/list", {
-            withCredentials: true,
-          })
+        getBlockList()
           .then((response) => {
             if (!response.data.length) {
               console.log("null response");
@@ -317,11 +293,7 @@ function Chat(props) {
         const target_name: string = chat.substring(2, firstSpaceIdx);
         const msg: string = chat.substring(firstSpaceIdx + 1, chat.length);
 
-        console.log(target_name);
-        axios
-          .get("http://localhost:3001/users/nickname/" + target_name, {
-            withCredentials: true,
-          })
+        getUserByNickname(target_name)
           .then((response) => {
             socket.emit("chat", {
               id: data.id,
@@ -350,7 +322,6 @@ function Chat(props) {
       } else if (chat.length) {
         where(socket, data.id)
           .then((channel) => {
-            // console.log(channel);
             socket.emit("chat", {
               id: data.id,
               target: channel.channelname,

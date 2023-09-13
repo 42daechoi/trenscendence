@@ -1,11 +1,7 @@
 import axios, { AxiosResponse } from "axios";
-import { type } from "os";
-import { whoami } from "./whoami";
-import { StringLiteral } from "typescript";
 
 // const serverUrl: string = "http://localhost:3001";
-const serverUrl: string = "http://localhost:3001";
-const tagUser: string = "users";
+const serverUrl: string = process.env.REACT_APP_SERVER_URL;
 
 export const apiRequest = <T = any,>(
   method: "get" | "post" | "patch",
@@ -20,23 +16,47 @@ export const apiRequest = <T = any,>(
   });
 };
 
+export function postAuthenticate<T = any>(
+  fullotp: string
+): Promise<AxiosResponse<T>> {
+  return apiRequest("post", `${serverUrl}/2fa/authenticate}`, {
+    twoFactorAuthCode: fullotp,
+  });
+}
+
+export function postRegister<T = any>(): Promise<AxiosResponse<T>> {
+  return apiRequest("post", `${serverUrl}/2fa/authenticate}`);
+}
+
+export function post2faEnable<T = any>(): Promise<AxiosResponse<T>> {
+  return apiRequest("post", `${serverUrl}/2fa/enable}`);
+}
+
+export function post2faDisable<T = any>(): Promise<AxiosResponse<T>> {
+  return apiRequest("post", `${serverUrl}/2fa/disable}`);
+}
+
 export function getWhoami<T = any>(): Promise<AxiosResponse<T>> {
-  return apiRequest("get", `${serverUrl}/${tagUser}/whoami`);
+  return apiRequest("get", `${serverUrl}/users/whoami`);
+}
+
+export function getLoginfortytwo<T = any>(): Promise<AxiosResponse<T>> {
+  return apiRequest("get", `${serverUrl}/auth/loginfortytwo/callback`);
 }
 
 export function getIntraId<T = any>(
   intraId: string
 ): Promise<AxiosResponse<T>> {
-  return apiRequest("get", `${serverUrl}/${tagUser}/intraId/${intraId}`);
+  return apiRequest("get", `${serverUrl}/users/intraId/${intraId}`);
 }
 
 export function getId<T = any>(Id: string): Promise<AxiosResponse<T>> {
-  return apiRequest("get", `${serverUrl}/${tagUser}/id/${Id}`);
+  return apiRequest("get", `${serverUrl}/users/id/${Id}`);
 }
 export function getUserByNickname<T = any>(
   nickname: string
 ): Promise<AxiosResponse<T>> {
-  return apiRequest("get", `${serverUrl}/${tagUser}/nickname/${nickname}`);
+  return apiRequest("get", `${serverUrl}/users/nickname/${nickname}`);
 }
 
 export function patchId<T = any>(
@@ -47,14 +67,25 @@ export function patchId<T = any>(
     currentAvatarData?: boolean;
   }
 ): Promise<AxiosResponse<T>> {
-  return apiRequest("patch", `${serverUrl}/${tagUser}/${String(id)}`, body);
+  return apiRequest("patch", `${serverUrl}/users/${String(id)}`, body);
 }
 
 export function patchAddFriend<T = any>(id: number): Promise<AxiosResponse<T>> {
-  return apiRequest(
-    "patch",
-    `${serverUrl}/${tagUser}/friends/add/${String(id)}}`
-  );
+  return apiRequest("patch", `${serverUrl}/users/friends/add/${String(id)}}`);
+}
+
+export function patchBlockAdd<T = any>(id: string): Promise<AxiosResponse<T>> {
+  return apiRequest("patch", `${serverUrl}/users/blocks/add/${id}}`);
+}
+
+export function patchBlockRemove<T = any>(
+  id: string
+): Promise<AxiosResponse<T>> {
+  return apiRequest("patch", `${serverUrl}/users/blocks/remove/${id}}`);
+}
+
+export function getBlockList<T = any>(): Promise<AxiosResponse<T>> {
+  return apiRequest("get", `${serverUrl}/users/blocks/list`);
 }
 
 export function patchDeleteFriend<T = any>(
@@ -62,12 +93,12 @@ export function patchDeleteFriend<T = any>(
 ): Promise<AxiosResponse<T>> {
   return apiRequest(
     "patch",
-    `${serverUrl}/${tagUser}/friends/remove/${String(id)}}`
+    `${serverUrl}/users/friends/remove/${String(id)}}`
   );
 }
 
 export function getFriendList<T = any>(id: number): Promise<AxiosResponse<T>> {
-  return apiRequest("get", `${serverUrl}/${tagUser}/friends/list`);
+  return apiRequest("get", `${serverUrl}/users/friends/list`);
 }
 
 export function modifyNickname(
@@ -152,5 +183,5 @@ export function getLeaderBoard<T = any>(): Promise<AxiosResponse<T>> {
 }
 
 export function getAllUsers<T = any>(): Promise<AxiosResponse<T>> {
-  return apiRequest("get", `${serverUrl}/${tagUser}/findAll`);
+  return apiRequest("get", `${serverUrl}/users/findAll`);
 }

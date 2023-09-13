@@ -25,6 +25,8 @@ services:
       - tran_net
     volumes:
       - back_vol:/back/my-app
+    env_file:
+      - .env
 
   # PostgreSQL service
   db:
