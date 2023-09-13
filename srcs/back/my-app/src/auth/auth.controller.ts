@@ -79,7 +79,7 @@ export class AuthController {
       );
       // return res.redirect('http://localhost:3000/partial-tfa');
     } else {
-      this.authService.updateUserStatusOnline(user);
+      //this.authService.updateUserStatusOnline(user);
       //if no avata data
       if (user.currentAvatarData == false) {
         const smallProfilePictureUrl: string =
@@ -156,7 +156,7 @@ export class AuthController {
     //			return res.redirect('http://localhost:3000/main');
     //		}
     //else redirect to main page
-    await this.authService.updateUserStatusOnline(user);
+    //await this.authService.updateUserStatusOnline(user);
     res.json(user_token);
     return user;
   }
