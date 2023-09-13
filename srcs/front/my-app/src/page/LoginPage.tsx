@@ -8,7 +8,10 @@ function LoginPage() {
   const login42 = () => {
   getWhoami()
       .then((result) => {
-        navigate("/main");
+        if (result.data.status === 1)
+          navigate("/main");
+        else 
+          navigate("/");
       })
       .catch((err) => {
           window.location.href =
