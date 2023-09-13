@@ -4,6 +4,7 @@ import { User } from 'src/typeorm';
 import { userDTO, channelDTO } from './dto/chat.dto';
 import { Socket } from 'socket.io';
 import { ConnectedSocket, MessageBody } from '@nestjs/websockets';
+import { UserDto } from 'src/users/dtos/users.dto';
 
 
 @Injectable()
@@ -38,25 +39,12 @@ export class ChatService {
   
     async getUserBlocklist(@MessageBody() id: number) : Promise<Map<number, string>>  {
         const block_users : User[] = await this.usersService.getUserBlocks(id);
-1
-        // console.log("###################block-list########################");
-        // console.log("block_users + ");
-        // console.log(block_users);
-        // console.log("###########################################");
-        
-        let   block_list : Map<number, string> = new Map();
-        
-        // console.log("###################block-list#2222222222222222222222#######################");
-        // console.log(block_list);
-        // console.log("###########################################");
-        
+    
+        let   block_list : Map<number, string> = new Map();        
         for (const blockuser of block_users) {
             block_list.set(blockuser.id, blockuser.nickname);
         }
         
-        // console.log("###################block-list#33333333333333333333#######################");
-        // console.log(block_list);
-        // console.log("###########################################");
         return block_list;
     }
 }

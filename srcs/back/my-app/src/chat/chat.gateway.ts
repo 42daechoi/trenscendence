@@ -25,6 +25,7 @@ import { User } from 'src/typeorm';
 import { ChatService } from './chat.service';
 import { UserDto } from 'src/users/dtos/users.dto';
 import { UserStatus } from 'src/typeorm/user.entity';
+import { exit } from 'process';
 
 @WebSocketGateway({
   namespace: 'chat',
@@ -57,9 +58,9 @@ export class ChatGateway
   //****************************** init **********************************//
   //**********************************************************************//
   async afterInit() {
-    console.log('----------------------------------------');
-    console.log('-------------------ININT----------------');
-    console.log('----------------------------------------');
+    // console.log('----------------------------------------');
+    // console.log('-------------------ININT----------------');
+    // console.log('----------------------------------------');
 
     const channel = {
       channelname: '$home',
@@ -81,20 +82,20 @@ export class ChatGateway
   //**********************************************************************//
   handleConnection(socket: Socket) {
     //connection은 그냥 체크.
-    console.log('----------------------------------------');
-    console.log('----------------CONNECTION--------------');
-    console.log('Client connected: ', socket.id);
-    console.log('----------------------------------------');
+    // console.log('----------------------------------------');
+    // console.log('----------------CONNECTION--------------');
+    // console.log('Client connected: ', socket.id);
+    // console.log('----------------------------------------');
   }
 
   //**********************************************************************//
   //************************** disconnection *****************************//
   //**********************************************************************//
   async handleDisconnect(socket: Socket) {
-    console.log('----------------------------------------');
-    console.log('--------------DICONNECTION--------------');
-    console.log('Client connected: ', socket.id);
-    console.log('----------------------------------------');
+    // console.log('----------------------------------------');
+    // console.log('--------------DICONNECTION--------------');
+    // console.log('Client connected: ', socket.id);
+    // console.log('----------------------------------------');
 
     let user = await this.chatService.findUserBySocketId(socket.id);
 
@@ -197,26 +198,22 @@ export class ChatGateway
     @MessageBody() id: number,
     @ConnectedSocket() socket: Socket,
   ) {
-    console.log('----------------------------------------');
-    console.log('-----------------BIND-------------------');
-    console.log('Userid: ', id);
-    console.log('SocketId: ', socket.id);
-    console.log('----------------------------------------');
-
-    // const user_double = await this.usersService.findUserById(id);
-    // if (user_double.status !== UserStatus.OFFLINE) {
-    //   return;
-    // }
+    // console.log('----------------------------------------');
+    // console.log('-----------------BIND-------------------');
+    // console.log('Userid: ', id);
+    // console.log('SocketId: ', socket.id);
+    // console.log('----------------------------------------');
 
     let user_check = await this.chatService.findUserById(id);
     if (user_check) {
       let check_id = user_check.id;
       await this.handleDisconnect(socket);
-      // const double_check = await this.chatService.findUserById(id);
-      // if (double_check) return;
       const users: userDTO[] = await this.chatService.getUsers();
       const user = users.find((u) => u.id === check_id);
       if (user) {
+        // console.log('                                                             ');
+        // console.log('                    duplicated login user                    ');
+        // console.log('                                                             ');
         socket.emit('exit');
         await this.handleDisconnect(user.socket);
       }
@@ -232,7 +229,7 @@ export class ChatGateway
       channelname: '$home',
       socket: socket,
       interval: null,
-      blocklist: block_list,
+      blocklist: block_list
     };
 
     const Users: userDTO[] = await this.chatService.getUsers();
@@ -244,10 +241,10 @@ export class ChatGateway
     socket.join(user.channelname);
     socket.broadcast.to(user.channelname).emit('update', true); //$home 채널 입장 시 정보 업데이트
 
-    console.log('----------------------------------------');
-    console.log('-----------------BIND USER--------------');
+    // console.log('----------------------------------------');
+    // console.log('-----------------BIND USER--------------');
     // console.log(user);
-    console.log('----------------------------------------');
+    // console.log('----------------------------------------');
   }
 
   //*********************************************************************//
@@ -258,29 +255,49 @@ export class ChatGateway
     @MessageBody() chatobj: chatDTO,
     @ConnectedSocket() socket: Socket,
   ) {
-    console.log('----------------------------------------');
-    console.log('-----------------CHAT-------------------');
-    console.log(
-      'UserId: ',
-      chatobj.id,
-      ' Target: ',
-      chatobj.target,
-      ' Flag: ',
-      chatobj.flag,
-      ' Msg: ',
-      chatobj.msg,
-    );
-    console.log('----------------------------------------');
+    // console.log('----------------------------------------');
+    // console.log('------------BEFORE CHAT-----------------');
+    // console.log(
+    //   'UserId: ',
+    //   chatobj.id,
+    //   ' Target: ',
+    //   chatobj.target,
+    //   ' Flag: ',
+    //   chatobj.flag,
+    //   ' Msg: ',
+    //   chatobj.msg,
+    // );
+    // console.log('----------------------------------------');
 
-    // console.log("123");
+    // //msg 200자로 제한.
+    // // const maxMsgLength = 200;
+    // if (chatobj.msg.length > maxMsgLength)
+    // {
+    //   chatobj.msg = chatobj.msg.substring(0, maxMsgLength);
+    // }
+
+    // console.log('----------------------------------------');
+    // console.log('---------------AFTER CHAT---------------');
+    // console.log(
+    //   'UserId: ',
+    //   chatobj.id,
+    //   ' Target: ',
+    //   chatobj.target,
+    //   ' Flag: ',
+    //   chatobj.flag,
+    //   ' Msg: ',
+    //   chatobj.msg,
+    // );
+    // console.log('----------------------------------------');
+
     const users: userDTO[] = await this.chatService.getUsers();
     const user = users.find((u) => u.id === chatobj.id);
     if (!user) return;
     if (chatobj.flag == 'broad') {
       //* 유저가 속한 채널에 채팅.
-      console.log('----------------------------------------');
-      console.log('             broad chat part            ');
-      console.log('----------------------------------------');
+      // console.log('----------------------------------------');
+      // console.log('             broad chat part            ');
+      // console.log('----------------------------------------');
 
       const channel = await this.chatService.findChannelByChannelname(
         user.channelname,
@@ -295,16 +312,16 @@ export class ChatGateway
       }
     } else {
       //* 귓속말
-      console.log('----------------------------------------');
-      console.log('             dm chat part               ');
-      console.log('----------------------------------------');
+      // console.log('----------------------------------------');
+      // console.log('             dm chat part               ');
+      // console.log('----------------------------------------');
 
       const target = await this.chatService.findUserById(chatobj.target);
       if (!target) return;
 
-      console.log('----------------------------------------');
-      console.log('target check :', target.id);
-      console.log('----------------------------------------');
+      // console.log('----------------------------------------');
+      // console.log('target check :', target.id);
+      // console.log('----------------------------------------');
 
       const blocks = target.blocklist;
       const block_check = blocks.get(user.id);
@@ -314,9 +331,9 @@ export class ChatGateway
           socket.to(target.socketid).emit('chat', chatobj);
         }
       } else {
-        console.log('----------------------------------------');
-        console.log('                  blocked               ');
-        console.log('----------------------------------------');
+        // console.log('----------------------------------------');
+        // console.log('                  blocked               ');
+        // console.log('----------------------------------------');
         return;
       }
     }
@@ -330,10 +347,10 @@ export class ChatGateway
     @MessageBody() userid: number,
     @ConnectedSocket() socket: Socket,
   ) {
-    console.log('----------------------------------------');
-    console.log('-----------------WHERE------------------');
-    console.log('userid: ', userid);
-    console.log('----------------------------------------');
+    // console.log('----------------------------------------');
+    // console.log('-----------------WHERE------------------');
+    // console.log('userid: ', userid);
+    // console.log('----------------------------------------');
 
     //이후 유저 어디서 체크 & 유저가 있는 위치 확인 후 리플라이 전달.
     let user = await this.chatService.findUserById(userid);
@@ -341,10 +358,10 @@ export class ChatGateway
     let channel = await this.chatService.findChannelByChannelname(
       user.channelname,
     );
-    console.log('----------------------------------------');
-    console.log('-----------------WHERE------------------');
-    console.log(JSON.stringify(channel, null, 2));
-    console.log('----------------------------------------');
+    // console.log('----------------------------------------');
+    // console.log('-----------------WHERE------------------');
+    // console.log(JSON.stringify(channel, null, 2));
+    // console.log('----------------------------------------');
     socket.emit('where', channel);
   }
 
@@ -356,17 +373,17 @@ export class ChatGateway
     @MessageBody() room: roomDTO,
     @ConnectedSocket() socket: Socket,
   ) {
-    console.log('----------------------------------------');
-    console.log('-----------------CREATE-----------------');
-    console.log(room);
-    console.log('----------------------------------------');
+    // console.log('----------------------------------------');
+    // console.log('-----------------CREATE-----------------');
+    // console.log(room);
+    // console.log('----------------------------------------');
 
     // 유저 확인
     let user = await this.chatService.findUserById(room.id);
     if (!user) {
-      console.log('----------------------------------------');
-      console.log('            can not find user           ');
-      console.log('----------------------------------------');
+      // console.log('----------------------------------------');
+      // console.log('            can not find user           ');
+      // console.log('----------------------------------------');
       return;
     }
     // home이 아닐 경우 생성 불가.(왜냐면 방 이름이 곧 닉네임이기에)
@@ -374,9 +391,9 @@ export class ChatGateway
       user.channelname,
     );
     if (checkChannel.channelname !== '$home') {
-      console.log('----------------------------------------');
-      console.log('             you are not home           ');
-      console.log('----------------------------------------');
+      // console.log('----------------------------------------');
+      // console.log('             you are not home           ');
+      // console.log('----------------------------------------');
       return;
     }
 
@@ -428,10 +445,10 @@ export class ChatGateway
     @MessageBody() room: roomDTO,
     @ConnectedSocket() socket: Socket,
   ) {
-    console.log('----------------------------------------');
-    console.log('-----------------MODIFY-----------------');
-    console.log(room);
-    console.log('----------------------------------------');
+    // console.log('----------------------------------------');
+    // console.log('-----------------MODIFY-----------------');
+    // console.log(room);
+    // console.log('----------------------------------------');
     const users: userDTO[] = await this.chatService.getUsers();
     let user = users.find((u) => u.id === room.id); //last check
     if (!user) return;
@@ -448,10 +465,10 @@ export class ChatGateway
       if (!modifyingchannel.operator.includes(user.id)) return;
     }
 
-    console.log('----------------------------------------');
-    console.log('                 BEFORE                 ');
-    console.log(modifyingchannel);
-    console.log('----------------------------------------');
+    // console.log('----------------------------------------');
+    // console.log('                 BEFORE                 ');
+    // console.log(modifyingchannel);
+    // console.log('----------------------------------------');
 
     modifyingchannel.maxmember = room.maxmember;
     modifyingchannel.option = room.option;
@@ -461,10 +478,10 @@ export class ChatGateway
       modifyingchannel.password = null;
     }
 
-    console.log('----------------------------------------');
-    console.log('                 AFTER                  ');
-    console.log(modifyingchannel);
-    console.log('----------------------------------------');
+    // console.log('----------------------------------------');
+    // console.log('                 AFTER                  ');
+    // console.log(modifyingchannel);
+    // console.log('----------------------------------------');
 
     socket.emit('modify', modifyingchannel);
   }
@@ -477,17 +494,17 @@ export class ChatGateway
     @MessageBody() joinobj: joinDTO,
     @ConnectedSocket() socket: Socket,
   ) {
-    console.log('----------------------------------------');
-    console.log('-----------------JOIN-------------------');
-    console.log(
-      'userid: ',
-      joinobj.id,
-      ' channelname: ',
-      joinobj.channelname,
-      ' password: ',
-      joinobj.password,
-    );
-    console.log('----------------------------------------');
+    // console.log('----------------------------------------');
+    // console.log('-----------------JOIN-------------------');
+    // console.log(
+    //   'userid: ',
+    //   joinobj.id,
+    //   ' channelname: ',
+    //   joinobj.channelname,
+    //   ' password: ',
+    //   joinobj.password,
+    // );
+    // console.log('----------------------------------------');
 
     // 유저 확인
     let user = await this.chatService.findUserById(joinobj.id);
@@ -498,15 +515,15 @@ export class ChatGateway
       joinobj.channelname,
     );
     if (!channel) {
-      console.log('----------------------------------------');
-      console.log('                no room                 ');
-      console.log('----------------------------------------');
+      // console.log('----------------------------------------');
+      // console.log('                no room                 ');
+      // console.log('----------------------------------------');
       return;
     }
     if (channel.channelname === user.channelname) {
-      console.log('----------------------------------------');
-      console.log('           already in room              ');
-      console.log('----------------------------------------');
+      // console.log('----------------------------------------');
+      // console.log('           already in room              ');
+      // console.log('----------------------------------------');
       return;
     }
 
@@ -516,9 +533,9 @@ export class ChatGateway
       return;
     } else if (channel.option === 'protected') {
       if (channel.password !== joinobj.password) {
-        console.log('----------------------------------------');
-        console.log('           wrong password               ');
-        console.log('----------------------------------------');
+        // console.log('----------------------------------------');
+        // console.log('           wrong password               ');
+        // console.log('----------------------------------------');
         return;
       }
     }
@@ -634,17 +651,17 @@ export class ChatGateway
         }
       }
     } else {
-      console.log('----------------------------------------');
-      console.log('           room is fulled               ');
-      console.log('----------------------------------------');
+      // console.log('----------------------------------------');
+      // console.log('           room is fulled               ');
+      // console.log('----------------------------------------');
       socket.emit('join', { flag: false, list: null, channelname: null });
     }
 
     //전체 채널 객체 뽑아서 확인하기
-    console.log('----------------------------------------');
-    console.log('---------------ALL CHANNELS-------------');
-    console.log(await this.chatService.getChannels()); //  마지막에 채널들 다 잘 수정되었는지 확인
-    console.log('----------------------------------------');
+    // console.log('----------------------------------------');
+    // console.log('---------------ALL CHANNELS-------------');
+    // console.log(await this.chatService.getChannels()); //  마지막에 채널들 다 잘 수정되었는지 확인
+    // console.log('----------------------------------------');
   }
 
   //*********************************************************************//
@@ -652,10 +669,10 @@ export class ChatGateway
   //*********************************************************************//
   @SubscribeMessage('op')
   async handleop(@MessageBody() op: opDTO) {
-    console.log('----------------------------------------');
-    console.log('----------------- OP -------------------');
-    console.log('userId: ', op.id, ' targetId: ', op.target);
-    console.log('----------------------------------------');
+    // console.log('----------------------------------------');
+    // console.log('----------------- OP -------------------');
+    // console.log('userId: ', op.id, ' targetId: ', op.target);
+    // console.log('----------------------------------------');
 
     let user = await this.chatService.findUserById(op.id);
     if (!user) return;
@@ -668,34 +685,34 @@ export class ChatGateway
     if (!channel) return;
     if (channel.host !== user.id) {
       if (!channel.operator.includes(user.id)) {
-        console.log('----------------------------------------');
-        console.log('                 no access              ');
-        console.log('----------------------------------------');
+        // console.log('----------------------------------------');
+        // console.log('                 no access              ');
+        // console.log('----------------------------------------');
         return;
       }
     }
 
     //타겟이 해당채널에 존재하는지 체크
     if (!channel.users.includes(op.target)) {
-      console.log('----------------------------------------');
-      console.log('                 no target              ');
-      console.log('----------------------------------------');
+      // console.log('----------------------------------------');
+      // console.log('                 no target              ');
+      // console.log('----------------------------------------');
       return;
     }
 
     //이미 오퍼레이터인지 체크
     if (channel.operator.includes(op.target)) {
-      console.log('----------------------------------------');
-      console.log('           target is already op         ');
-      console.log('----------------------------------------');
+      // console.log('----------------------------------------');
+      // console.log('           target is already op         ');
+      // console.log('----------------------------------------');
       return;
     }
 
     //타겟이 host인지 체크
     if (channel.host === op.target) {
-      console.log('----------------------------------------');
-      console.log('             target is host             ');
-      console.log('----------------------------------------');
+      // console.log('----------------------------------------');
+      // console.log('             target is host             ');
+      // console.log('----------------------------------------');
       return;
     }
 
@@ -703,9 +720,9 @@ export class ChatGateway
     channel.operator.push(target.id);
     target.socket.emit('op', true);
 
-    console.log('----------------------------------------');
-    console.log(channel);
-    console.log('----------------------------------------');
+    // console.log('----------------------------------------');
+    // console.log(channel);
+    // console.log('----------------------------------------');
   }
 
   //*********************************************************************//
@@ -713,9 +730,9 @@ export class ChatGateway
   //*********************************************************************//
   @SubscribeMessage('allchannel')
   async handleallchannel(@ConnectedSocket() socket: Socket) {
-    console.log('----------------------------------------');
-    console.log('--------------ALLCHANNEL----------------');
-    console.log('----------------------------------------');
+    // console.log('----------------------------------------');
+    // console.log('--------------ALLCHANNEL----------------');
+    // console.log('----------------------------------------');
 
     socket.emit('allchannel', await this.chatService.getChannels());
   }
@@ -728,10 +745,10 @@ export class ChatGateway
     @MessageBody() kickobj: kickDTO,
     @ConnectedSocket() socket: Socket,
   ) {
-    console.log('----------------------------------------');
-    console.log('-----------------KICK-------------------');
-    console.log('userId: ', kickobj.id, ' targetId: ', kickobj.target);
-    console.log('----------------------------------------');
+    // console.log('----------------------------------------');
+    // console.log('-----------------KICK-------------------');
+    // console.log('userId: ', kickobj.id, ' targetId: ', kickobj.target);
+    // console.log('----------------------------------------');
 
     let user = await this.chatService.findUserById(kickobj.id);
     if (!user) return;
@@ -744,9 +761,9 @@ export class ChatGateway
     // 유저가 호스트 혹은 오퍼레이터가 아닐 경우
     if (channel.host !== user.id) {
       if (!channel.operator.includes(user.id)) {
-        console.log('----------------------------------------');
-        console.log('                 no access              ');
-        console.log('----------------------------------------');
+        // console.log('----------------------------------------');
+        // console.log('                 no access              ');
+        // console.log('----------------------------------------');
         return;
       }
     }
@@ -756,25 +773,25 @@ export class ChatGateway
 
     if (!target) return;
     if (user.channelname !== target.channelname) {
-      console.log('----------------------------------------');
-      console.log('                 no target              ');
-      console.log('----------------------------------------');
+      // console.log('----------------------------------------');
+      // console.log('                 no target              ');
+      // console.log('----------------------------------------');
       return;
     }
 
     // 타켓이 본인인지.
     if (user.id === kickobj.target) {
-      console.log('----------------------------------------');
-      console.log('               no kick myself           ');
-      console.log('----------------------------------------');
+      // console.log('----------------------------------------');
+      // console.log('               no kick myself           ');
+      // console.log('----------------------------------------');
       return;
     }
 
     // target이 호스트일 경우 그냥 파.
     if (channel.host === target.id) {
-      console.log('----------------------------------------');
-      console.log('              target is host            ');
-      console.log('----------------------------------------');
+      // console.log('----------------------------------------');
+      // console.log('              target is host            ');
+      // console.log('----------------------------------------');
       return;
     }
 
@@ -814,10 +831,10 @@ export class ChatGateway
     @MessageBody() id: number,
     @ConnectedSocket() socket: Socket,
   ) {
-    console.log('----------------------------------------');
-    console.log('-----------------HOME-------------------');
-    console.log('userId: ', id);
-    console.log('----------------------------------------');
+    // console.log('----------------------------------------');
+    // console.log('-----------------HOME-------------------');
+    // console.log('userId: ', id);
+    // console.log('----------------------------------------');
 
     // 유저 확인
     let user = await this.chatService.findUserById(id);
@@ -827,11 +844,11 @@ export class ChatGateway
     let beforeChannel = await this.chatService.findChannelByChannelname(
       user.channelname,
     );
-    console.log('before', beforeChannel);
+    // console.log('before', beforeChannel);
     if (beforeChannel.channelname === '$home') {
-      console.log('----------------------------------------');
-      console.log('         you are alread home            ');
-      console.log('----------------------------------------');
+      // console.log('----------------------------------------');
+      // console.log('         you are alread home            ');
+      // console.log('----------------------------------------');
       return;
     }
 
@@ -842,7 +859,7 @@ export class ChatGateway
       if (removeIdx !== -1) {
         (await this.chatService.getChannels()).splice(removeIdx, 1); // 111111111111111
       }
-      console.log(await this.chatService.getChannels());
+      // console.log(await this.chatService.getChannels());
       socket.leave(user.channelname);
       beforeChannel = null;
     } else {
@@ -906,10 +923,10 @@ export class ChatGateway
 
     socket.broadcast.to(user.channelname).emit('update', true); //입장 메시지
 
-    console.log('----------------------------------------');
-    console.log('---------------ALL CHANNELS-------------');
-    console.log(await this.chatService.getChannels()); //  마지막에 채널들 다 잘 수정되었는지 확인
-    console.log('----------------------------------------');
+    // console.log('----------------------------------------');
+    // console.log('---------------ALL CHANNELS-------------');
+    // console.log(await this.chatService.getChannels()); //  마지막에 채널들 다 잘 수정되었는지 확인
+    // console.log('----------------------------------------');
   }
 
   //*********************************************************************//
@@ -917,8 +934,8 @@ export class ChatGateway
   //*********************************************************************//
   @SubscribeMessage('blocklistupdate')
   async handlemutelist(@MessageBody() id: number) {
-    console.log('----------------------------------------');
-    console.log('---------BLOCK LIST UPDATE--------------');
+    // console.log('----------------------------------------');
+    // console.log('---------BLOCK LIST UPDATE--------------');
 
     let user = await this.chatService.findUserById(id);
     if (!user) return;
@@ -926,8 +943,8 @@ export class ChatGateway
     user.blocklist = null;
     user.blocklist = await this.chatService.getUserBlocklist(id);
 
-    console.log(user.blocklist);
-    console.log('----------------------------------------');
+    // console.log(user.blocklist);
+    // console.log('----------------------------------------');
   }
 
   //*********************************************************************//
@@ -935,11 +952,11 @@ export class ChatGateway
   //*********************************************************************//
   @SubscribeMessage('gamechatroom')
   async handlegameset(@MessageBody() gamers: gameDTO) {
-    console.log('----------------------------------------');
-    console.log('-----------------GAME SET---------------');
-    // console.log('hostId : ', gamers.host);
-    // console.log('targetId : ', gamers.target);
-    console.log('----------------------------------------');
+    // console.log('----------------------------------------');
+    // console.log('-----------------GAME SET---------------');
+    // // console.log('hostId : ', gamers.host);
+    // // console.log('targetId : ', gamers.target);
+    // console.log('----------------------------------------');
 
     let host = await this.chatService.findUserById(gamers.host);
     let target = await this.chatService.findUserById(gamers.target);
