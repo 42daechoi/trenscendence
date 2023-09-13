@@ -186,6 +186,10 @@ export class ChatGateway
       //마지막 user 객체 정리
       user.blocklist = null;
       user = null;
+      console.log('----------------------------------------');
+    console.log('--------------DICONNECTION--------------');
+    // console.log('Client connected: ', socket.id);
+    console.log('----------------------------------------');
     }
   }
 
@@ -197,33 +201,43 @@ export class ChatGateway
     @MessageBody() id: number,
     @ConnectedSocket() socket: Socket,
   ) {
+    async function asySleep(ms: number): Promise<any> {
+      return new Promise((resolve) => {
+        setTimeout(resolve, ms);
+      });
+    }
+
     console.log('----------------------------------------');
     console.log('-----------------BIND-------------------');
     console.log('Userid: ', id);
     console.log('SocketId: ', socket.id);
     console.log('----------------------------------------');
 
-    const user_double = await this.usersService.findUserById(id);
-    if (user_double.status !== UserStatus.OFFLINE) {
-      socket.emit('exit');
-      return;
-    }
-
-    let user_check = await this.chatService.findUserById(id);
-    if (user_check) {
-      let check_id = user_check.id;
-      await this.handleDisconnect(socket);
+    // const user_double = await this.usersService.findUserById(id);
+    // if (user_double.status !== UserStatus.OFFLINE) {
+    //   socket.emit('exit');
+    //   return;
+    // }
+    let i = 0;
+    while (1)
+    {
+      let user_check = await this.chatService.findUserById(id);
+      if (user_check) {
+        return
       // const double_check = await this.chatService.findUserById(id);
       // if (double_check) return;
-      const users: userDTO[] = await this.chatService.getUsers();
-      const user = users.find((u) => u.id === check_id);
-      if (user) {
-        socket.emit('exit');
-        return;
-        await this.handleDisconnect(user.socket);
+      // const users: userDTO[] = await this.chatService.getUsers();
+      // const user = users.find((u) => u.id === check_id);
+      // if (user) {
+      //   socket.emit('exit');
+      //   return;
+      //   await this.handleDisconnect(user.socket);
+      // }
       }
+      else
+        break;
     }
-
+    console.log("here");
     // this.connectedSockets.set(id, socket);
 
     let block_list = await this.chatService.getUserBlocklist(id);

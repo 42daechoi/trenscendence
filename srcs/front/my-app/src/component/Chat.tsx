@@ -57,8 +57,6 @@ function Chat(props) {
     const bufferData: number[] = data.profilePicture.data;
     const buffer: Buffer = Buffer.from(bufferData);
     data.profilePicture.data = buffer.toString("base64");
-
-    socket.emit("bind", data.id);
     receiveMessage();
   };
 

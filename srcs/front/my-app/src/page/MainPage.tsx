@@ -9,12 +9,11 @@ import MemoChannelsList from "../component/ChannelsList";
 import MemoChat from "../component/Chat";
 import { getWhoami } from "../utils/ApiRequest";
 import Modal from "../component/Modal";
-import { useSocket, useGameSocket, useCurPage} from "../component/SocketContext";
+import { useSocket, useGameSocket } from "../component/SocketContext";
+import { useCurPage } from "../component/CurPageContext"
 import { apiRequest } from "../utils/ApiRequest";
-import { Navigate, useNavigate } from "react-router-dom";
 
 export default function MainPage() {
-  const navigate = useNavigate();
   const [isMatch, setIsMatch] = useState(false);
   const [play, setPlay] = useState(false);
   const [matchInfo, setMatchInfo] = useState(null);
@@ -28,6 +27,11 @@ export default function MainPage() {
   const {match, set} = useCurPage();
   useEffect(()=>{if (curPage !== "game_waiting")setPlay(false); set("");},[curPage]);
   useEffect(()=> {
+    if (match === "block")
+    {
+      window.location.reload();
+      socket.disconnect();
+    }
     if (match === "match")
     {
       sideRef.current.checked = false;
@@ -51,14 +55,20 @@ export default function MainPage() {
   useEffect(() => {
     if (!socket) return;
     if (!gameSocket) return;
+      gameSocket.emit('checksocket', "", response =>{
+        if (response === 1)
+          setTimeout(() => {
+            console.log("checksocket");
+            gameSocket.emit('checksocket', "", response =>{ if (response === 1) window.location.reload();
+            })
+          }, 1000);
+      });
+
     gameSocket.on("OneOnOneNoti", data =>{
       console.log("게임초대");
       set("match");
       setMatchInfo(data.id);
     });
-    socket.on("exit", data => {
-      navigate("/");
-    })
     socket.on("allinfo", (data) => {
       getWhoami()
         .then((response) => {

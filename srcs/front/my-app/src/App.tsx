@@ -4,9 +4,10 @@ import { useState } from "react";
 import {
   SocketProvider,
   GameSocketProvider,
-  CurPageProvider,
 } from "./component/SocketContext";
+import { CurPageProvider } from "./component/CurPageContext"
 import LoginPage from "./page/LoginPage";
+import CookiePage from "./page/CookiePage"
 import MainPage from "./page/MainPage";
 import CreateAccPage from "./page/CreateAccPage";
 import Callback from "./page/CallbackPage";
@@ -15,64 +16,86 @@ import GamePage from "./page/GamePage";
 import PartialTFA from "./page/PartialTFA";
 import NotFound from "./page/Notfound";
 import { getWhoami } from "./utils/ApiRequest";
+import { useEffect, useRef } from "react";
+
 
 function App() {
   const [isLogin, setIsLogin] = useState(false);
   const [isSet, setIsSet] = useState(false);
-
-  getWhoami()
-    .then((result) => {
-      setIsSet(true);
-      setIsLogin(true);
-    })
-    .catch((err) => {
-      setIsSet(true);
-      setIsLogin(false);
-    });
-
+  const [isOn,setIsOn] = useState(false);
+  const checkOnRef = useRef(null);
+  const refreshPage = () => {
+    window.location.reload();
+  };
+  useEffect(() => {
+    function checkOn(setIsSet, setIsLogin, setIsOn)
+    {
+      console.log("1", isOn, isSet, isLogin);
+      getWhoami()
+      .then((result) => {
+        if (result.data.status === 0)
+        {
+          setIsOn(true);
+        }
+        setIsLogin(true);
+        setIsSet(true);
+      })
+      .catch((err) => {
+        clearInterval(checkOnRef.current);
+        console.log("asdasdasdasd")
+        setIsSet(true);
+        setIsLogin(false);
+      });
+    }
+    checkOn(setIsSet, setIsLogin, setIsOn);
+    checkOnRef.current = setInterval(() => {checkOn(setIsSet, setIsLogin, setIsOn)}, 500);
+    return (()=>{if(checkOnRef.current) {clearInterval(checkOnRef.current)}});
+  },[]);
+  useEffect(() => {if (isOn === true) clearInterval(checkOnRef.current)} ,[isOn]);
   return (
+    <CurPageProvider>
     <GameSocketProvider>
       <SocketProvider>
-        <CurPageProvider>
           <Router>
             {isSet && (
               <Routes>
                 <Route
                   path="/"
-                  Component={isLogin ? LoginPage : LoginPage}
+                  Component={!isLogin ? CookiePage : isOn ? MainPage : LoginPage}
                 ></Route>
                 <Route
                   path="/main"
-                  Component={isLogin ? MainPage : LoginPage}
+                  Component={!isOn ? LoginPage :isLogin ? MainPage : LoginPage}
                 ></Route>
                 <Route
                   path="/create-account"
-                  Component={isLogin ? CreateAccPage : LoginPage}
+                  Component={!isOn ? LoginPage : isLogin ? CreateAccPage : LoginPage}
                 ></Route>
                 <Route
                   path="/callback"
-                  Component={isLogin ? Callback : LoginPage}
+                  Component={!isOn ? LoginPage : isLogin ? Callback : LoginPage}
                 ></Route>
                 <Route
                   path="/game"
-                  Component={isLogin ? GamePage : LoginPage}
+                  Component={!isOn ? LoginPage : isLogin ? GamePage : LoginPage}
                 ></Route>
                 <Route
                   path="/full-tfa"
-                  Component={isLogin ? FullTFA : LoginPage}
+                  Component={!isOn ? LoginPage : isLogin ? FullTFA : LoginPage}
                 ></Route>
                 <Route
                   path="/partial-tfa"
-                  Component={isLogin ? PartialTFA : LoginPage}
+                  Component={!isOn ? LoginPage : isLogin ? PartialTFA : LoginPage}
                 ></Route>
                 <Route path="*" Component={NotFound} />
               </Routes>
             )}
           </Router>
-        </CurPageProvider>
       </SocketProvider>
     </GameSocketProvider>
+    </CurPageProvider>
   );
 }
+
 
 export default App;

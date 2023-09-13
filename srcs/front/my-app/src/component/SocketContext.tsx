@@ -1,25 +1,13 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
+import { useCurPage, CurPageContext} from "./CurPageContext";
 import { io, Socket } from "socket.io-client";
-
+import { whoami } from "../utils/whoami";
 interface ProviderProps {
   children: React.ReactNode;
 }
 
 const SocketContext = createContext<Socket | null>(null);
 const GameSocketContext = createContext<Socket | null>(null);
-export const CurPageContext = createContext<{
-  match: string;
-  set: React.Dispatch<React.SetStateAction<string>>;
-}>({ match: "", set: () => {} });
-
-export function CurPageProvider({ children }: ProviderProps) {
-  const [curPage, setCurPage] = useState<string>("");
-  const value = { match: curPage, set: setCurPage };
-
-  return (
-    <CurPageContext.Provider value={value}>{children}</CurPageContext.Provider>
-  );
-}
 
 export function GameSocketProvider({ children }: ProviderProps) {
   const gameSocket = useGameSocketConnection();
@@ -39,10 +27,6 @@ export function SocketProvider({ children }: ProviderProps) {
   );
 }
 
-export function useCurPage() {
-  return useContext(CurPageContext);
-}
-
 export function useGameSocket() {
   return useContext(GameSocketContext);
 }
@@ -55,17 +39,17 @@ export function useSocket() {
 //   return useContext()
 // }
 
-function sleep(ms: number): Promise<any> {
-  return new Promise((resolve) => {
-    setTimeout(resolve, ms);
-  });
-}
 
 function useGameSocketConnection() {
   const [gameSocket, setGameSocket] = useState<Socket | null>(null);
-
+  const {match, set} = useCurPage();
   useEffect(() => {
     const newGameSocket = io("localhost:3001/game", { withCredentials: true });
+    newGameSocket.on("connectionBlock",()=>{
+      console.log("block")
+      newGameSocket.disconnect();
+      set("block");
+    });
     // newGameSocket.on("exit", () => {
       // console.log("exit!!");
       // while (1) {
@@ -90,7 +74,17 @@ function useSocketConnection() {
 
   useEffect(() => {
     const newSocket = io("localhost:3001/chat", { withCredentials: true });
+    const whoAmI = async () =>{
+      const data = await whoami();
+      if (data)
+      {
+        newSocket.emit("bind", data.id);
+        console.log("data",data.id);
+      }
+    }
     setSocket(newSocket);
+    whoAmI();
+
     // newSocket.on("exit", () => {
     //   console.log("exit!!");
       // while (1) {

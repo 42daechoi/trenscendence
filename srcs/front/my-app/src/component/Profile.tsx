@@ -6,7 +6,8 @@ import { useNavigate } from "react-router-dom";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { Buffer } from "buffer";
-import { useCurPage, useGameSocket } from "./SocketContext";
+import {  useGameSocket } from "./SocketContext";
+import {useCurPage} from "./CurPageContext"
 import {
   apiRequest,
   getWhoami,

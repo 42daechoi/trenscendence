@@ -1,10 +1,20 @@
-import "../css/LoginPage.css";
 
+
+import "../css/LoginPage.css";
+import { getWhoami } from "../utils/ApiRequest";
+import { useNavigate } from "react-router-dom";
 function LoginPage() {
+  const navigate = useNavigate();
   const login42 = () => {
-    window.location.href =
-      "https://api.intra.42.fr/oauth/authorize?client_id=u-s4t2ud-2ba7bd194c505ff9326db61afa5c8f62b677dd535610878d78076cd0137b36b9&redirect_uri=http%3A%2F%2Flocalhost%3A3001%2Fauth%2Floginfortytwo%2Fcallback&response_type=code";
-  };
+  getWhoami()
+      .then((result) => {
+        navigate("/main");
+      })
+      .catch((err) => {
+          window.location.href =
+            "https://api.intra.42.fr/oauth/authorize?client_id=u-s4t2ud-2ba7bd194c505ff9326db61afa5c8f62b677dd535610878d78076cd0137b36b9&redirect_uri=http%3A%2F%2Flocalhost%3A3001%2Fauth%2Floginfortytwo%2Fcallback&response_type=code";
+      });
+    };
   return (
     <div className="hero min-h-screen bg-base-200">
       <button onClick={login42} className="login">
@@ -16,3 +26,4 @@ function LoginPage() {
 }
 
 export default LoginPage;
+

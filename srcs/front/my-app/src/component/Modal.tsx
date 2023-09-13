@@ -1,6 +1,6 @@
 import { useContext, useEffect, useState } from "react";
 import "../css/Modal.css";
-import { useCurPage, CurPageContext } from "./SocketContext";
+import { CurPageContext } from "./CurPageContext";
 // closeModal = Functions required to close modal window
 // ConfigureModal = Functions required to decorate modal window
 export default function Modal({
