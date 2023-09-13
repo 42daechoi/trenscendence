@@ -103,17 +103,24 @@ export class GameGateway
       //binding user and socket id
       if (!user) return;
 
-      // await this.gameService.asySleep(1000);
-      // if (user.status !== UserStatus.OFFLINE) {
-      //   socket.emit('exit');
-      //   this.logger.log(`${socket.id} socket blocked ❌`);
-      //   return;
-      //   // return new ForbiddenException('Forbidden access');
-      // }
+      if (user.status !== UserStatus.OFFLINE) {
+        this.logger.log(`❌❌❌  ${socket.id} socket blocked  ❌❌❌`);
+        return;
+        return new ForbiddenException('Forbidden access');
+      }
       this.logger.log('binding socket id with user id ' + user.intraId);
+      // await this.authService.updateUserStatusOnline(user);
 
+      await this.usersService.update(user.id, { socketId: socket.id });//bind
+      //const guarantee : User = await this.usersService.findUserBySocketId(socket.id);
+      // if (guarantee){
+      //   await this.authService.updateUserStatusOnline(user);
+      // }
+      // else{
+      //   await this.authService.updateUserStatusOffline(user);
+      //   return ;
+      // }
       await this.authService.updateUserStatusOnline(user);
-      await this.usersService.update(user.id, { socketId: socket.id });
       await this.gameService.userComeNsp(socket);
       return Boolean(user);
     }
@@ -123,9 +130,9 @@ export class GameGateway
     this.logger.log(`${socket.id} socket disconnected ❌`);
     const out_user = await this.usersService.findUserBySocketId(socket.id);
     if (!out_user) return;
+    await this.authService.updateUserStatusOffline(out_user);
     this.gameService.userOutNsp(socket);
     await this.usersService.update(out_user.id, { socketId: null });
-    await this.authService.updateUserStatusOffline(out_user);
   }
 
   //	@UseGuards(WsJwtGuard)

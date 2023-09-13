@@ -11,8 +11,10 @@ import { getWhoami } from "../utils/ApiRequest";
 import Modal from "../component/Modal";
 import { useSocket, useGameSocket, useCurPage} from "../component/SocketContext";
 import { apiRequest } from "../utils/ApiRequest";
+import { Navigate, useNavigate } from "react-router-dom";
 
 export default function MainPage() {
+  const navigate = useNavigate();
   const [isMatch, setIsMatch] = useState(false);
   const [play, setPlay] = useState(false);
   const [matchInfo, setMatchInfo] = useState(null);
@@ -48,11 +50,15 @@ export default function MainPage() {
   
   useEffect(() => {
     if (!socket) return;
+    if (!gameSocket) return;
     gameSocket.on("OneOnOneNoti", data =>{
       console.log("게임초대");
       set("match");
       setMatchInfo(data.id);
     });
+    socket.on("exit", data => {
+      navigate("/");
+    })
     socket.on("allinfo", (data) => {
       getWhoami()
         .then((response) => {
@@ -73,10 +79,11 @@ export default function MainPage() {
         });
     });
     return () => {
+      socket.off ("exit");
       gameSocket.off("OneOnOneNoti");
       socket.off("allinfo");
     };
-  }, [socket]);
+  }, [socket, gameSocket]);
 
   useEffect(() => {
     apiRequest<any>("get", "http://localhost:3001/users/whoami").then(
@@ -131,7 +138,8 @@ export default function MainPage() {
     setIsMatch(false);
     console.log("closeMatch");
     if (gameSocket && match !== "accept")
-      gameSocket.emit("denyOneOnOne","");
+      if (gameSocket)
+        gameSocket.emit("denyOneOnOne","");
   };
 
   return (

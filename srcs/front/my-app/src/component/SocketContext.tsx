@@ -67,15 +67,15 @@ function useGameSocketConnection() {
   useEffect(() => {
     const newGameSocket = io("localhost:3001/game", { withCredentials: true });
     // newGameSocket.on("exit", () => {
-    //   console.log("exit!!");
-    //   while (1) {
-    //     alert("Already login user");
-    //   }
-    //   // navigate("/");
+      // console.log("exit!!");
+      // while (1) {
+      //   alert("Already login user");
+      // }
+      // navigate("/");
     // });
-
     // if (!newGameSocket)
     setGameSocket(newGameSocket);
+    
 
     return () => {
       newGameSocket.disconnect();
@@ -91,13 +91,14 @@ function useSocketConnection() {
   useEffect(() => {
     const newSocket = io("localhost:3001/chat", { withCredentials: true });
     setSocket(newSocket);
-    newSocket.on("exit", () => {
-      console.log("exit!!");
-      while (1) {
-        alert("Already login user");
-      }
+    // newSocket.on("exit", () => {
+    //   console.log("exit!!");
+      // while (1) {
+      //   alert("Already login user");
+      //   navigate()
+      // }
       // navigate("/");
-    });
+    // });
     return () => {
       newSocket.disconnect();
     };

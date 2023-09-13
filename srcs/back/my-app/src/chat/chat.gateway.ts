@@ -101,7 +101,7 @@ export class ChatGateway
     if (user) {
       //2초마다 보내는 socket에서 해제
       clearInterval(user.interval);
-      this.connectedSockets.delete(user.id);
+      // this.connectedSockets.delete(user.id);
 
       //users에서 지우기.
       const Users: userDTO[] = await this.chatService.getUsers();
@@ -203,10 +203,11 @@ export class ChatGateway
     console.log('SocketId: ', socket.id);
     console.log('----------------------------------------');
 
-    // const user_double = await this.usersService.findUserById(id);
-    // if (user_double.status !== UserStatus.OFFLINE) {
-    //   return;
-    // }
+    const user_double = await this.usersService.findUserById(id);
+    if (user_double.status !== UserStatus.OFFLINE) {
+      socket.emit('exit');
+      return;
+    }
 
     let user_check = await this.chatService.findUserById(id);
     if (user_check) {
@@ -218,11 +219,12 @@ export class ChatGateway
       const user = users.find((u) => u.id === check_id);
       if (user) {
         socket.emit('exit');
+        return;
         await this.handleDisconnect(user.socket);
       }
     }
 
-    this.connectedSockets.set(id, socket);
+    // this.connectedSockets.set(id, socket);
 
     let block_list = await this.chatService.getUserBlocklist(id);
 
