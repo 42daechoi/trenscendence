@@ -62,6 +62,9 @@ export class UsersService {
   }
 
   async findUserById(id: number): Promise<User | null> {
+    if (isNaN(id) || id <= 0 || id > 2147483647) {
+		return (null);
+    }
     const user = await this.userRepository.findOneById(id);
     if (!user) return null;
     return user;
@@ -84,6 +87,9 @@ export class UsersService {
   }
 
   async update(id: number, attrs: Partial<User>) {
+    if (isNaN(id) || id <= 0 || id > 2147483647) {
+		return (null);
+    }
     const user = await this.findUserById(id);
     if (!user) {
       throw new NotFoundException('user not found');
@@ -114,6 +120,10 @@ export class UsersService {
   }
 
   async remove(id: number) {
+    if (isNaN(id) || id <= 0 || id > 2147483647) {
+		throw new NotFoundException('Invalid Input');
+		//return (null);
+    }
     const user = await this.findUserById(id);
     if (!user) {
       throw new NotFoundException('user not found');
@@ -128,14 +138,25 @@ export class UsersService {
   }
 
   async addFriends(cur_id: number, fri_id: number) {
+    if (isNaN(cur_id) || cur_id <= 0 || cur_id > 2147483647) {
+		throw new NotFoundException('Invalid Input');
+		//return (null);
+    }
+    if (isNaN(fri_id) || fri_id <= 0 || fri_id > 2147483647) {
+		throw new NotFoundException('Invalid Input');
+		//return (null);
+    }
     if (cur_id === fri_id) return;
     //find cur user
     const user: User = await this.userRepository.findOne({
       where: { id: cur_id },
-      relations: { blocks: true, friends: true },
+      relations: { friends: true, blocks: true },
     });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
 
-    //find cur friend
+    //find cur user
     const friend: User = await this.findUserById(fri_id);
     if (friend && user.friends) {
       user.friends.push(friend);
@@ -150,15 +171,26 @@ export class UsersService {
     return user;
   }
 
-  async removeFriends(cur_id: number, fri_id: number) {
+  async removeFriends(cur_id: number, fri_id: number) : Promise<User | null>{
+    if (isNaN(cur_id) || cur_id <= 0 || cur_id > 2147483647) {
+		throw new NotFoundException('Invalid Input');
+		//return (null);
+    }
+    if (isNaN(fri_id) || fri_id <= 0 || fri_id > 2147483647) {
+		throw new NotFoundException('Invalid Input');
+		//return (null);
+    }
     if (cur_id === fri_id) return;
-
     //find cur user
     const user: User = await this.userRepository.findOne({
       where: { id: cur_id },
-      relations: { blocks: true, friends: true },
+      relations: { friends: true, blocks: true },
     });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
 
+    //find cur user
     const friend: User = await this.findUserById(fri_id);
     if (friend && user.friends) {
       for (var i = user.friends.length - 1; i >= 0; i--) {
@@ -188,6 +220,12 @@ export class UsersService {
   }
 
   async addBlocks(cur_id: number, block_id: number) {
+    if (isNaN(cur_id) || cur_id <= 0 || cur_id > 2147483647) {
+		return (null);
+    }
+    if (isNaN(block_id) || block_id <= 0 || block_id > 2147483647) {
+		return (null);
+    }
     if (cur_id === block_id) return;
     //find cur user
     const user: User = await this.userRepository.findOne({
@@ -200,6 +238,8 @@ export class UsersService {
 
     //find cur user
     const target: User = await this.findUserById(block_id);
+	if (!target)
+		return;
     if (target && user.blocks) {
       user.blocks.push(target);
       //console.log('added blocks id : ' + block_id);
@@ -214,14 +254,26 @@ export class UsersService {
   }
 
   async removeBlocks(cur_id: number, block_id: number) {
+    if (isNaN(cur_id) || cur_id <= 0 || cur_id > 2147483647) {
+		return (null);
+    }
+    if (isNaN(block_id) || block_id <= 0 || block_id > 2147483647) {
+		return (null);
+    }
     if (cur_id === block_id) return;
-
+    //find cur user
     const user: User = await this.userRepository.findOne({
       where: { id: cur_id },
-      relations: { blocks: true, friends: true },
+      relations: { friends: true, blocks: true },
     });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
 
+    //find cur user
     const target: User = await this.findUserById(block_id);
+	if (!target)
+		return;
     if (target && user.friends) {
       for (var i = user.blocks.length - 1; i >= 0; i--) {
         if (user.blocks[i].id === target.id) {

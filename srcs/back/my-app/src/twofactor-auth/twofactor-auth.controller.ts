@@ -95,20 +95,18 @@ export class TwoFactorAuthController {
     //    res.setHeader("Set-Cookie", authCookie);
     res.json(user);
     return;
-	res.json(user);
-	return ;
   }
 
-  private validateCode(user: User, twoFactorAuthCode: string) {
+  private async validateCode(user: User, twoFactorAuthCode: string) {
     this.logger.log(
       `Attempting to validate user ${user.id} with 2FA code ${twoFactorAuthCode}`,
     );
-    const isCodeValid = this.twoFactorAuthService.isTwoFactorAuthCodeValid(
+    const isCodeValid = await this.twoFactorAuthService.isTwoFactorAuthCodeValid(
       twoFactorAuthCode,
       user,
     );
     if (!isCodeValid) {
-      console.log('2FA code not valid');
+      this.logger.log('2FA code not valid');
       throw new UnauthorizedException('2FA: wrong authentication code');
     }
   }
