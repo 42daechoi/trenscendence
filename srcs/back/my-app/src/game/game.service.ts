@@ -313,11 +313,6 @@ export class GameService {
       this.logger.log('Target User is OFFLINE. id: ' + targetUserId);
       return;
     }
-    //In Game
-    if (targetUser.status === UserStatus.GAME) {
-      this.logger.log('Target User is in Game. id: ' + targetUserId);
-      return;
-    }
     //cannot find socket
     const targetSocket: Socket = this.usersSockets.get(targetUser.socketId);
     if (targetSocket) {

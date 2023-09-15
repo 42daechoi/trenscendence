@@ -115,11 +115,8 @@ export default function GamePage() {
       }
     };
     if (socket) {
-      console.log("checktSocket");
-      socket.emit("checksocket", "", (response) => {
-        if (response === 1)
-          navigate.current('/');
-      });
+      if (socket.connected === false)
+        navigate.current('/');
       socket.emit('inGame', "", response => {
         if (response === false) {navigate.current('/main');}
         else if (response === true) {
