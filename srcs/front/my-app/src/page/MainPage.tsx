@@ -9,11 +9,9 @@ import MemoChannelsList from "../component/ChannelsList";
 import MemoChat from "../component/Chat";
 import { getWhoami } from "../utils/ApiRequest";
 import Modal from "../component/Modal";
-import {
-  useSocket,
-  useGameSocket,
-  useCurPage,
-} from "../component/SocketContext";
+
+import { useSocket, useGameSocket } from "../component/SocketContext";
+import { useCurPage } from "../component/CurPageContext";
 
 export default function MainPage() {
   const [isMatch, setIsMatch] = useState(false);
@@ -26,12 +24,17 @@ export default function MainPage() {
   const [memberList, setMemberList] = useState([]);
   const socket = useSocket();
   const [myId, setMyId] = useState(0);
+
   const { match, set } = useCurPage();
   useEffect(() => {
     if (curPage !== "game_waiting") setPlay(false);
     set("");
   }, [curPage]);
   useEffect(() => {
+    if (match === "block") {
+      window.location.reload();
+      socket.disconnect();
+    }
     if (match === "match") {
       sideRef.current.checked = false;
       setIsMatch(true);
@@ -53,6 +56,17 @@ export default function MainPage() {
 
   useEffect(() => {
     if (!socket) return;
+    if (!gameSocket) return;
+    gameSocket.emit("checksocket", "", (response) => {
+      if (response === 1)
+        setTimeout(() => {
+          console.log("checksocket");
+          gameSocket.emit("checksocket", "", (response) => {
+            if (response === 1) window.location.reload();
+          });
+        }, 1000);
+    });
+
     gameSocket.on("OneOnOneNoti", (data) => {
       console.log("게임초대");
       set("match");
@@ -78,10 +92,11 @@ export default function MainPage() {
         });
     });
     return () => {
+      socket.off("exit");
       gameSocket.off("OneOnOneNoti");
       socket.off("allinfo");
     };
-  }, [socket]);
+  }, [socket, gameSocket]);
 
   useEffect(() => {
     getWhoami().then((response) => {
@@ -132,7 +147,9 @@ export default function MainPage() {
   const closeMatch = (): void => {
     setIsMatch(false);
     console.log("closeMatch");
-    if (gameSocket && match !== "accept") gameSocket.emit("denyOneOnOne", "");
+
+    if (gameSocket && match !== "accept")
+      if (gameSocket) gameSocket.emit("denyOneOnOne", "");
   };
 
   return (

@@ -219,7 +219,6 @@ export class GameService {
     const cur_game_id = await this.getCurGameRoomId(client);
     const cur_game = this.gameSessions.get(cur_game_id);
     this.usersSockets.delete(client.id);
-    await this.updateUserStatusOnline(client);
   }
 
   async updateGameRoomInfo(client: Socket, body: any) {}

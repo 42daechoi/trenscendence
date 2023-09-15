@@ -1,28 +1,15 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
+import { useCurPage, CurPageContext } from "./CurPageContext";
 import { io, Socket } from "socket.io-client";
-
+import { whoami } from "../utils/whoami";
+import { getWhoami } from "../utils/ApiRequest";
 interface ProviderProps {
   children: React.ReactNode;
 }
 
 const SocketContext = createContext<Socket | null>(null);
 const GameSocketContext = createContext<Socket | null>(null);
-
-export const CurPageContext = createContext<{
-  match: string;
-  set: React.Dispatch<React.SetStateAction<string>>;
-}>({ match: "", set: () => {} });
-
 const socketUrl: string = process.env.REACT_APP_SOCKET_URL;
-
-export function CurPageProvider({ children }: ProviderProps) {
-  const [curPage, setCurPage] = useState<string>("");
-  const value = { match: curPage, set: setCurPage };
-
-  return (
-    <CurPageContext.Provider value={value}>{children}</CurPageContext.Provider>
-  );
-}
 
 export function GameSocketProvider({ children }: ProviderProps) {
   const gameSocket = useGameSocketConnection();
@@ -42,10 +29,6 @@ export function SocketProvider({ children }: ProviderProps) {
   );
 }
 
-export function useCurPage() {
-  return useContext(CurPageContext);
-}
-
 export function useGameSocket() {
   return useContext(GameSocketContext);
 }
@@ -54,17 +37,17 @@ export function useSocket() {
   return useContext(SocketContext);
 }
 
-function sleep(ms: number): Promise<any> {
-  return new Promise((resolve) => {
-    setTimeout(resolve, ms);
-  });
-}
-
 function useGameSocketConnection() {
   const [gameSocket, setGameSocket] = useState<Socket | null>(null);
-
+  const { match, set } = useCurPage();
   useEffect(() => {
     const newGameSocket = io(`${socketUrl}/game`, { withCredentials: true });
+
+    newGameSocket.on("connectionBlock", () => {
+      console.log("block");
+      newGameSocket.disconnect();
+      set("block");
+    });
     setGameSocket(newGameSocket);
 
     return () => {
@@ -80,14 +63,31 @@ function useSocketConnection() {
 
   useEffect(() => {
     const newSocket = io(`${socketUrl}/chat`, { withCredentials: true });
+
+    const whoAmI = async () => {
+      getWhoami()
+        .then((resposne) => {
+          const data = resposne.data;
+          if (data) {
+            newSocket.emit("bind", data.id);
+            console.log("data", data.id);
+          }
+        })
+        .catch((error) => {
+          console.log(error);
+        });
+    };
     setSocket(newSocket);
-    newSocket.on("exit", () => {
-      console.log("exit!!");
-      while (1) {
-        alert("Already login user");
-      }
-      // navigate("/");
-    });
+    whoAmI();
+
+    // newSocket.on("exit", () => {
+    //   console.log("exit!!");
+    // while (1) {
+    //   alert("Already login user");
+    //   navigate()
+    // }
+    // navigate("/");
+    // });
     return () => {
       newSocket.disconnect();
     };

@@ -4,6 +4,7 @@ import { AppModule } from './app.module';
 import * as cookieParser from 'cookie-parser';
 import { ConfigService } from '@nestjs/config';
 import { json, urlencoded } from 'express';
+import { UsersService } from './users/users.service';
 //const cookieSession = require('cookie-session');
 
 async function bootstrap() {
@@ -25,6 +26,7 @@ async function bootstrap() {
     //		allowedHeaders: 'Content-Type, Accept',
     credentials: true,
   });
+
   app.use(json({ limit: '10mb' }));
   app.use(urlencoded({ extended: true, limit: '10mb' }));
   await app.listen(config.get<number>('CORS_PORT'));

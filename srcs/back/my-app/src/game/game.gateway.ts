@@ -90,9 +90,6 @@ export class GameGateway
   async handleConnection(@ConnectedSocket() socket: Socket) {
     this.logger.log(`${socket.id} socket connected`);
     //broadcast
-    socket.emit('message', {
-      message: `${socket.id} has connected.`,
-    });
     const jwtCookie = socket.handshake.headers.cookie
       ?.split('; ')
       .find((row) => row.startsWith('jwt='))
@@ -103,29 +100,39 @@ export class GameGateway
       //binding user and socket id
       if (!user) return;
 
-      // await this.gameService.asySleep(1000);
-      // if (user.status !== UserStatus.OFFLINE) {
-      //   socket.emit('exit');
-      //   this.logger.log(`${socket.id} socket blocked ❌`);
-      //   return;
-      //   // return new ForbiddenException('Forbidden access');
-      // }
+      if (user.status !== UserStatus.OFFLINE) {
+        this.logger.log(`❌❌❌  ${socket.id} socket blocked  ❌❌❌`);
+        socket.emit("connectionBlock");
+        return;
+        return new ForbiddenException('Forbidden access');
+      }
       this.logger.log('binding socket id with user id ' + user.intraId);
+      // await this.authService.updateUserStatusOnline(user);
+
+      await this.usersService.update(user.id, { socketId: socket.id });//bind
+      //const guarantee : User = await this.usersService.findUserBySocketId(socket.id);
+      // if (guarantee){
+      //   await this.authService.updateUserStatusOnline(user);
+      // }
+      // else{
+      //   await this.authService.updateUserStatusOffline(user);
+      //   return ;
+      // }
 
       await this.authService.updateUserStatusOnline(user);
-      await this.usersService.update(user.id, { socketId: socket.id });
       await this.gameService.userComeNsp(socket);
       return Boolean(user);
     }
   }
 
   async handleDisconnect(@ConnectedSocket() socket: Socket) {
+    await this.gameService.asySleep(1000);
     this.logger.log(`${socket.id} socket disconnected ❌`);
     const out_user = await this.usersService.findUserBySocketId(socket.id);
     if (!out_user) return;
+    await this.authService.updateUserStatusOffline(out_user);
     this.gameService.userOutNsp(socket);
     await this.usersService.update(out_user.id, { socketId: null });
-    await this.authService.updateUserStatusOffline(out_user);
   }
 
   //	@UseGuards(WsJwtGuard)
@@ -303,6 +310,15 @@ export class GameGateway
   async wait(@ConnectedSocket() socket: Socket) {
     await this.gameService.gameWait(socket, this.nsp);
   }
+
+  @SubscribeMessage('checksocket')
+  async checkSocket(@ConnectedSocket() socket: Socket) {
+    const out_user = await this.usersService.findUserBySocketId(socket.id);
+    if (out_user)
+      return 0;
+    return 1;
+  }
+
 
   @SubscribeMessage('gameRoomOut')
   async gameRoomOut(@ConnectedSocket() socket: Socket) {

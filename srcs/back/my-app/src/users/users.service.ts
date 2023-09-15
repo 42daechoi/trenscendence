@@ -9,15 +9,27 @@ import { UserDto } from './dtos/users.dto';
 import { randomBytes, scrypt as _scrypt } from 'crypto';
 import { promisify } from 'util';
 import { HttpService } from '@nestjs/axios';
+import { UserStatus } from '../typeorm/user.entity';
 const scrypt = promisify(_scrypt);
 
 @Injectable()
 export class UsersService {
-  constructor(
+    constructor(
     @InjectRepository(User) private userRepository: Repository<User>,
     private httpService: HttpService,
-  ) {}
+  ) {
+      this.init();
+  }
+  async init() {
+    const users = await this.userRepository.find();
 
+    for (const user of users) {
+      user.status = UserStatus.OFFLINE; // 모든 유저의 status를 OFFLINE으로 변경
+      await this.userRepository.save(user); // 변경된 상태를 저장
+    }
+  }
+
+  
   async createUser(createUserDto: CreateUserDto) {
     //creating has type checking with dto
 
