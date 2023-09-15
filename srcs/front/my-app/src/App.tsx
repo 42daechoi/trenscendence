@@ -16,18 +16,20 @@ import { getWhoami } from "./utils/ApiRequest";
 import { useEffect, useRef } from "react";
 
 function App() {
-  const [isLogin, setIsLogin] = useState(false);
-  const [isSet, setIsSet] = useState(false);
+  const [isLogin, setIsLogin] = useState<boolean>(false);
+  const [isSet, setIsSet] = useState<boolean>(false);
 
-  const [isOn, setIsOn] = useState(false);
-  const checkOnRef = useRef(null);
+  const [isOn, setIsOn] = useState<boolean>(false);
+  const checkOnRef = useRef<NodeJS.Timeout | null>(null);
   const count = useRef(0);
   useEffect(() => {
-    function checkOn(setIsSet, setIsLogin, setIsOn) {
+    function checkOn(setIsSet : React.Dispatch<React.SetStateAction<boolean>>, setIsLogin: React.Dispatch<React.SetStateAction<boolean>>, setIsOn: React.Dispatch<React.SetStateAction<boolean>>) {
       if (count) {
         count.current += 1;
       }
-      if (count.current === 5) clearInterval(checkOnRef.current);
+      if (count.current === 5) 
+        if (checkOnRef.current)  
+          clearInterval(checkOnRef.current);
       getWhoami()
         .then((result) => {
           if (result.data.status === 0) {
@@ -37,7 +39,8 @@ function App() {
           setIsSet(true);
         })
         .catch((err) => {
-          clearInterval(checkOnRef.current);
+          if (checkOnRef.current)
+            clearInterval(checkOnRef.current);
           setIsSet(true);
           setIsLogin(false);
         });
@@ -53,7 +56,7 @@ function App() {
     };
   }, []);
   useEffect(() => {
-    if (isOn === true) clearInterval(checkOnRef.current);
+    if (isOn === true) if (checkOnRef.current)clearInterval(checkOnRef.current);
   }, [isOn]);
   return (
     <CurPageProvider>
