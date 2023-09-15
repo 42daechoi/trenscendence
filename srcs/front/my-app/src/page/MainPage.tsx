@@ -14,7 +14,6 @@ import {
   useGameSocket,
   useCurPage,
 } from "../component/SocketContext";
-import { apiRequest } from "../utils/ApiRequest";
 
 export default function MainPage() {
   const [isMatch, setIsMatch] = useState(false);
@@ -85,11 +84,9 @@ export default function MainPage() {
   }, [socket]);
 
   useEffect(() => {
-    apiRequest<any>("get", "http://localhost:3001/users/whoami").then(
-      (response) => {
-        setMyId(response.data.id);
-      }
-    );
+    getWhoami().then((response) => {
+      setMyId(response.data.id);
+    });
     return () => {};
   }, []);
 
