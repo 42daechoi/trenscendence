@@ -5,11 +5,12 @@ import { authenticator } from "otplib";
 import { toDataURL, toFileStream } from "qrcode";
 import { Response } from "express";
 import * as CryptoJS from 'crypto-js';
+import {ConfigService} from "@nestjs/config";
 
 @Injectable()
 export class TwoFactorAuthService {
   private readonly logger = new Logger(TwoFactorAuthService.name);
-  constructor(private readonly userService: UsersService) {}
+  constructor(private readonly userService: UsersService, private readonly configServie: ConfigService) {}
 
   async generateTwoFactorAuthSecret(user: User) {
     this.logger.log(`Generating 2FA secret for user ${user.id}`);
@@ -18,7 +19,7 @@ export class TwoFactorAuthService {
 
 	//hash encode
 	//ENCRYPTION
-	const ENCRYPTION_SECRET = "01234567890123456789012345678901"
+	const ENCRYPTION_SECRET = this.configServie.get('TFA_SECRET');
 	const encrypted = CryptoJS.AES.encrypt(secret, ENCRYPTION_SECRET).toString();
 
 	//get APP name
@@ -40,13 +41,13 @@ export class TwoFactorAuthService {
     return await toDataURL(otpauthUrl);
   }
 
-  isTwoFactorAuthCodeValid(twoFactorAuthCode: string, user: User) {
+  async isTwoFactorAuthCodeValid(twoFactorAuthCode: string, user: User) {
     if (!user.twoFASecret || user.twoFASecret.length < 1) {
       throw new BadRequestException("2FA: user has not registered a secret");
     }
 	
 	//hash decoding
-	const ENCRYPTION_SECRET = "01234567890123456789012345678901"
+	const ENCRYPTION_SECRET = this.configServie.get('TFA_SECRET');
 	const decoded_secret = CryptoJS.AES.decrypt(user.twoFASecret, ENCRYPTION_SECRET).toString(CryptoJS.enc.Utf8);
 	
     return authenticator.verify({
