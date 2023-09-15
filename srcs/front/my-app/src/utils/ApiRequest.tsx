@@ -1,6 +1,5 @@
 import axios, { AxiosResponse } from "axios";
 
-// const serverUrl: string = "http://localhost:3001";
 const serverUrl: string = process.env.REACT_APP_SERVER_URL;
 
 export const apiRequest = <T = any,>(

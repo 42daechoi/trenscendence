@@ -7,10 +7,13 @@ interface ProviderProps {
 
 const SocketContext = createContext<Socket | null>(null);
 const GameSocketContext = createContext<Socket | null>(null);
+
 export const CurPageContext = createContext<{
   match: string;
   set: React.Dispatch<React.SetStateAction<string>>;
 }>({ match: "", set: () => {} });
+
+const socketUrl: string = process.env.REACT_APP_SOCKET_URL;
 
 export function CurPageProvider({ children }: ProviderProps) {
   const [curPage, setCurPage] = useState<string>("");
@@ -51,10 +54,6 @@ export function useSocket() {
   return useContext(SocketContext);
 }
 
-// export function setCurPage() {
-//   return useContext()
-// }
-
 function sleep(ms: number): Promise<any> {
   return new Promise((resolve) => {
     setTimeout(resolve, ms);
@@ -65,16 +64,7 @@ function useGameSocketConnection() {
   const [gameSocket, setGameSocket] = useState<Socket | null>(null);
 
   useEffect(() => {
-    const newGameSocket = io("10.14.8.7:3001/game", { withCredentials: true });
-    // newGameSocket.on("exit", () => {
-    //   console.log("exit!!");
-    //   while (1) {
-    //     alert("Already login user");
-    //   }
-    //   // navigate("/");
-    // });
-
-    // if (!newGameSocket)
+    const newGameSocket = io(`${socketUrl}/game`, { withCredentials: true });
     setGameSocket(newGameSocket);
 
     return () => {
@@ -89,7 +79,7 @@ function useSocketConnection() {
   const [socket, setSocket] = useState<Socket | null>(null);
 
   useEffect(() => {
-    const newSocket = io("10.14.8.7:3001/chat", { withCredentials: true });
+    const newSocket = io(`${socketUrl}/chat`, { withCredentials: true });
     setSocket(newSocket);
     newSocket.on("exit", () => {
       console.log("exit!!");

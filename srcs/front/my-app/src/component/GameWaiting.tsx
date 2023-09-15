@@ -281,7 +281,9 @@ export default function GameWaiting(prop) {
       console.log("tmp", tmp);
       if (tmp === -1) {
         socket.emit("matchQueueOut", "");
-        socket.emit("gameRoomOut", "");
+        setTimeout(() => {
+          socket.emit("gameRoomOut", "");
+        }, 500);
       }
       socket.emit("whoamiGateway", "", (response) => {
         console.log("join");
