@@ -19,7 +19,6 @@ import { getWhoami } from "./utils/ApiRequest";
 function App() {
   const [isLogin, setIsLogin] = useState(false);
   const [isSet, setIsSet] = useState(false);
-
   getWhoami()
     .then((result) => {
       setIsSet(true);

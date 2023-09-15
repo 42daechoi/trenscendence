@@ -1,9 +1,8 @@
-import axios from "axios";
-import { response } from "express";
 import React, { useState, useRef } from "react";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useNavigate } from "react-router-dom";
+import { postAuthenticate } from "../utils/ApiRequest";
 
 export default function GoogleAuth(props) {
   const [otp, setOtp] = useState("");
@@ -20,12 +19,13 @@ export default function GoogleAuth(props) {
 
   const handleOtpClick = () => {
     const fullotp = otp + otp2;
-    axios
-      .post(
-        "http://localhost:3001/2fa/authenticate",
-        { twoFactorAuthCode: fullotp },
-        { withCredentials: true }
-      )
+    // axios
+    //   .post(
+    //     "http://localhost:3001/2fa/authenticate",
+    //     { twoFactorAuthCode: fullotp },
+    //     { withCredentials: true }
+    //   )
+    postAuthenticate(fullotp)
       .then((response) => {
         if (response.data) navigate("/main");
       })

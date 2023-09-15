@@ -2,14 +2,13 @@ import React, { useEffect, useState } from "react";
 import "../css/TwoFactoryAuth.css";
 import OtpSet from "../component/OtpSet";
 import GoogleAuth from "../component/GoogleAuth";
-import axios from "axios";
+import { getWhoami } from "../utils/ApiRequest";
 
 export default function FullTFA() {
   const [curPage, setCurPage] = useState("google_auth");
   const [curState, setState] = useState(true);
   useEffect(() => {
-    axios
-      .get("http://localhost:3001/users/whoami", { withCredentials: true })
+    getWhoami()
       .then((response) => {
         response.data.twoFASecret === null
           ? setCurPage("otp_set")

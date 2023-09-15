@@ -1,6 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
 import "../css/Profile.css";
-import axios from "axios";
 import "../css/Profile.css";
 import { useNavigate } from "react-router-dom";
 import { toast, ToastContainer } from "react-toastify";
@@ -8,10 +7,7 @@ import "react-toastify/dist/ReactToastify.css";
 import { Buffer } from "buffer";
 import { useCurPage, useGameSocket } from "./SocketContext";
 import {
-  apiRequest,
   getWhoami,
-  getIntraId,
-  patchId,
   patchAddFriend,
   patchDeleteFriend,
   modifyNickname,
@@ -19,6 +15,7 @@ import {
   getId,
   modifyAvatar,
   getGameLog,
+  post2faDisable,
 } from "../utils/ApiRequest";
 import { resolveTypeReferenceDirective } from "typescript";
 
@@ -100,9 +97,7 @@ function Profile(pn: ProfileNode) {
           else if (props.modalType === iGM) window[iGM].showModal();
           else if (props.modalType === "false") navigate("/full-tfa");
           else if (props.modalType === "true") {
-            axios.post("http://localhost:3001/2fa/disable", null, {
-              withCredentials: true,
-            });
+            post2faDisable();
             toast.error("OTP가 비활성화 되었습니다.", {
               position: toast.POSITION.TOP_LEFT,
               style: {
