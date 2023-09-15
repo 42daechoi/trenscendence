@@ -95,7 +95,12 @@ export class ChatGateway
     console.log('--------------DICONNECTION--------------');
     console.log('Client connected: ', socket.id);
     console.log('----------------------------------------');
-
+    async function asySleep(ms: number): Promise<any> {
+      return new Promise((resolve) => {
+        setTimeout(resolve, ms);
+      });
+    }
+    await asySleep(500);
     let user = await this.chatService.findUserBySocketId(socket.id);
 
     if (user) {
@@ -201,11 +206,6 @@ export class ChatGateway
     @MessageBody() id: number,
     @ConnectedSocket() socket: Socket,
   ) {
-    async function asySleep(ms: number): Promise<any> {
-      return new Promise((resolve) => {
-        setTimeout(resolve, ms);
-      });
-    }
 
     console.log('----------------------------------------');
     console.log('-----------------BIND-------------------');
@@ -219,11 +219,11 @@ export class ChatGateway
     //   return;
     // }
     let i = 0;
-    while (1)
-    {
-      let user_check = await this.chatService.findUserById(id);
-      if (user_check) {
-        return
+    // while (1)
+    // {
+      // let user_check = await this.chatService.findUserById(id);
+      // if (user_check) {
+      //   return
       // const double_check = await this.chatService.findUserById(id);
       // if (double_check) return;
       // const users: userDTO[] = await this.chatService.getUsers();
@@ -233,10 +233,10 @@ export class ChatGateway
       //   return;
       //   await this.handleDisconnect(user.socket);
       // }
-      }
-      else
-        break;
-    }
+    //   }
+    //   else
+    //     break;
+    // }
     console.log("here");
     // this.connectedSockets.set(id, socket);
 

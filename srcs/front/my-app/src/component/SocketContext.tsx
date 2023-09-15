@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect, useState } from "react";
 import { useCurPage, CurPageContext} from "./CurPageContext";
 import { io, Socket } from "socket.io-client";
 import { whoami } from "../utils/whoami";
+import { getWhoami} from "../utils/ApiRequest"
 interface ProviderProps {
   children: React.ReactNode;
 }
@@ -50,14 +51,6 @@ function useGameSocketConnection() {
       newGameSocket.disconnect();
       set("block");
     });
-    // newGameSocket.on("exit", () => {
-      // console.log("exit!!");
-      // while (1) {
-      //   alert("Already login user");
-      // }
-      // navigate("/");
-    // });
-    // if (!newGameSocket)
     setGameSocket(newGameSocket);
     
 
@@ -74,13 +67,17 @@ function useSocketConnection() {
 
   useEffect(() => {
     const newSocket = io("localhost:3001/chat", { withCredentials: true });
+    
     const whoAmI = async () =>{
-      const data = await whoami();
-      if (data)
-      {
-        newSocket.emit("bind", data.id);
-        console.log("data",data.id);
+      getWhoami().then((resposne) => {
+        const data = resposne.data;
+        if (data)
+        {
+          newSocket.emit("bind", data.id);
+          console.log("data",data.id);
+        }
       }
+      ).catch((error)=>{console.log(error)});
     }
     setSocket(newSocket);
     whoAmI();

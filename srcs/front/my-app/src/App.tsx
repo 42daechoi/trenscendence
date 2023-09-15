@@ -24,13 +24,16 @@ function App() {
   const [isSet, setIsSet] = useState(false);
   const [isOn,setIsOn] = useState(false);
   const checkOnRef = useRef(null);
-  const refreshPage = () => {
-    window.location.reload();
-  };
+  const count = useRef(0);
   useEffect(() => {
     function checkOn(setIsSet, setIsLogin, setIsOn)
     {
-      console.log("1", isOn, isSet, isLogin);
+      if (count)
+      {
+        count.current += 1;
+      }
+      if (count.current === 5)
+        clearInterval(checkOnRef.current);
       getWhoami()
       .then((result) => {
         if (result.data.status === 0)
@@ -42,7 +45,6 @@ function App() {
       })
       .catch((err) => {
         clearInterval(checkOnRef.current);
-        console.log("asdasdasdasd")
         setIsSet(true);
         setIsLogin(false);
       });
@@ -61,7 +63,7 @@ function App() {
               <Routes>
                 <Route
                   path="/"
-                  Component={!isLogin ? CookiePage : isOn ? MainPage : LoginPage}
+                  Component={isOn ? MainPage : LoginPage}
                 ></Route>
                 <Route
                   path="/main"

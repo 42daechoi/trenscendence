@@ -3,15 +3,38 @@
 import "../css/LoginPage.css";
 import { getWhoami } from "../utils/ApiRequest";
 import { useNavigate } from "react-router-dom";
+import { useSocket } from "../component/SocketContext";
+import { useEffect, useState } from "react";
 function LoginPage() {
   const navigate = useNavigate();
+  const socket = useSocket();
+  const [isLogin, setIsLogin] = useState(false);
+  useEffect(()=> {
+    getWhoami()
+      .then((result) => {
+        if (result.data.status === 1)
+          setIsLogin(true);
+        // navigate("/main");
+      })
+      .catch((err) => {
+        return ;
+      });
+  },[])
+  useEffect(() => {if (socket){
+    console.log("1");
+    if (isLogin === true)
+    {
+      console.log("2");
+      socket.disconnect();
+    }
+    else
+      console.log("3");
+  }},[socket, isLogin])
   const login42 = () => {
   getWhoami()
       .then((result) => {
         if (result.data.status === 1)
-          navigate("/main");
-        else 
-          navigate("/");
+          setIsLogin(true);
       })
       .catch((err) => {
           window.location.href =
