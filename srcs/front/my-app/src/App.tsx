@@ -62,7 +62,7 @@ function App() {
           <Router>
             {isSet && (
               <Routes>
-                <Route path="/" Component={isOn ? MainPage : LoginPage}></Route>
+                <Route path="/" Component={LoginPage}></Route>
                 <Route
                   path="/main"
                   Component={!isOn ? LoginPage : isLogin ? MainPage : LoginPage}
