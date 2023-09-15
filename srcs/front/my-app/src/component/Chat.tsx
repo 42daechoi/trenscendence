@@ -227,6 +227,10 @@ function Chat(props) {
         const target_name: string = chat.substring(7, chat.length);
         getUserByNickname(target_name)
           .then((response) => {
+            if (response.data.id === undefined) {
+              alert('없는 유저입니다.');
+              return ;
+            }
             patchBlockAdd(response.data.id)
               .then((res) => {
                 socket.emit("blocklistupdate", data.id);
@@ -244,6 +248,10 @@ function Chat(props) {
         const target_name: string = chat.substring(9, chat.length);
         getUserByNickname(target_name)
           .then((response) => {
+             if (response.data.id === undefined) {
+              alert('없는 유저입니다.');
+              return ;
+            }
             patchBlockRemove(response.data.id)
               .then((res) => {
                 socket.emit("blocklistupdate", data.id);
@@ -251,10 +259,6 @@ function Chat(props) {
               .catch((error) => {
                 console.log(error);
               });
-          })
-          .catch((error) => {
-            console.log(error);
-          });
         chat = "";
         return;
       } else if (chat.substring(0, 10) === "/blocklist") {
