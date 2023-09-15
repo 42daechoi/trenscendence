@@ -5,7 +5,8 @@ import { useNavigate } from "react-router-dom";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { Buffer } from "buffer";
-import { useCurPage, useGameSocket } from "./SocketContext";
+import {  useGameSocket } from "./SocketContext";
+import {useCurPage} from "./CurPageContext"
 import {
   getWhoami,
   patchAddFriend,
@@ -58,6 +59,7 @@ function Profile(pn: ProfileNode) {
   // const [gameLog, setGameLog] = useState<string[]>([]);
   const [gameLog, setGameLog] = useState<string[]>([]);
   const [info, setInfo] = useState<profileInfo>(myInfo);
+  
   useEffect(() => {
     getWhoami()
       .then((result) => {
@@ -375,6 +377,14 @@ function Profile(pn: ProfileNode) {
         console.log(err);
       });
   }
+  const [twoFA, setTwoFA] = useState("false");
+  useEffect(()=> {
+    getWhoami()
+    .then((my) => {
+        if (!my.data.twoFA) setTwoFA("false");
+        else setTwoFA("true");
+      })
+  },[]);
 
   function LoadUserInfo() {
     let newInfo: profileInfo = {
@@ -385,12 +395,11 @@ function Profile(pn: ProfileNode) {
       isMyProfile: false,
       isFriendly: false,
     };
+
     useEffect(() => {
       getWhoami()
         .then((my) => {
           if (pn.currUser === my.data.id) {
-            if (!my.data.twoFA) setTwoFA("false");
-            else setTwoFA("true");
             setInfo(myInfo);
             loadGameLog(info.id, info.nickname);
           } else {
@@ -430,8 +439,6 @@ function Profile(pn: ProfileNode) {
         });
     }, []);
   }
-
-  const [twoFA, setTwoFA] = useState("false");
   const changeTwoFA = (s) => {
     setTwoFA(s);
   };

@@ -114,8 +114,9 @@ export default function GamePage() {
         else if (client.current === 1 && socket) socket.emit('pad2', pad.current[client.current]);
       }
     };
-
     if (socket) {
+      if (socket.connected === false)
+        navigate.current('/');
       socket.emit('inGame', "", response => {
         if (response === false) {navigate.current('/main');}
         else if (response === true) {
@@ -286,7 +287,10 @@ export default function GamePage() {
           <div id="user2" className="user2"></div>
         </div>
         <div className="gameset" ref={gameRef} tabIndex={0}>
-          <div id="count">3</div>
+          <div id="count">3
+          <div  style={{ fontSize:"50px" }}>위로 이동 위쪽 화살표↑</div>
+          <div style={{ fontSize:"50px" }}>아래로 이동 아래쪽 화살표↓</div>
+          </div>
           <canvas id="canvas" ref={canvasRef}></canvas>
         </div>
       </div>

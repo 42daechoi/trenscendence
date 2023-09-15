@@ -59,8 +59,6 @@ function Chat(props) {
     const bufferData: number[] = data.profilePicture.data;
     const buffer: Buffer = Buffer.from(bufferData);
     data.profilePicture.data = buffer.toString("base64");
-
-    socket.emit("bind", data.id);
     receiveMessage();
   };
 
@@ -228,8 +226,8 @@ function Chat(props) {
         getUserByNickname(target_name)
           .then((response) => {
             if (response.data.id === undefined) {
-              alert('없는 유저입니다.');
-              return ;
+              alert("없는 유저입니다.");
+              return;
             }
             patchBlockAdd(response.data.id)
               .then((res) => {
@@ -246,19 +244,19 @@ function Chat(props) {
         return;
       } else if (chat.substring(0, 9) === "/unblock ") {
         const target_name: string = chat.substring(9, chat.length);
-        getUserByNickname(target_name)
-          .then((response) => {
-             if (response.data.id === undefined) {
-              alert('없는 유저입니다.');
-              return ;
-            }
-            patchBlockRemove(response.data.id)
-              .then((res) => {
-                socket.emit("blocklistupdate", data.id);
-              })
-              .catch((error) => {
-                console.log(error);
-              });
+        getUserByNickname(target_name).then((response) => {
+          if (response.data.id === undefined) {
+            alert("없는 유저입니다.");
+            return;
+          }
+          patchBlockRemove(response.data.id)
+            .then((res) => {
+              socket.emit("blocklistupdate", data.id);
+            })
+            .catch((error) => {
+              console.log(error);
+            });
+        });
         chat = "";
         return;
       } else if (chat.substring(0, 10) === "/blocklist") {
@@ -508,6 +506,7 @@ function Chat(props) {
           placeholder="채팅을 입력하세요."
           className="input input-bordered input-accent w-full max-w-xs"
           onKeyDown={handleKeyPress}
+          maxLength={10000}
         />
         <button
           className="btn btn-active btn-primary"

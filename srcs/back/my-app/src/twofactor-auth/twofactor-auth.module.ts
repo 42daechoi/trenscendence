@@ -5,9 +5,10 @@ import { UsersModule } from "src/users/users.module";
 import { Module } from "@nestjs/common";
 import { JwtStrategy } from "src/auth/strategy/jwt.strategy";
 import { PartialJwtStrategy } from "src/auth/strategy/partial-jwt.strategy";
+import {ConfigModule} from "@nestjs/config";
 
 @Module({
-  imports: [UsersModule, AuthModule],
+  imports: [UsersModule, AuthModule, ConfigModule],
   controllers: [TwoFactorAuthController],
   providers: [
 		TwoFactorAuthService,

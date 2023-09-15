@@ -7,13 +7,10 @@ import {
   Param,
   Query,
   Delete,
-  UseInterceptors,
-  Session,
   UseGuards,
   NotFoundException,
   Req,
   Res,
-  UploadedFile,
 } from '@nestjs/common';
 import { User } from '../typeorm/user.entity';
 import { UsersService } from './users.service';
@@ -23,9 +20,6 @@ import { JwtAuthGuard } from 'src/auth/guards/auth-jwt.guard';
 import { Request, Response } from 'express';
 import PartialJwtGuard from 'src/auth/guards/auth-partial-jwt.guard';
 import { currentAuthUser } from 'src/auth/decorators/auth-user.decorator';
-import { Serialize } from 'src/interceptors/serialize.interceptor';
-import { FileInterceptor } from '@nestjs/platform-express';
-import { profile } from 'console';
 @Controller('users')
 export class UsersController {
   constructor(private usersService: UsersService) {}
@@ -39,17 +33,15 @@ export class UsersController {
   }
   @UseGuards(PartialJwtGuard)
   @Get('/OTPwhoami')
-  OTPwhoAmI(@CurrentUser() user: User, @Res() res: Response) {
+  OTPwhoAmI(@currentAuthUser() user: User, @Res() res: Response) {
     //user CurrentUser Decorator -> extract user from request
     res.json(user);
     return user;
   }
 
   @Get('id/:id')
+  @UseGuards(JwtAuthGuard)
   async findUserById(@Param('id') id: string, @Req() req: Request) {
-    //		console.log(req);
-    //		console.log("GET PARAM called");
-    //		console.log("Handler is running");
     const user: User = await this.usersService.findUserById(parseInt(id));
     if (!user) {
       throw new NotFoundException('user not found');
@@ -58,26 +50,22 @@ export class UsersController {
   }
 
   @Get('/intraId/:intraId')
+  @UseGuards(JwtAuthGuard)
   async findUserByIntraId(@Param('intraId') intraId: string) {
-    //		console.log("GET PARAM called");
-    console.log('Handler is running');
     const user = await this.usersService.findUserByIntraId(intraId);
     if (!user) {
-      return null;
-      //		  throw new NotFoundException('user not found');
+      throw new NotFoundException('user not found');
     }
     return user;
   }
 
   @Get('/nickname/:nickname')
-  //	@UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard)
   async findUserByNick(@Param('nickname') nickname: string) {
-    //		console.log("GET PARAM called");
-    console.log('Handler is running');
     const user = await this.usersService.findUserByNick(nickname);
     if (!user) {
-      return null;
-      //		  throw new NotFoundException('user not found');
+      // return null;
+      throw new NotFoundException('user not found');
     }
     return user;
   }
@@ -88,8 +76,7 @@ export class UsersController {
   }
 
   @Patch('/:id')
-  //@UseGuards(JwtAuthGuard)
-  // @Serialize(UpdateUserDto)
+  @UseGuards(JwtAuthGuard)
   updateUser(
     @Param('id') id: string,
     @Req() req: Request,
@@ -110,27 +97,39 @@ export class UsersController {
   }
 
   @Get('findAll')
-  //	@UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard)
   findAllUser() {
     return this.usersService.findAllUsers();
   }
 
   @Patch('/friends/add/:id')
   @UseGuards(JwtAuthGuard)
-  async friendAdd(@CurrentUser() user: User, @Param('id') id: string) {
+  async friendAdd(@currentAuthUser() user: User, @Param('id') id: string) {
     //add freinds
-    await this.usersService.addFriends(user.id, parseInt(id));
+    const ret_user: User = await this.usersService.addFriends(
+      user.id,
+      parseInt(id),
+    );
+    if (!ret_user) {
+      throw new NotFoundException('User not found');
+    }
   }
 
   @UseGuards(JwtAuthGuard)
   @Patch('/friends/remove/:id')
-  async friendRemove(@CurrentUser() user: User, @Param('id') id: string) {
-    await this.usersService.removeFriends(user.id, parseInt(id));
+  async friendRemove(@currentAuthUser() user: User, @Param('id') id: string) {
+    const ret_user = await this.usersService.removeFriends(
+      user.id,
+      parseInt(id),
+    );
+    if (!ret_user) {
+      throw new NotFoundException('User not found');
+    }
   }
 
   @Get('/friends/list')
   @UseGuards(JwtAuthGuard)
-  async friendsList(@CurrentUser() user: User): Promise<User[] | null> {
+  async friendsList(@currentAuthUser() user: User): Promise<User[] | null> {
     const friends: User[] | null = await this.usersService.getUserFriends(
       user.id,
     );
@@ -139,20 +138,20 @@ export class UsersController {
 
   @Patch('/blocks/add/:id')
   @UseGuards(JwtAuthGuard)
-  async blockAdd(@CurrentUser() user: User, @Param('id') id: string) {
+  async blockAdd(@currentAuthUser() user: User, @Param('id') id: string) {
     //add freinds
     await this.usersService.addBlocks(user.id, parseInt(id));
   }
 
   @UseGuards(JwtAuthGuard)
   @Patch('/blocks/remove/:id')
-  async blockRemove(@CurrentUser() user: User, @Param('id') id: string) {
+  async blockRemove(@currentAuthUser() user: User, @Param('id') id: string) {
     await this.usersService.removeBlocks(user.id, parseInt(id));
   }
 
   @Get('/blocks/list')
   @UseGuards(JwtAuthGuard)
-  async blocksList(@CurrentUser() user: User): Promise<User[] | null> {
+  async blocksList(@currentAuthUser() user: User): Promise<User[] | null> {
     const blocks: User[] | null = await this.usersService.getUserBlocks(
       user.id,
     );

@@ -284,15 +284,17 @@ export default function GameWaiting(prop) {
         socket.emit("gameRoomOut", "");
       }
       socket.emit("whoamiGateway", "", (response) => {
-        console.log("join");
-        chatSocket.emit("home", response);
+        if (client === 0)
+          chatSocket.emit("home", response);
+        else
+          setTimeout(()=>{chatSocket.emit("home", response);},500);
       });
     };
   }, [socket]);
   useEffect(() => {
     if (exit === 1) {
       tmp = 1;
-      prop.leavefun();
+      setTimeout(()=>{prop.leavefun();},500);
     }
     if (exit === 2) {
       tmp = 2;

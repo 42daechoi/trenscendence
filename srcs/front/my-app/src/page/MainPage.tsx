@@ -7,14 +7,11 @@ import LeaderBoard from "../component/LeaderBoard";
 import FriendsList from "../component/FriendsList";
 import MemoChannelsList from "../component/ChannelsList";
 import MemoChat from "../component/Chat";
-import { getWhoami } from "../utils/ApiRequest";
+import { getWhoami, getUserByNickname } from "../utils/ApiRequest";
 import Modal from "../component/Modal";
-import {
-  useSocket,
-  useGameSocket,
-  useCurPage,
-} from "../component/SocketContext";
-import { apiRequest } from "../utils/ApiRequest";
+
+import { useSocket, useGameSocket } from "../component/SocketContext";
+import { useCurPage } from "../component/CurPageContext";
 
 export default function MainPage() {
   const [isMatch, setIsMatch] = useState(false);
@@ -27,12 +24,17 @@ export default function MainPage() {
   const [memberList, setMemberList] = useState([]);
   const socket = useSocket();
   const [myId, setMyId] = useState(0);
+
   const { match, set } = useCurPage();
   useEffect(() => {
     if (curPage !== "game_waiting") setPlay(false);
     set("");
   }, [curPage]);
   useEffect(() => {
+    if (match === "block") {
+      window.location.reload();
+      socket.disconnect();
+    }
     if (match === "match") {
       sideRef.current.checked = false;
       setIsMatch(true);
@@ -54,6 +56,17 @@ export default function MainPage() {
 
   useEffect(() => {
     if (!socket) return;
+    if (!gameSocket) return;
+    gameSocket.emit("checksocket", "", (response) => {
+      if (response === 1)
+        setTimeout(() => {
+          console.log("checksocket");
+          gameSocket.emit("checksocket", "", (response) => {
+            if (response === 1) window.location.reload();
+          });
+        }, 1000);
+    });
+
     gameSocket.on("OneOnOneNoti", (data) => {
       console.log("게임초대");
       set("match");
@@ -79,17 +92,16 @@ export default function MainPage() {
         });
     });
     return () => {
+      socket.off("exit");
       gameSocket.off("OneOnOneNoti");
       socket.off("allinfo");
     };
-  }, [socket]);
+  }, [socket, gameSocket]);
 
   useEffect(() => {
-    apiRequest<any>("get", "http://localhost:3001/users/whoami").then(
-      (response) => {
-        setMyId(response.data.id);
-      }
-    );
+    getWhoami().then((response) => {
+      setMyId(response.data.id);
+    });
     return () => {};
   }, []);
 
@@ -135,7 +147,43 @@ export default function MainPage() {
   const closeMatch = (): void => {
     setIsMatch(false);
     console.log("closeMatch");
-    if (gameSocket && match !== "accept") gameSocket.emit("denyOneOnOne", "");
+
+    if (gameSocket && match !== "accept")
+      if (gameSocket) gameSocket.emit("denyOneOnOne", "");
+  };
+
+  const [currUser, setCurrUser] = useState(null); // 현재 유저 상태
+  const searchText = useRef(null);
+  const [id, setId] = useState(0);
+
+  function searchUser() {
+    getUserByNickname(searchText.current.value)
+      .then((result) => {
+        if (result.data) {
+          setModalOpen(true);
+          setCurrUser(result.data.id);
+        } else {
+          alert("해당 유저가 없습니다");
+        }
+      })
+      .catch((err) => {
+        alert("해당 유저가 없습니다");
+      });
+  }
+
+  const handleKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+    if (event.keyCode === 13 && event.key === "Enter") {
+      searchUser();
+    }
+  };
+
+  const [isModalOpen, setModalOpen] = useState(false);
+  const openModal = (id: number): void => {
+    setId(id);
+    setModalOpen(true);
+  };
+  const closeModal = (): void => {
+    setModalOpen(false);
   };
 
   return (
@@ -212,6 +260,26 @@ export default function MainPage() {
                 </button>
               </div>
               <div className="list">{renderSide()}</div>
+              {curSide === "friends_list" && (
+                <div className="search-side">
+                  <input
+                    ref={searchText}
+                    onKeyDown={handleKeyDown}
+                    type="text"
+                  ></input>
+                  <button className="search-button" onClick={searchUser}>
+                    🔍
+                  </button>
+                  {currUser && isModalOpen && (
+                    <Modal
+                      closeModal={closeModal}
+                      ConfigureModal={() => (
+                        <MemoProfile currUser={currUser} isMe={false} />
+                      )}
+                    />
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </div>

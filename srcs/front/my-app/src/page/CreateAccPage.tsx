@@ -40,26 +40,28 @@ export default function CreateAccPage() {
     }
     getUserByNickname(nickname.current.value)
       .then((result) => {
-        if (result.data) alert("이미 존재하는 닉네임입니다.");
-        else {
-          modifyNickname(nickname.current.value, false)
-            .then((result) => {
-              modifyAvatar(selectedFile)
-                .then((response) => {
-                  modifyFirstCreateFlag();
-                  navigate("/main");
-                })
-                .catch((err) => {
-                  modifyFirstCreateFlag();
-                  navigate("/main");
-                });
-            })
-            .catch((err) => {
-              console.log(err);
-            });
-        }
+        alert("이미 존재하는 닉네임입니다.");
       })
-      .catch((err) => {});
+      .catch((err) => {
+        modifyNickname(nickname.current.value, false)
+          .then((result) => {
+            console.log("123");
+            modifyAvatar(selectedFile)
+              .then((response) => {
+                console.log("modifyAvatar");
+                modifyFirstCreateFlag();
+                navigate("/main");
+              })
+              .catch((err) => {
+                console.log("modifyAvatar");
+                modifyFirstCreateFlag();
+                navigate("/main");
+              });
+          })
+          .catch((err) => {
+            console.log(err);
+          });
+      });
   };
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -79,6 +81,7 @@ export default function CreateAccPage() {
       reader.onload = function (event) {
         const result = event.target.result;
         if (typeof result === "string") {
+          console.log("setAvatar");
           setAvatar(result.split(",")[1]);
           image.current.value = null;
         }

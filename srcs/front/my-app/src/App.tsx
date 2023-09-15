@@ -1,12 +1,10 @@
 import "./App.css";
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import { useState } from "react";
-import {
-  SocketProvider,
-  GameSocketProvider,
-  CurPageProvider,
-} from "./component/SocketContext";
+import { SocketProvider, GameSocketProvider } from "./component/SocketContext";
+import { CurPageProvider } from "./component/CurPageContext";
 import LoginPage from "./page/LoginPage";
+import CookiePage from "./page/CookiePage";
 import MainPage from "./page/MainPage";
 import CreateAccPage from "./page/CreateAccPage";
 import Callback from "./page/CallbackPage";
@@ -15,62 +13,94 @@ import GamePage from "./page/GamePage";
 import PartialTFA from "./page/PartialTFA";
 import NotFound from "./page/Notfound";
 import { getWhoami } from "./utils/ApiRequest";
+import { useEffect, useRef } from "react";
 
 function App() {
-  const [isLogin, setIsLogin] = useState(false);
-  const [isSet, setIsSet] = useState(false);
-  getWhoami()
-    .then((result) => {
-      setIsSet(true);
-      setIsLogin(true);
-    })
-    .catch((err) => {
-      setIsSet(true);
-      setIsLogin(false);
-    });
+  const [isLogin, setIsLogin] = useState<boolean>(false);
+  const [isSet, setIsSet] = useState<boolean>(false);
 
+  const [isOn, setIsOn] = useState<boolean>(false);
+  const checkOnRef = useRef<NodeJS.Timeout | null>(null);
+  const count = useRef(0);
+  useEffect(() => {
+    function checkOn(setIsSet : React.Dispatch<React.SetStateAction<boolean>>, setIsLogin: React.Dispatch<React.SetStateAction<boolean>>, setIsOn: React.Dispatch<React.SetStateAction<boolean>>) {
+      if (count) {
+        count.current += 1;
+      }
+      if (count.current === 5) 
+        if (checkOnRef.current)  
+          clearInterval(checkOnRef.current);
+      getWhoami()
+        .then((result) => {
+          if (result.data.status === 0) {
+            setIsOn(true);
+          }
+          setIsLogin(true);
+          setIsSet(true);
+        })
+        .catch((err) => {
+          if (checkOnRef.current)
+            clearInterval(checkOnRef.current);
+          setIsSet(true);
+          setIsLogin(false);
+        });
+    }
+    checkOn(setIsSet, setIsLogin, setIsOn);
+    checkOnRef.current = setInterval(() => {
+      checkOn(setIsSet, setIsLogin, setIsOn);
+    }, 500);
+    return () => {
+      if (checkOnRef.current) {
+        clearInterval(checkOnRef.current);
+      }
+    };
+  }, []);
+  useEffect(() => {
+    if (isOn === true) if (checkOnRef.current)clearInterval(checkOnRef.current);
+  }, [isOn]);
   return (
-    <GameSocketProvider>
-      <SocketProvider>
-        <CurPageProvider>
+    <CurPageProvider>
+      <GameSocketProvider>
+        <SocketProvider>
           <Router>
             {isSet && (
               <Routes>
-                <Route
-                  path="/"
-                  Component={isLogin ? LoginPage : LoginPage}
-                ></Route>
+                <Route path="/" Component={LoginPage}></Route>
                 <Route
                   path="/main"
-                  Component={isLogin ? MainPage : LoginPage}
+                  Component={!isOn ? LoginPage : isLogin ? MainPage : LoginPage}
                 ></Route>
                 <Route
                   path="/create-account"
-                  Component={isLogin ? CreateAccPage : LoginPage}
+                  Component={
+                    !isOn ? LoginPage : isLogin ? CreateAccPage : LoginPage
+                  }
                 ></Route>
                 <Route
                   path="/callback"
-                  Component={isLogin ? Callback : LoginPage}
+                  Component={!isOn ? LoginPage : isLogin ? Callback : LoginPage}
                 ></Route>
                 <Route
                   path="/game"
-                  Component={isLogin ? GamePage : LoginPage}
+                  Component={!isOn ? LoginPage : isLogin ? GamePage : LoginPage}
                 ></Route>
                 <Route
                   path="/full-tfa"
-                  Component={isLogin ? FullTFA : LoginPage}
+                  Component={!isOn ? LoginPage : isLogin ? FullTFA : LoginPage}
                 ></Route>
                 <Route
                   path="/partial-tfa"
-                  Component={isLogin ? PartialTFA : LoginPage}
+                  Component={
+                     PartialTFA 
+                  }
                 ></Route>
                 <Route path="*" Component={NotFound} />
               </Routes>
             )}
           </Router>
-        </CurPageProvider>
-      </SocketProvider>
-    </GameSocketProvider>
+        </SocketProvider>
+      </GameSocketProvider>
+    </CurPageProvider>
   );
 }
 

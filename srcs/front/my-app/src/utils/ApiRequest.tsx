@@ -1,6 +1,5 @@
 import axios, { AxiosResponse } from "axios";
 
-// const serverUrl: string = "http://localhost:3001";
 const serverUrl: string = process.env.REACT_APP_SERVER_URL;
 
 export const apiRequest = <T = any,>(
@@ -19,21 +18,21 @@ export const apiRequest = <T = any,>(
 export function postAuthenticate<T = any>(
   fullotp: string
 ): Promise<AxiosResponse<T>> {
-  return apiRequest("post", `${serverUrl}/2fa/authenticate}`, {
+  return apiRequest("post", `${serverUrl}/2fa/authenticate`, {
     twoFactorAuthCode: fullotp,
   });
 }
 
 export function postRegister<T = any>(): Promise<AxiosResponse<T>> {
-  return apiRequest("post", `${serverUrl}/2fa/authenticate}`);
+  return apiRequest("post", `${serverUrl}/2fa/register`);
 }
 
 export function post2faEnable<T = any>(): Promise<AxiosResponse<T>> {
-  return apiRequest("post", `${serverUrl}/2fa/enable}`);
+  return apiRequest("post", `${serverUrl}/2fa/enable`);
 }
 
 export function post2faDisable<T = any>(): Promise<AxiosResponse<T>> {
-  return apiRequest("post", `${serverUrl}/2fa/disable}`);
+  return apiRequest("post", `${serverUrl}/2fa/disable`);
 }
 
 export function getWhoami<T = any>(): Promise<AxiosResponse<T>> {
@@ -71,17 +70,17 @@ export function patchId<T = any>(
 }
 
 export function patchAddFriend<T = any>(id: number): Promise<AxiosResponse<T>> {
-  return apiRequest("patch", `${serverUrl}/users/friends/add/${String(id)}}`);
+  return apiRequest("patch", `${serverUrl}/users/friends/add/${String(id)}`);
 }
 
 export function patchBlockAdd<T = any>(id: string): Promise<AxiosResponse<T>> {
-  return apiRequest("patch", `${serverUrl}/users/blocks/add/${id}}`);
+  return apiRequest("patch", `${serverUrl}/users/blocks/add/${id}`);
 }
 
 export function patchBlockRemove<T = any>(
   id: string
 ): Promise<AxiosResponse<T>> {
-  return apiRequest("patch", `${serverUrl}/users/blocks/remove/${id}}`);
+  return apiRequest("patch", `${serverUrl}/users/blocks/remove/${id}`);
 }
 
 export function getBlockList<T = any>(): Promise<AxiosResponse<T>> {
@@ -91,10 +90,7 @@ export function getBlockList<T = any>(): Promise<AxiosResponse<T>> {
 export function patchDeleteFriend<T = any>(
   id: number
 ): Promise<AxiosResponse<T>> {
-  return apiRequest(
-    "patch",
-    `${serverUrl}/users/friends/remove/${String(id)}}`
-  );
+  return apiRequest("patch", `${serverUrl}/users/friends/remove/${String(id)}`);
 }
 
 export function getFriendList<T = any>(id: number): Promise<AxiosResponse<T>> {
@@ -136,12 +132,18 @@ export function modifyAvatar(img: File): Promise<AxiosResponse<any>> {
           if (result) {
             const arrayBuffer = new Uint8Array(result as ArrayBuffer);
             axios
-              .patch(`${serverUrl}/users/${res.data.id}`, {
-                headers: {
-                  "Content-Type": "application/json",
+              .patch(
+                `${serverUrl}/users/${res.data.id}`,
+                {
+                  profilePicture: Array.from(arrayBuffer),
                 },
-                profilePicture: Array.from(arrayBuffer),
-              })
+                {
+                  headers: {
+                    "Content-Type": "application/json",
+                  },
+                  withCredentials: true,
+                }
+              )
               .then((result) => {
                 resolve(result);
               })

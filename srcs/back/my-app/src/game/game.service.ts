@@ -219,7 +219,6 @@ export class GameService {
     const cur_game_id = await this.getCurGameRoomId(client);
     const cur_game = this.gameSessions.get(cur_game_id);
     this.usersSockets.delete(client.id);
-    await this.updateUserStatusOnline(client);
   }
 
   async updateGameRoomInfo(client: Socket, body: any) {}
@@ -312,11 +311,6 @@ export class GameService {
     //Not ONLINE
     if (targetUser.status === UserStatus.OFFLINE) {
       this.logger.log('Target User is OFFLINE. id: ' + targetUserId);
-      return;
-    }
-    //In Game
-    if (targetUser.status === UserStatus.GAME) {
-      this.logger.log('Target User is in Game. id: ' + targetUserId);
       return;
     }
     //cannot find socket
