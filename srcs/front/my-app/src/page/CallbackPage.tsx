@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import { getLoginfortytwo } from "../utils/ApiRequest";
 
 export default function CallbackPage() {
   const navigate = useNavigate();
@@ -26,8 +26,7 @@ export default function CallbackPage() {
     const dataToSend = {
       code: code,
     };
-    axios
-      .get("http://localhost:3001/auth/loginfortytwo/callback")
+    getLoginfortytwo()
       .then((response) => {
         if (response.data) navigate("/create-account");
       })

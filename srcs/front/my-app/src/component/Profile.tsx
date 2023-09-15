@@ -1,6 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
 import "../css/Profile.css";
-import axios from "axios";
 import "../css/Profile.css";
 import { useNavigate } from "react-router-dom";
 import { toast, ToastContainer } from "react-toastify";
@@ -8,10 +7,7 @@ import "react-toastify/dist/ReactToastify.css";
 import { Buffer } from "buffer";
 import { useCurPage, useGameSocket } from "./SocketContext";
 import {
-  apiRequest,
   getWhoami,
-  getIntraId,
-  patchId,
   patchAddFriend,
   patchDeleteFriend,
   modifyNickname,
@@ -19,6 +15,7 @@ import {
   getId,
   modifyAvatar,
   getGameLog,
+  post2faDisable,
 } from "../utils/ApiRequest";
 import { resolveTypeReferenceDirective } from "typescript";
 
@@ -100,9 +97,7 @@ function Profile(pn: ProfileNode) {
           else if (props.modalType === iGM) window[iGM].showModal();
           else if (props.modalType === "false") navigate("/full-tfa");
           else if (props.modalType === "true") {
-            axios.post("http://localhost:3001/2fa/disable", null, {
-              withCredentials: true,
-            });
+            post2faDisable();
             toast.error("OTP가 비활성화 되었습니다.", {
               position: toast.POSITION.TOP_LEFT,
               style: {
@@ -121,8 +116,8 @@ function Profile(pn: ProfileNode) {
               });
             }
           } else if (props.modalType === mnM) {
-              set("deny");
-            }
+            set("deny");
+          }
         }}
         className="btn-fix glass"
         ref={typeRef}
@@ -275,7 +270,6 @@ function Profile(pn: ProfileNode) {
       if (files && files.length > 0) {
         const fileSizeKB = files[0].size / 1024;
         if (fileSizeKB > 6000) {
-          // 100KB를 초과하면
           alert("첨부 파일 크기가 허용 제한을 초과했습니다.");
           image.current.value = null;
           return;
@@ -403,19 +397,21 @@ function Profile(pn: ProfileNode) {
             if (pn.currUser !== 0) {
               getId(String(pn.currUser))
                 .then((target) => {
+                  console.log("123");
                   newInfo.nickname = target.data.nickname;
                   newInfo.isMyProfile = false;
                   const bufferData: number[] = target.data.profilePicture.data;
                   const buffer: Buffer = Buffer.from(bufferData);
                   newInfo.avatar = buffer.toString("base64");
-                  setInfo(newInfo);
                   loadGameLog(target.data.id, target.data.nickname);
                   getFriendList(pn.currUser)
                     .then((res) => {
                       res.data.forEach((element) => {
                         console.log(element);
-                        if (element.id === pn.currUser)
+                        if (element.id === pn.currUser) {
                           newInfo.isFriendly = true;
+                          setInfo(newInfo);
+                        }
                       });
                       setInfo(newInfo);
                     })
