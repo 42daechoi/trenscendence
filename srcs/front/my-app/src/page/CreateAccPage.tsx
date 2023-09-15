@@ -40,9 +40,10 @@ export default function CreateAccPage() {
     }
     getUserByNickname(nickname.current.value)
       .then((result) => {
-        if (result.data) alert("이미 존재하는 닉네임입니다.");
-        else {
-          modifyNickname(nickname.current.value, false)
+        alert("이미 존재하는 닉네임입니다.");
+      })
+      .catch((err) => {
+        modifyNickname(nickname.current.value, false)
             .then((result) => {
               modifyAvatar(selectedFile)
                 .then((response) => {
@@ -57,9 +58,7 @@ export default function CreateAccPage() {
             .catch((err) => {
               console.log(err);
             });
-        }
-      })
-      .catch((err) => {});
+      });
   };
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
