@@ -88,7 +88,7 @@ function App() {
                 <Route
                   path="/partial-tfa"
                   Component={
-                    !isOn ? LoginPage : isLogin ? PartialTFA : LoginPage
+                     PartialTFA 
                   }
                 ></Route>
                 <Route path="*" Component={NotFound} />
