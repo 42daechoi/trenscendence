@@ -44,20 +44,23 @@ export default function CreateAccPage() {
       })
       .catch((err) => {
         modifyNickname(nickname.current.value, false)
-            .then((result) => {
-              modifyAvatar(selectedFile)
-                .then((response) => {
-                  modifyFirstCreateFlag();
-                  navigate("/main");
-                })
-                .catch((err) => {
-                  modifyFirstCreateFlag();
-                  navigate("/main");
-                });
-            })
-            .catch((err) => {
-              console.log(err);
-            });
+          .then((result) => {
+            console.log("123");
+            modifyAvatar(selectedFile)
+              .then((response) => {
+                console.log("modifyAvatar");
+                modifyFirstCreateFlag();
+                navigate("/main");
+              })
+              .catch((err) => {
+                console.log("modifyAvatar");
+                modifyFirstCreateFlag();
+                navigate("/main");
+              });
+          })
+          .catch((err) => {
+            console.log(err);
+          });
       });
   };
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -78,6 +81,7 @@ export default function CreateAccPage() {
       reader.onload = function (event) {
         const result = event.target.result;
         if (typeof result === "string") {
+          console.log("setAvatar");
           setAvatar(result.split(",")[1]);
           image.current.value = null;
         }

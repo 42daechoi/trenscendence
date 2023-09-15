@@ -40,6 +40,7 @@ export class UsersController {
   }
 
   @Get('id/:id')
+  @UseGuards(JwtAuthGuard)
   async findUserById(@Param('id') id: string, @Req() req: Request) {
     const user: User = await this.usersService.findUserById(parseInt(id));
     if (!user) {
@@ -49,10 +50,11 @@ export class UsersController {
   }
 
   @Get('/intraId/:intraId')
+  @UseGuards(JwtAuthGuard)
   async findUserByIntraId(@Param('intraId') intraId: string) {
     const user = await this.usersService.findUserByIntraId(intraId);
     if (!user) {
-      	throw new NotFoundException('user not found');
+      throw new NotFoundException('user not found');
     }
     return user;
   }
@@ -62,8 +64,8 @@ export class UsersController {
   async findUserByNick(@Param('nickname') nickname: string) {
     const user = await this.usersService.findUserByNick(nickname);
     if (!user) {
-     // return null;
-    	throw new NotFoundException('user not found');
+      // return null;
+      throw new NotFoundException('user not found');
     }
     return user;
   }
@@ -104,7 +106,10 @@ export class UsersController {
   @UseGuards(JwtAuthGuard)
   async friendAdd(@currentAuthUser() user: User, @Param('id') id: string) {
     //add freinds
-    const ret_user : User = await this.usersService.addFriends(user.id, parseInt(id));
+    const ret_user: User = await this.usersService.addFriends(
+      user.id,
+      parseInt(id),
+    );
     if (!ret_user) {
       throw new NotFoundException('User not found');
     }
@@ -113,7 +118,10 @@ export class UsersController {
   @UseGuards(JwtAuthGuard)
   @Patch('/friends/remove/:id')
   async friendRemove(@currentAuthUser() user: User, @Param('id') id: string) {
-    const ret_user = await this.usersService.removeFriends(user.id, parseInt(id));
+    const ret_user = await this.usersService.removeFriends(
+      user.id,
+      parseInt(id),
+    );
     if (!ret_user) {
       throw new NotFoundException('User not found');
     }
