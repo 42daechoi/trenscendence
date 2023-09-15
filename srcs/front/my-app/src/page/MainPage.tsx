@@ -7,7 +7,7 @@ import LeaderBoard from "../component/LeaderBoard";
 import FriendsList from "../component/FriendsList";
 import MemoChannelsList from "../component/ChannelsList";
 import MemoChat from "../component/Chat";
-import { getWhoami } from "../utils/ApiRequest";
+import { getWhoami, getUserByNickname } from "../utils/ApiRequest";
 import Modal from "../component/Modal";
 
 import { useSocket, useGameSocket } from "../component/SocketContext";
@@ -152,6 +152,40 @@ export default function MainPage() {
       if (gameSocket) gameSocket.emit("denyOneOnOne", "");
   };
 
+  const [currUser, setCurrUser] = useState(null); // 현재 유저 상태
+  const searchText = useRef(null);
+  const [id, setId] = useState(0);
+
+  function searchUser() {
+    getUserByNickname(searchText.current.value)
+      .then((result) => {
+        if (result.data) {
+          setModalOpen(true);
+          setCurrUser(result.data.id);
+        } else {
+          alert("해당 유저가 없습니다");
+        }
+      })
+      .catch((err) => {
+        alert("해당 유저가 없습니다");
+      });
+  }
+
+  const handleKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+    if (event.keyCode === 13 && event.key === "Enter") {
+      searchUser();
+    }
+  };
+
+  const [isModalOpen, setModalOpen] = useState(false);
+  const openModal = (id: number): void => {
+    setId(id);
+    setModalOpen(true);
+  };
+  const closeModal = (): void => {
+    setModalOpen(false);
+  };
+
   return (
     <div className="background">
       {matchInfo && isMatch && (
@@ -226,6 +260,26 @@ export default function MainPage() {
                 </button>
               </div>
               <div className="list">{renderSide()}</div>
+              {curSide === "friends_list" && (
+                <div className="search-side">
+                  <input
+                    ref={searchText}
+                    onKeyDown={handleKeyDown}
+                    type="text"
+                  ></input>
+                  <button className="search-button" onClick={searchUser}>
+                    🔍
+                  </button>
+                  {currUser && isModalOpen && (
+                    <Modal
+                      closeModal={closeModal}
+                      ConfigureModal={() => (
+                        <MemoProfile currUser={currUser} isMe={false} />
+                      )}
+                    />
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </div>
