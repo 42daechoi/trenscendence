@@ -12,7 +12,7 @@ import {
 import { useRef } from "react";
 
 export default function CreateAccPage() {
-  const nickname = useRef(null);
+  const nickname = useRef<HTMLInputElement | null>(null);
   const [avatar, setAvatar] = useState("");
   const navigate = useNavigate();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -24,12 +24,15 @@ export default function CreateAccPage() {
         const bufferData: number[] = result.data.profilePicture.data;
         const buffer: Buffer = Buffer.from(bufferData);
         setAvatar(buffer.toString("base64"));
-        nickname.current.value = result.data.nickname;
+        if (nickname.current)
+          nickname.current.value = result.data.nickname;
       })
       .catch((err) => {});
   }, []);
 
   const createAccount = () => {
+    if (nickname.current)
+    {
     if (!nickname.current.value) {
       alert("닉네임이 입력되지 않았습니다.");
       return;
@@ -43,11 +46,13 @@ export default function CreateAccPage() {
         alert("이미 존재하는 닉네임입니다.");
       })
       .catch((err) => {
+        console.log("catcch in");
+        if (nickname.current)
         modifyNickname(nickname.current.value, false)
-          .then((result) => {
-            console.log("123");
+        .then((result) => {
+            console.log("modifyNickname");
             modifyAvatar(selectedFile)
-              .then((response) => {
+            .then((response) => {
                 console.log("modifyAvatar");
                 modifyFirstCreateFlag();
                 navigate("/main");
@@ -62,6 +67,7 @@ export default function CreateAccPage() {
             console.log(err);
           });
       });
+    }
   };
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -71,7 +77,8 @@ export default function CreateAccPage() {
       if (fileSizeKB > 6000) {
         // 100KB를 초과하면
         alert("첨부 파일 크기가 허용 제한을 초과했습니다.");
-        image.current.value = null;
+		if (image.current)
+        	image.current.value = "";
         return;
       }
       const selectedFile = files[0];
@@ -79,11 +86,12 @@ export default function CreateAccPage() {
 
       const reader = new FileReader();
       reader.onload = function (event) {
-        const result = event.target.result;
+        const result = event.target?.result;
         if (typeof result === "string") {
           console.log("setAvatar");
           setAvatar(result.split(",")[1]);
-          image.current.value = null;
+          if (image.current)
+            image.current.value = "";
         }
       };
       reader.readAsDataURL(selectedFile);

@@ -10,6 +10,7 @@ type ProfileModalProps = {
 
 export default function ProfileModal({ name, currUser }: ProfileModalProps) {
   const [isModalOpen, setModalOpen] = useState(false);
+
   const openModal = (): void => {
     setModalOpen(true);
   };

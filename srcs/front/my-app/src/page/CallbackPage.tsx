@@ -18,7 +18,7 @@ export default function CallbackPage() {
 
   useEffect(() => {
     const searchParams = new URLSearchParams(window.location.search);
-    const code: string = searchParams.get("code");
+    const code: string | null = searchParams.get("code");
     if (code) loginCall(code);
   }, []);
 

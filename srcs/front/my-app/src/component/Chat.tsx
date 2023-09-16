@@ -22,6 +22,8 @@ import {
   getBlockList,
 } from "../utils/ApiRequest";
 
+import { Socket } from "socket.io-client";
+
 interface IUsers {
   name: string;
   profile: any;
@@ -37,20 +39,25 @@ interface IMessage {
   avatar: string;
 }
 
+interface ChatProps {
+  memberList: number[];
+  type: string; 
+}
+
 const initTmpMessages: IMessage[] = [
   {
     user: { name: "SERVER", profile: null, id: 1, isChecked: false },
     sender: "chat chat-start",
     text: "Home 채널에 참가하셨습니다.",
     time: new Date().toLocaleTimeString(),
-    avatar: null,
+    avatar: "",
   },
 ];
 
-function Chat(props) {
+function Chat(props:ChatProps) {
   const [users, setUsers] = useState<IUsers[]>([]);
   const [messages, setMessages] = useState<IMessage[]>(initTmpMessages);
-  const socket = useSocket();
+  const socket : Socket | null = useSocket();
   const inputRef = useRef<HTMLInputElement>(null);
   const lastMessageRef = useRef<HTMLDivElement>(null);
 
@@ -63,26 +70,29 @@ function Chat(props) {
   };
 
   const receiveMessage = () => {
-    socket.on("chat", (receiveData) => {
-      if (!receiveData) return;
-      getId(receiveData.id).then((response) => {
-        if (!response.data) return;
-        const bufferData: number[] = response.data.profilePicture.data;
-        const buffer: Buffer = Buffer.from(bufferData);
-        const img: string = buffer.toString("base64");
-        addMessage(
-          {
-            name: response.data.nickname,
-            profile: response.data.avatar,
-            id: response.data.id,
-            isChecked: false,
-          },
-          receiveData.msg,
-          "chat chat-start",
-          img
-        );
+    if (socket) {
+      socket.on("chat", (receiveData) => {
+        if (!receiveData) return;
+        getId(receiveData.id)
+          .then((response) => {
+            if (!response.data) return;
+            const bufferData: number[] = response.data.profilePicture.data;
+            const buffer: Buffer = Buffer.from(bufferData);
+            const img: string = buffer.toString("base64");
+            addMessage(
+              {
+                name: response.data.nickname,
+                profile: response.data.avatar,
+                id: response.data.id,
+                isChecked: false,
+              },
+              receiveData.msg,
+              "chat chat-start",
+              img
+            );
+          });
       });
-    });
+    }
   };
 
   useEffect(() => {
@@ -101,7 +111,7 @@ function Chat(props) {
           },
           "채팅방 관리자 권한을 부여 받으셨습니다.",
           "chat chat-start",
-          null
+          ""
         );
       }
     });
@@ -122,7 +132,7 @@ function Chat(props) {
           },
           "채널에서 강제 퇴장 당하셨습니다.",
           "chat chat-start",
-          null
+          ""
         );
 
         addMessage(
@@ -134,7 +144,7 @@ function Chat(props) {
           },
           "Home 채널에 참가하셨습니다.",
           "chat chat-start",
-          null
+          ""
         );
       }
     });
@@ -164,9 +174,9 @@ function Chat(props) {
       const prevUsers = JSON.parse(JSON.stringify(users));
       const newUsers = [];
 
-      for (let i = 0; i < props.memberList.length; i++) {
+      for (let i:number = 0; i < props.memberList.length; i++) {
         try {
-          const response = await getId(props.memberList[i]);
+          const response = await getId((props.memberList[i]));
           const data = response.data;
           let isAdd = false;
 
@@ -223,7 +233,9 @@ function Chat(props) {
       const data = await whoami();
       if (chat.substring(0, 7) === "/block ") {
         const target_name: string = chat.substring(7, chat.length);
-        getUserByNickname(target_name)
+        if (socket)
+          socket.emit("mutelistupdate", data.id);
+          getUserByNickname(target_name)
           .then((response) => {
             if (response.data.id === undefined) {
               alert("없는 유저입니다.");
@@ -231,7 +243,8 @@ function Chat(props) {
             }
             patchBlockAdd(response.data.id)
               .then((res) => {
-                socket.emit("blocklistupdate", data.id);
+                if (socket)
+                  socket.emit("blocklistupdate", data.id);
               })
               .catch((error) => {
                 console.log(error);
@@ -243,6 +256,8 @@ function Chat(props) {
         chat = "";
         return;
       } else if (chat.substring(0, 9) === "/unblock ") {
+        if (socket)
+          socket.emit("mutelistupdate", data.id);
         const target_name: string = chat.substring(9, chat.length);
         getUserByNickname(target_name).then((response) => {
           if (response.data.id === undefined) {
@@ -251,7 +266,8 @@ function Chat(props) {
           }
           patchBlockRemove(response.data.id)
             .then((res) => {
-              socket.emit("blocklistupdate", data.id);
+              if (socket)
+                socket.emit("blocklistupdate", data.id);
             })
             .catch((error) => {
               console.log(error);
@@ -281,7 +297,7 @@ function Chat(props) {
               },
               msg,
               "chat chat-start",
-              null
+              ""
             );
           })
           .catch((error) => {
@@ -297,15 +313,14 @@ function Chat(props) {
 
         getUserByNickname(target_name)
           .then((response) => {
-            socket.emit("chat", {
-              id: data.id,
-              target: response.data.id,
-              flag: "dm",
-              msg: msg,
-            });
-          })
-          .catch((err) => {
-            console.log(err);
+            if (socket) {
+              socket.emit("chat", {
+                id: data.id,
+                target: response.data.id,
+                flag: "dm",
+                msg: msg,
+              });
+            }
           });
 
         addMessage(
@@ -317,23 +332,27 @@ function Chat(props) {
           },
           chat,
           "chat chat-end",
-          null
+          ""
         );
         chat = "";
         return;
       } else if (chat.length) {
         where(socket, data.id)
           .then((channel) => {
-            socket.emit("chat", {
-              id: data.id,
-              target: channel.channelname,
-              flag: "broad",
-              msg: chat,
-            });
+            if (socket) {
+             socket.emit("chat", {
+                id: data.id,
+                target: channel.channelname,
+                flag: "broad",
+                msg: chat,
+              });
+            }
+
           })
           .catch((error) => {
             console.log(error);
           });
+          
         const bufferData: number[] = data.profilePicture.data;
         const buffer: Buffer = Buffer.from(bufferData);
         const img: string = buffer.toString("base64");
@@ -383,11 +402,13 @@ function Chat(props) {
       const data = await whoami();
       for (let i: number = 0; i < users.length; i++) {
         if (users[i].isChecked) {
-          socket.emit("kick", {
-            id: data.id,
-            target: users[i].id,
-          });
-          console.log(users[i].name);
+          if (socket) {
+            socket.emit("kick", {
+              id: data.id,
+              target: users[i].id,
+            });
+            console.log(users[i].name);
+          }
         }
       }
     } catch (error) {
@@ -398,7 +419,8 @@ function Chat(props) {
   const goHome = async () => {
     try {
       const data = await whoami();
-      socket.emit("home", data.id);
+      if (socket)
+        socket.emit("home", data.id);
       setMessages([]);
       addMessage(
         {
@@ -409,7 +431,7 @@ function Chat(props) {
         },
         "Home 채널에 참가하셨습니다.",
         "chat chat-start",
-        null
+        ""
       );
     } catch (error) {
       console.log(error);
@@ -420,8 +442,10 @@ function Chat(props) {
     try {
       const data = await whoami();
       for (let i: number = 0; i < users.length; i++) {
-        if (users[i].isChecked)
-          socket.emit("op", { id: data.id, target: users[i].id });
+        if (users[i].isChecked) {
+          if (socket)
+            socket.emit("op", { id: data.id, target: users[i].id });
+        }      
       }
     } catch (error) {
       console.log(error);
@@ -446,7 +470,7 @@ function Chat(props) {
             },
             chname + " 채널에 참가하셨습니다.",
             "chat chat-start",
-            null
+            ""
           );
         })
         .catch((error) => {
@@ -518,14 +542,10 @@ function Chat(props) {
       <div className="chat-member-list">
         <ul>
           {users.map((user, index) => (
-            // {/* 추후 key 값을 index 대신 id로 대체 */}
             <li key={"chat" + index}>
               <input
                 type="checkbox"
                 checked={users[index].isChecked}
-                // onChange={() => {
-                //   users[index].isChecked = users[index].isChecked ? false : true
-                // }}
                 onChange={() => {
                   setUsers((prevUsers) => {
                     return prevUsers.map((prevUser) => {

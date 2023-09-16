@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
-import { useCurPage, CurPageContext } from "./CurPageContext";
+import { useCurPage } from "./CurPageContext";
 import { io, Socket } from "socket.io-client";
-import { whoami } from "../utils/whoami";
+
 import { getWhoami } from "../utils/ApiRequest";
 interface ProviderProps {
   children: React.ReactNode;

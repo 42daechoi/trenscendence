@@ -42,7 +42,7 @@ export default function GamePage() {
     const ctxRef = ctx.current;
     const board_xRef = board_x.current;
     const board_yRef = board_y.current;
-    if (ctx) {
+    if (ctxRef) {
       ctxRef.clearRect(0, 0, board_xRef, board_yRef);
       ctxRef.beginPath();
       ctxRef.arc(ball.current.x, ball.current.y, ball.current.r, 0, Math.PI * 2);
@@ -65,7 +65,7 @@ export default function GamePage() {
           obstacle.current[i].height
         );
       }
-      ctx.current.closePath();
+      ctxRef.closePath();
     }
   }
 
@@ -83,7 +83,8 @@ export default function GamePage() {
       document.getElementById("winner-box")!.hidden = true;
     }
     let canvas = canvasRef.current;
-    ctx.current = canvas?.getContext("2d");
+    if (canvas)
+      ctx.current = canvas.getContext("2d");
     if (game) {
       game.addEventListener("keyup", handlKeyup);
     }
@@ -117,7 +118,8 @@ export default function GamePage() {
     if (socket) {
       if (socket.connected === false)
         navigate.current('/');
-      socket.emit('inGame', "", response => {
+
+      socket.emit('inGame', "", (response : boolean) => {
         if (response === false) {navigate.current('/main');}
         else if (response === true) {
           socket.on("Win", (data) => {
@@ -196,12 +198,12 @@ export default function GamePage() {
             });
           });
 
-          socket.emit("amiHost", "", response => {
+          socket.emit("amiHost", "", (response : number) => {
             client.current = response;
             if (client.current === 0) {
               socket.emit("wait", "");
             }
-            socket.emit('myInfo', "", response => {
+            socket.emit('myInfo', "", (response: string) => {
               if (client.current === 0) {
                 const p1 = document.getElementById("user2");
                 if (p1) {
@@ -211,7 +213,7 @@ export default function GamePage() {
                     p1.innerText = response;
                   }
                 }
-                socket.emit('other', "", response => {
+                socket.emit('other', "", (response: string) => {
                   if (response.length > 5) {
                     document.getElementById("user1")!.innerText = (response.substr(0, 5) + "...");
                   } else {
@@ -227,7 +229,7 @@ export default function GamePage() {
                     p2.innerText = response;
                   }
                 }
-                socket.emit('other', "", response => {
+                socket.emit('other', "", (response: string) => {
                   if (response.length > 5) {
                     document.getElementById("user2")!.innerText = (response.substr(0, 5) + "...");
                   } else {

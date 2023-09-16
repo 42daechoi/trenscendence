@@ -12,17 +12,18 @@ import Modal from "../component/Modal";
 
 import { useSocket, useGameSocket } from "../component/SocketContext";
 import { useCurPage } from "../component/CurPageContext";
+import { Socket } from "socket.io-client";
 
 export default function MainPage() {
   const [isMatch, setIsMatch] = useState(false);
   const [play, setPlay] = useState(false);
   const [matchInfo, setMatchInfo] = useState(null);
-  const sideRef = useRef(null);
+  const sideRef = useRef<HTMLInputElement | null>(null);
   const gameSocket = useGameSocket();
   const [curPage, setCurPage] = useState("my_profile");
   const [channelList, setChannelList] = useState([]);
   const [memberList, setMemberList] = useState([]);
-  const socket = useSocket();
+  const socket : Socket | null = useSocket();
   const [myId, setMyId] = useState(0);
 
   const { match, set } = useCurPage();
@@ -33,14 +34,15 @@ export default function MainPage() {
   useEffect(() => {
     if (match === "block") {
       window.location.reload();
-      socket.disconnect();
+      if (socket)
+        socket.disconnect();
     }
     if (match === "match") {
-      sideRef.current.checked = false;
+      if (sideRef.current) sideRef.current.checked = false;
       setIsMatch(true);
     }
     if (match === "accept") {
-      sideRef.current.checked = false;
+      if (sideRef.current) sideRef.current.checked = false;
       setIsMatch(false);
       setPlay(true);
       setCurPage("game_waiting");
@@ -57,11 +59,11 @@ export default function MainPage() {
   useEffect(() => {
     if (!socket) return;
     if (!gameSocket) return;
-    gameSocket.emit("checksocket", "", (response) => {
+    gameSocket.emit("checksocket", "", (response: number) => {
       if (response === 1)
         setTimeout(() => {
           console.log("checksocket");
-          gameSocket.emit("checksocket", "", (response) => {
+          gameSocket.emit("checksocket", "", (response: number) => {
             if (response === 1) window.location.reload();
           });
         }, 1000);
@@ -78,9 +80,9 @@ export default function MainPage() {
           for (let i = 0; i < data.length; i++) {
             for (let j = 0; j < data[i].users.length; j++) {
               if (data[i].users[j] === response.data.id) {
-                if (JSON.stringify(data) != JSON.stringify(channelList))
+                if (JSON.stringify(data) !== JSON.stringify(channelList))
                   setChannelList(data);
-                if (JSON.stringify(data[i].users) != JSON.stringify(memberList))
+                if (JSON.stringify(data[i].users) !== JSON.stringify(memberList))
                   setMemberList(data[i].users);
                 return;
               }
@@ -124,7 +126,7 @@ export default function MainPage() {
     setCurPage("my_profile");
   };
 
-  const handleButtonClick = (side) => {
+  const handleButtonClick = (side : string) => {
     if (side === "friends_list") {
       setCurSide("friends_list");
       setFriendsButtonClass("clicked-button");
@@ -153,10 +155,11 @@ export default function MainPage() {
   };
 
   const [currUser, setCurrUser] = useState(null); // 현재 유저 상태
-  const searchText = useRef(null);
+  const searchText = useRef<HTMLInputElement | null>(null);
   const [id, setId] = useState(0);
 
   function searchUser() {
+    if (searchText.current)
     getUserByNickname(searchText.current.value)
       .then((result) => {
         if (result.data) {

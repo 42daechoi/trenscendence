@@ -1,6 +1,6 @@
 import axios, { AxiosResponse } from "axios";
 
-const serverUrl: string = process.env.REACT_APP_SERVER_URL;
+const serverUrl : string = process.env.REACT_APP_SERVER_URL;
 
 export const apiRequest = <T = any,>(
   method: "get" | "post" | "patch",
@@ -49,7 +49,7 @@ export function getIntraId<T = any>(
   return apiRequest("get", `${serverUrl}/users/intraId/${intraId}`);
 }
 
-export function getId<T = any>(Id: string): Promise<AxiosResponse<T>> {
+export function getId<T = any>(Id: number): Promise<AxiosResponse<T>> {
   return apiRequest("get", `${serverUrl}/users/id/${Id}`);
 }
 export function getUserByNickname<T = any>(
@@ -121,7 +121,7 @@ type profilePicture = {
   data: ArrayBuffer;
 };
 
-export function modifyAvatar(img: File): Promise<AxiosResponse<any>> {
+export function modifyAvatar(img: File | null): Promise<AxiosResponse<any>> {
   return new Promise((resolve, reject) => {
     if (!img) reject(null);
     getWhoami()
@@ -152,7 +152,8 @@ export function modifyAvatar(img: File): Promise<AxiosResponse<any>> {
               });
           }
         };
-        reader.readAsArrayBuffer(img);
+        if (img)
+          reader.readAsArrayBuffer(img);
       })
       .catch((err) => {
         reject(err);

@@ -78,12 +78,17 @@ export class TwoFactorAuthController {
   @Post('authenticate')
   @HttpCode(200)
   @UseGuards(PartialJwtGuard)
-  async authenticate(
+  async authenticate (
     @CurrentUser() user: User,
     @Body() twoFactorAuthCode: TwoFactorAuthCodeDto,
     @Res({ passthrough: true }) res: Response,
-  ) {
-    this.validateCode(user, twoFactorAuthCode.twoFactorAuthCode);
+  ): Promise<any> {
+    const isCodeValid = await this.validateCode(user, twoFactorAuthCode.twoFactorAuthCode);
+    if (isCodeValid == false) {
+      this.logger.log('2FA code not valid');
+      throw new UnauthorizedException('2FA: wrong authentication code');
+     
+    }
     //give TokenPayload and getJwtToken
     const full_token = await this.authService.validateUser(
       user.intraId,
@@ -97,7 +102,7 @@ export class TwoFactorAuthController {
     return;
   }
 
-  private async validateCode(user: User, twoFactorAuthCode: string) {
+  private async validateCode(user: User, twoFactorAuthCode: string) : Promise<null | boolean>{
     this.logger.log(
       `Attempting to validate user ${user.id} with 2FA code ${twoFactorAuthCode}`,
     );
@@ -105,9 +110,13 @@ export class TwoFactorAuthController {
       twoFactorAuthCode,
       user,
     );
-    if (!isCodeValid) {
-      this.logger.log('2FA code not valid');
-      throw new UnauthorizedException('2FA: wrong authentication code');
-    }
+    return (isCodeValid);
+    // if (isCodeValid)
+    //   return ();
+    // if (!isCodeValid) {
+    //   this.logger.log('2FA code not valid');
+    //   return null;
+    //   throw new UnauthorizedException('2FA: wrong authentication code');
+    // }
   }
 }

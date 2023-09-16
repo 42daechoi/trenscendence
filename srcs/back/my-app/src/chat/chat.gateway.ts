@@ -37,8 +37,8 @@ export class ChatGateway
   implements OnGatewayConnection, OnGatewayDisconnect, OnGatewayInit
 {
   constructor(
-    @Inject(UsersService) private readonly usersService,
-    @Inject(ChatService) private readonly chatService,
+    @Inject(UsersService) private readonly usersService : UsersService,
+    @Inject(ChatService) private readonly chatService : ChatService,
   ) {}
   private connectedSockets: Map<number, Socket> = new Map();
 
@@ -63,13 +63,13 @@ export class ChatGateway
 
     const channel = {
       channelname: '$home',
-      host: null,
-      operator: [],
-      users: [],
+      host: null as number | null,
+      operator: [] as number[],
+      users: [] as number[],
       member: 0,
       maxmember: 420,
       option: 'public',
-      password: null,
+      password: null as string | null,
     };
     const channels: channelDTO[] = await this.chatService.getChannels();
 
@@ -145,7 +145,7 @@ export class ChatGateway
               //채널 목록에서 삭제
               const removeChannelIdx = (
                 await this.chatService.getChannels()
-              ).findIndex((c) => c.channelname === channel.channelname);
+              ).findIndex((c : channelDTO) => c.channelname === channel.channelname);
               if (removeChannelIdx !== -1) {
                 const channels: channelDTO[] =
                   await this.chatService.getChannels();
@@ -402,7 +402,7 @@ export class ChatGateway
     const newChannel = {
       channelname: user_info.nickname,
       host: room.id,
-      operator: [],
+      operator: [] as number[],
       users: [user.id],
       member: 1,
       maxmember: room.maxmember,
@@ -560,7 +560,7 @@ export class ChatGateway
             //channels에서 삭제
             const removeChannelIdx = (
               await this.chatService.getChannels()
-            ).findIndex((c) => c.channelname === beforeChannel.channelname);
+            ).findIndex((c : channelDTO) => c.channelname === beforeChannel.channelname);
             if (removeChannelIdx !== -1) {
               (await this.chatService.getChannels()).splice(
                 removeChannelIdx,
@@ -603,7 +603,7 @@ export class ChatGateway
             //채널 목록에서 삭제
             const removeChannelIdx = (
               await this.chatService.getChannels()
-            ).findIndex((c) => c.channelname === beforeChannel.channelname);
+            ).findIndex((c : channelDTO) => c.channelname === beforeChannel.channelname);
             if (removeChannelIdx !== -1) {
               (await this.chatService.getChannels()).splice(
                 removeChannelIdx,
@@ -878,7 +878,7 @@ export class ChatGateway
         //채널 목록에서 삭제
         const removeChannelIdx = (
           await this.chatService.getChannels()
-        ).findIndex((c) => c.channelname === beforeChannel.channelname);
+        ).findIndex((c : channelDTO) => c.channelname === beforeChannel.channelname);
         if (removeChannelIdx !== -1) {
           const channels: channelDTO[] = await this.chatService.getChannels();
           channels.splice(removeChannelIdx, 1);

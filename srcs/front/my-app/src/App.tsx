@@ -4,7 +4,6 @@ import { useState } from "react";
 import { SocketProvider, GameSocketProvider } from "./component/SocketContext";
 import { CurPageProvider } from "./component/CurPageContext";
 import LoginPage from "./page/LoginPage";
-import CookiePage from "./page/CookiePage";
 import MainPage from "./page/MainPage";
 import CreateAccPage from "./page/CreateAccPage";
 import Callback from "./page/CallbackPage";

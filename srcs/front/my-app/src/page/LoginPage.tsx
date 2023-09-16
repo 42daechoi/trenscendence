@@ -1,10 +1,10 @@
 import "../css/LoginPage.css";
 import { getWhoami } from "../utils/ApiRequest";
-import { useNavigate } from "react-router-dom";
+
 import { useSocket } from "../component/SocketContext";
 import { useEffect, useState } from "react";
 import { useGameSocket } from "../component/SocketContext";
-const authUrl = process.env.REACT_APP_AUTH_URL;
+const authUrl:string = process.env.REACT_APP_AUTH_URL;
 function LoginPage() {
   const gameSocket = useGameSocket();
   const socket = useSocket();
@@ -13,7 +13,7 @@ function LoginPage() {
     getWhoami()
       .then((result) => {
         if (result.data.status === 1) setIsLogin(true);
-        // navigate("/main");
+          // navigate("/main");
       })
       .catch((err) => {
         return;
@@ -25,7 +25,7 @@ function LoginPage() {
       if (isLogin === true) {
         if (gameSocket)
         {
-          gameSocket.emit("checksocket","", response =>{
+          gameSocket.emit("checksocket","", (response : number) =>{
             if (response === 1)
               socket.disconnect();
             else

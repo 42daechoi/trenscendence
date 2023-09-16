@@ -1,5 +1,5 @@
-import axios from 'axios'
 
+import { Socket } from 'socket.io-client';
 interface Channel {
 	channelname:string;
 	host?:string | null;
@@ -11,15 +11,18 @@ interface Channel {
 	password?:number | null;
 }
 
-export const where = (socket, id: number): Promise<Channel> => {
+export const where = (socket:Socket | null, id: number): Promise<Channel> => {
 	return new Promise((resolve, reject) => {
-		socket.emit('where', id);
-		socket.on('where', (channel: Channel) => {
-			resolve(channel);
-		});
-  
-		setTimeout(() => {
-			reject(new Error('채널 정보를 불러올 수 없습니다.'));
-		}, 5000);
+		if (socket)
+		{
+			socket.emit('where', id);
+			socket.on('where', (channel: Channel) => {
+				resolve(channel);
+			});
+	
+			setTimeout(() => {
+				reject(new Error('채널 정보를 불러올 수 없습니다.'));
+			}, 5000);
+		}
 	});
 }
