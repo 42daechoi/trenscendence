@@ -319,7 +319,7 @@ export default function GameWaiting(prop :{type : boolean, leavefun : () => void
   useEffect(() => {
     if (exit === 1) {
       tmp = 1;
-      setTimeout(()=>{prop.leavefun();},500);
+      setTimeout(()=>{prop.leavefun();},1500);
     }
     if (exit === 2) {
       tmp = 2;

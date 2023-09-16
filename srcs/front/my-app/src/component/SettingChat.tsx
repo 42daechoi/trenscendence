@@ -1,7 +1,6 @@
 import { useState, ChangeEvent } from "react"; // 타입 추가
 import { useSocket } from "../component/SocketContext";
 import { whoami } from "../utils/whoami";
-import { where } from "../utils/where";
 
 export default function SettingChat(props: { closeModal: () => void }) { // 타입 추가
     const socket = useSocket();

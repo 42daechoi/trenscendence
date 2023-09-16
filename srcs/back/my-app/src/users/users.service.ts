@@ -202,6 +202,7 @@ export class UsersService {
       }
     }
     await this.userRepository.save(user);
+    return(user);
   }
 
   async getUserFriends(cur_id: number): Promise<User[] | null> {

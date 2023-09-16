@@ -70,7 +70,7 @@ export default function FriendsList() {
 
   useEffect(() => {
     init();
-    const pollingInterval = setInterval(init, 10000);
+    const pollingInterval = setInterval(init, 2000);
     return () => {
       clearInterval(pollingInterval);
     };
@@ -81,7 +81,7 @@ export default function FriendsList() {
       {friendList.map((friend) => (
         <li key={"friendList" + friend.id}>
           <a className="chat_btn" onClick={() => openModal(friend.id)}>
-            <div>{friend.status ? "🟢" : "🔴"}</div>
+            <div>{friend.status === 1 ? "🟢" : friend.status === 2 ? "🟡" : "🔴"}</div>
             <div>{friend.nickname}</div>
           </a>
         </li>
