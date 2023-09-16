@@ -1,6 +1,6 @@
 import "../css/LoginPage.css";
 import { getWhoami } from "../utils/ApiRequest";
-import { useNavigate } from "react-router-dom";
+
 import { useSocket } from "../component/SocketContext";
 import { useEffect, useState } from "react";
 import { useGameSocket } from "../component/SocketContext";
@@ -13,7 +13,7 @@ function LoginPage() {
     getWhoami()
       .then((result) => {
         if (result.data.status === 1) setIsLogin(true);
-        // navigate("/main");
+          // navigate("/main");
       })
       .catch((err) => {
         return;

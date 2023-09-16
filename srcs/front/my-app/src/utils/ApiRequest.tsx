@@ -121,7 +121,7 @@ type profilePicture = {
   data: ArrayBuffer;
 };
 
-export function modifyAvatar(img: File): Promise<AxiosResponse<any>> {
+export function modifyAvatar(img: File | null): Promise<AxiosResponse<any>> {
   return new Promise((resolve, reject) => {
     if (!img) reject(null);
     getWhoami()
@@ -152,7 +152,8 @@ export function modifyAvatar(img: File): Promise<AxiosResponse<any>> {
               });
           }
         };
-        reader.readAsArrayBuffer(img);
+        if (img)
+          reader.readAsArrayBuffer(img);
       })
       .catch((err) => {
         reject(err);

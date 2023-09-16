@@ -46,13 +46,13 @@ export default function CreateAccPage() {
         alert("이미 존재하는 닉네임입니다.");
       })
       .catch((err) => {
+        console.log("catcch in");
         if (nickname.current)
         modifyNickname(nickname.current.value, false)
-          .then((result) => {
-            console.log("123");
-            if (selectedFile)
+        .then((result) => {
+            console.log("modifyNickname");
             modifyAvatar(selectedFile)
-              .then((response) => {
+            .then((response) => {
                 console.log("modifyAvatar");
                 modifyFirstCreateFlag();
                 navigate("/main");
