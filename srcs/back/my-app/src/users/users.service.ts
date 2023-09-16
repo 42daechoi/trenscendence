@@ -253,7 +253,7 @@ export class UsersService {
     return user;
   }
 
-  async removeBlocks(cur_id: number, block_id: number) {
+  async removeBlocks(cur_id: number, block_id: number): Promise<void> {
     if (isNaN(cur_id) || cur_id <= 0 || cur_id > 2147483647) {
 		return (null);
     }

@@ -37,7 +37,7 @@ export class FortytwoStrategy extends PassportStrategy(Strategy) {
   // It is used to access the user informations of 42 API after the first access.
   // (And I don't know if 42 API uses them).
 
-  //what we want to do in 42 startegy is whethere we get the intra id, name, photourl
+  // what we want to do in 42 startegy is whethere we get the intra id, name, photourl
   // validate function's argument is accessToken, refreshToken, porfile!!
   async validate(
     accessToken: string,
