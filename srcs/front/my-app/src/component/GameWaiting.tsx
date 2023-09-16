@@ -5,62 +5,68 @@ import { useNavigate } from "react-router-dom";
 import { apiRequest } from "../utils/ApiRequest";
 import "../css/GamePage.css";
 import { ballItem, padItem, htmlItem, game } from "../utils/Game.Class";
+import { Socket } from "socket.io-client";
 let tmp = -1;
 
-export default function GameWaiting(prop) {
+export default function GameWaiting(prop :{type : boolean, leavefun : () => void }) {
   const [exit, setExit] = useState(-1);
-  const canvasRef = useRef(null);
-  const gameRef = useRef(null);
-  const obsRef = useRef(null);
-  const padRef1 = useRef(null);
-  const padRef2 = useRef(null);
-  const socket = useGameSocket();
-  const chatSocket = useSocket();
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const gameRef = useRef<HTMLDivElement>(null);
+  const obsRef = useRef<HTMLDivElement>(null);
+  const padRef1 = useRef<HTMLDivElement>(null);
+  const padRef2 = useRef<HTMLDivElement>(null);
+  const socket : Socket | null = useGameSocket();
+  const chatSocket: Socket | null = useSocket();
   const navigate = useNavigate();
-  const [Ready, setReady] = useState(false);
-  const [State, setState] = useState(false);
-  const [MapNum, setMapNum] = useState(1);
-  const [BallNum, setBallNum] = useState(2);
-  const [SpeedNum, setSpeedNum] = useState(2);
-  const [myinfo, setMyInfo] = useState("");
-  const [other, setOther] = useState("");
-  const [PadNum, setPadNum] = useState(2);
-  const [client, setclient] = useState(-1);
-  const gameset = new game([], 0, 0, new ballItem(0, 0, 0, 0, 0, 0), []);
-  const pad = [];
-  const obstacle = [];
-  const ball = new ballItem(0, 0, 0, 0, 0, 0);
-  let board_x;
-  let board_y;
-  let ctx;
-  let v = 6;
-  let r = 12;
+  const [Ready, setReady] = useState<boolean>(false);
+  const [State, setState] = useState<boolean>(false);
+  const [MapNum, setMapNum] = useState<number>(1);
+  const [BallNum, setBallNum] = useState<number>(2);
+  const [SpeedNum, setSpeedNum] = useState<number>(2);
+  const [myinfo, setMyInfo] = useState<string>("");
+  const [other, setOther] = useState<string>("");
+  const [PadNum, setPadNum] = useState<number>(2);
+  const [client, setclient] = useState<number>(-1);
+  const gameset = new game([], 0, 0, new ballItem(0,0,0,0,0,0), []);
+  const pad : padItem[] = [];
+  const obstacle :htmlItem[] = [];
+  const ball = new ballItem(0,0,0,0,0,0);
+  let board_x : number;
+  let board_y: number;
+  let ctxRef = useRef<CanvasRenderingContext2D | null>(null);
+  let v : number = 6;
+  let r : number = 12;
+
   function draw() {
-    ctx.clearRect(0, 0, board_x, board_y);
-    ctx.beginPath();
-    ctx.arc(ball.x, ball.y, ball.r, 0, Math.PI * 2);
-    ctx.fillStyle = "#ffffff";
-    ctx.fill();
-    ctx.beginPath();
-    ctx.fillStyle = pad[0].color;
-    ctx.roundRect(pad[0].x, pad[0].y, pad[0].width, pad[0].height, pad[0].radi);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.fillStyle = pad[1].color;
-    ctx.roundRect(pad[1].x, pad[1].y, pad[1].width, pad[1].height, pad[1].radi);
-    ctx.fill();
-    for (let i = 0; i < obstacle.length; i++) {
-      ctx.fillStyle = "#5a1515";
-      ctx.fillRect(
-        obstacle[i].x,
-        obstacle[i].y,
-        obstacle[i].width,
-        obstacle[i].height
-      );
+    const ctx = ctxRef.current;
+    if (ctx)
+    {
+      ctx.clearRect(0, 0, board_x, board_y);
+      ctx.beginPath();
+      ctx.arc(ball.x, ball.y, ball.r, 0, Math.PI * 2);
+      ctx.fillStyle = "#ffffff";
+      ctx.fill();
+      ctx.beginPath();
+      ctx.fillStyle = pad[0].color;
+      ctx.roundRect(pad[0].x, pad[0].y, pad[0].width, pad[0].height, pad[0].radi);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.fillStyle = pad[1].color;
+      ctx.roundRect(pad[1].x, pad[1].y, pad[1].width, pad[1].height, pad[1].radi);
+      ctx.fill();
+      for (let i = 0; i < obstacle.length; i++) {
+        ctx.fillStyle = "#5a1515";
+        ctx.fillRect(
+          obstacle[i].x,
+          obstacle[i].y,
+          obstacle[i].width,
+          obstacle[i].height
+        );
+      }
+      ctx.closePath();
     }
-    ctx.closePath();
   }
-  function updatedirection(ball) {
+  function updatedirection(ball : ballItem) {
     ball.dy = 0.5 * Math.random() + 0.5;
     ball.dx = 1;
     ball.dx *= Math.random() < 0.5 ? -1 : 1;
@@ -91,7 +97,7 @@ export default function GameWaiting(prop) {
     draw();
   }
 
-  function bounce_obstacle(obs) {
+  function bounce_obstacle(obs : htmlItem[]) {
     for (let i = 0; i < obs.length; i++) {
       if (ball.temp != i) {
         if (ball.x > obs[i].x && ball.x < obs[i].x + obs[i].width) {
@@ -162,8 +168,13 @@ export default function GameWaiting(prop) {
     if (State) {
       setReady(!Ready);
       const element = document.getElementById("check-box");
-      if (!Ready) element.style.backgroundColor = "rgb(77, 246, 100)";
-      else element.style.backgroundColor = "";
+      if (element)
+      {
+        if (!Ready)
+          element.style.backgroundColor = 'rgb(77, 246, 100)';
+        else
+          element.style.backgroundColor = "";
+      }
     }
   };
   function gameSettingbutton(
@@ -197,50 +208,58 @@ export default function GameWaiting(prop) {
   }
   function init() {
     const canvas = canvasRef.current;
-    ctx = canvas.getContext("2d");
-    board_x = gameRef.current.clientWidth;
-    board_y = gameRef.current.clientHeight;
+    if (canvas)
+      ctxRef.current = canvas.getContext("2d");
+    if (gameRef.current)
+    {
+      board_x = gameRef.current.clientWidth;
+      board_y = gameRef.current.clientHeight;
+    }
     ball.init(board_x / 2, board_y / 2, 1, 1, v, r, -1);
-
-    pad.push(
-      new padItem(
-        padRef1.current.offsetLeft,
-        padRef1.current.offsetTop,
-        padRef1.current.offsetWidth,
-        padRef1.current.offsetHeight,
-        "#d9d9d9",
-        parseInt(
-          window.getComputedStyle(padRef1.current).borderBottomLeftRadius
-        )
-      )
-    );
-
-    pad.push(
-      new padItem(
-        padRef2.current.offsetLeft,
-        padRef2.current.offsetTop,
-        padRef2.current.offsetWidth,
-        padRef2.current.offsetHeight,
-        "#ffe500",
-        parseInt(
-          window.getComputedStyle(padRef2.current).borderBottomLeftRadius
-        )
-      )
-    );
-    canvas.width = board_x;
-    canvas.height = board_y;
-    let obstacles = obsRef.current;
-    let obj = obstacles.firstElementChild;
-    while (obj != null) {
-      obstacle.push(
-        new htmlItem(
-          obj.offsetLeft,
-          obj.offsetTop,
-          obj.clientWidth,
-          obj.clientHeight
+    if (padRef1.current)
+      pad.push(
+        new padItem(
+          padRef1.current.offsetLeft,
+          padRef1.current.offsetTop,
+          padRef1.current.offsetWidth,
+          padRef1.current.offsetHeight,
+          "#d9d9d9",
+          parseInt(window.getComputedStyle(padRef1.current).borderBottomLeftRadius)
         )
       );
-      obj = obj.nextElementSibling;
+    if (padRef2.current)
+    pad.push(
+        new padItem(
+          padRef2.current.offsetLeft,
+          padRef2.current.offsetTop,
+          padRef2.current.offsetWidth,
+          padRef2.current.offsetHeight,
+          "#ffe500",
+          parseInt(window.getComputedStyle(padRef2.current).borderBottomLeftRadius)
+        )
+      );
+    if (canvas)
+    {
+      canvas.width = board_x;
+      canvas.height = board_y;
+    }
+    let obstacles = obsRef.current;
+    if (obstacles)
+    {
+      let obj :Element | null = obstacles.firstElementChild;
+      while (obj != null) {
+        if (obj instanceof HTMLElement) {
+        obstacle.push(
+          new htmlItem(
+            obj.offsetLeft,
+            obj.offsetTop,
+            obj.clientWidth,
+            obj.clientHeight
+          )
+        );
+        obj = obj.nextElementSibling;
+        }   
+      }
     }
     pad[0].height = 20 * (PadNum - 1) + 116;
     pad[1].height = 20 * (PadNum - 1) + 116;
@@ -271,26 +290,32 @@ export default function GameWaiting(prop) {
   useEffect(() => {
     if (socket && prop.type !== true) {
       socket.emit("match", "");
-    }
-    if (socket && prop.type === true) {
-      socket.emit("amiHost", (response) => {
-        if (response === 1) socket.emit("oneOnOneMade", "");
+    };
+    if (socket && prop.type === true)
+    {
+      socket.emit("amiHost", (response : number) => {
+        if (response === 1)
+          socket.emit("oneOnOneMade","");
       });
     }
     return () => {
       console.log("tmp", tmp);
-      if (tmp === -1) {
+      if (tmp === -1 &&socket ) {
         socket.emit("matchQueueOut", "");
         socket.emit("gameRoomOut", "");
       }
-      socket.emit("whoamiGateway", "", (response) => {
-        if (client === 0)
-          chatSocket.emit("home", response);
-        else
-          setTimeout(()=>{chatSocket.emit("home", response);},500);
-      });
+      if (socket && chatSocket)
+      {
+      socket.emit("whoamiGateway", "", (response : number) => {
+          if (client === 0)
+            chatSocket.emit("home", response);
+          else
+            setTimeout(()=>{chatSocket.emit("home", response);},500);
+        });
+      }
     };
   }, [socket]);
+
   useEffect(() => {
     if (exit === 1) {
       tmp = 1;
@@ -309,8 +334,10 @@ export default function GameWaiting(prop) {
   }, [exit]);
   useEffect(() => {
     init();
-    if (socket) {
-      socket.emit("myInfo", "", (response) => {
+
+    if (socket)
+    {
+      socket.emit('myInfo',"",(response : string) => {
         console.log(response.length);
         if (response.length > 5) {
           setMyInfo(response.substr(0, 5) + "...");
@@ -329,32 +356,34 @@ export default function GameWaiting(prop) {
       socket.on("matching waiting", (data) => {
         console.log(data);
       });
-      socket.on("matchInfo", (data) => {
-        socket.emit("amiHost", "", (response) => {
+      socket.on("matchInfo", data => {
+        socket.emit('amiHost', "", (response : number) => {
           setclient(response);
           if (response === 0) {
             console.log("gamechatroom");
-            chatSocket.emit("gamechatroom", {
-              host: data.host.id,
-              target: data.guest.id,
-            });
+            if (chatSocket)
+              chatSocket.emit("gamechatroom", {host : data.host.id, target: data.guest.id});
           }
         });
         setState(true);
-        socket.emit("other", "", (response) => {
-          if (response.length > 5) {
-            setOther(response.substr(0, 5) + "...");
-          } else setOther(response);
+        socket.emit('other', "", (response : string) => {
+          if (response.length > 5)
+        {
+          setOther(response.substr(0, 5) + "...");
+        }
+        else
+          setOther(response);
         });
         console.log("State", State);
       });
       socket.on("goodtogo", () => {
         setExit(2);
       });
-      socket.on("allReady", () => {
-        socket.emit("amiHost", "", (response) => {
-          console.log(response);
-          if (response === 0) {
+      socket.on("allReady",() => {
+        socket.emit('amiHost', "", (response : number) =>{
+          console.log(response)
+          if (response === 0)
+          {
             gameset.board_x = board_x * 2;
             gameset.board_y = board_y * 2;
 
@@ -422,9 +451,11 @@ export default function GameWaiting(prop) {
   }, [PadNum, SpeedNum, BallNum, MapNum, client, socket, chatSocket]);
 
   useEffect(() => {
-    console.log(State, Ready);
-    if (Ready && State) socket.emit("ready", Ready);
-    else if (!Ready && State) socket.emit("unReady", Ready);
+      console.log(State,Ready);
+      if (Ready && State && socket)
+        socket.emit("ready", Ready);
+      else if (!Ready && State && socket)
+        socket.emit("unReady", Ready);
   }, [Ready, State]);
   return (
     <div className="game-waiting-container">

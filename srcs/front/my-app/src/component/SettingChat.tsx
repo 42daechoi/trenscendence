@@ -1,15 +1,15 @@
-import { useState } from "react";
+import { useState, ChangeEvent } from "react"; // 타입 추가
 import { useSocket } from "../component/SocketContext";
 import { whoami } from "../utils/whoami";
 import { where } from "../utils/where";
 
-export default   function SettingChat(props) {
+export default function SettingChat(props: { closeModal: () => void }) { // 타입 추가
     const socket = useSocket();
-    const [isChecked, setChecked] = useState("public");
-    const [selectedValue, setSelectedValue] = useState(10);
-    const [password, setPassword] = useState("");
+    const [isChecked, setChecked] = useState<string>("public"); // 타입 추가
+    const [selectedValue, setSelectedValue] = useState<number>(10); // 타입 추가
+    const [password, setPassword] = useState<string>(""); // 타입 추가
 
-    const passwordChange = (event) => {
+    const passwordChange = (event: ChangeEvent<HTMLInputElement>) => { // 타입 추가
       setPassword(event.target.value);
     };
 
@@ -17,12 +17,13 @@ export default   function SettingChat(props) {
       props.closeModal();
       try {
         const data = await whoami();
-        socket.emit("modify", {
-          id: data.id,
-          maxmember: selectedValue,
-          option: isChecked,
-          password: password,
-        });
+        if (socket)
+          socket.emit("modify", {
+            id: data.id,
+            maxmember: selectedValue,
+            option: isChecked,
+            password: password,
+          });
       } catch (error) {
         console.log(error);
       }
@@ -113,4 +114,4 @@ export default   function SettingChat(props) {
         </button>
       </div>
     );
-  }
+}

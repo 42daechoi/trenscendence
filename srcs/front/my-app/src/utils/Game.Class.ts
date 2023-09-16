@@ -3,13 +3,13 @@ export class htmlItem {
     y :number;
     width :number;
     height :number;
-    constructor(x, y, width, height) {
+    constructor(x : number, y: number, width: number, height: number) {
       this.x = x;
       this.y = y;
       this.width = width;
       this.height = height;
     }
-    isEqual(other) {
+    isEqual(other : htmlItem) {
       this.x = other.x;
       this.y = other.y;
       this.width = other.width;
@@ -25,7 +25,7 @@ export class ballItem {
     v :number;
     r :number;
     temp :number;
-    constructor(x, y, dx, dy, v, r){
+    constructor(x: number, y: number, dx: number, dy: number, v: number, r: number){
       this.x = x;
       this.y = y;
       this.dx = dx;
@@ -34,7 +34,7 @@ export class ballItem {
       this.r = r;
       this.temp = -1;
     }
-    isEqual(other){
+    isEqual(other: ballItem){
       this.x = other.x;
       this.y = other.y;
       this.dx = other.dx;
@@ -43,7 +43,7 @@ export class ballItem {
       this.r = other.r;
       this.temp = other.temp;
     } 
-    init(x, y, dx ,dy, v,r,temp){
+    init(x: number, y: number, dx: number ,dy: number, v: number,r: number,temp: number){
       this.x = x;
       this.y = y;
       this.dx = dx;
@@ -60,15 +60,15 @@ export class padItem {
     height :number;
     color :string;
     radi :number;
-    constructor(x, y, width, height, color, radi) {
+    constructor(x: number, y: number, width: number, height: number, color: string, radi: number) {
       this.x = x;
       this.y = y;
       this.width = width;
       this.height = height;
       this.color = color;
-      this.radi = parseInt(radi);
+      this.radi = radi;
     }
-    isEqual(other) {
+    isEqual(other: padItem) {
       this.x = other.x;
       this.y = other.y;
       this.width = other.width;
@@ -84,8 +84,8 @@ export class game {
     board_y :number;
     ball :ballItem;
     obs :htmlItem[];
-    intervalId : NodeJS.Timeout;
-    constructor(pad, board_x, board_y, ball, obs){
+    intervalId! : NodeJS.Timeout;
+    constructor(pad:padItem[], board_x:number, board_y:number, ball:ballItem, obs:htmlItem[]){
       this.pad = pad;
       this.board_x = board_x;
       this.board_y = board_y;

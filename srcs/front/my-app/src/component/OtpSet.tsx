@@ -1,13 +1,19 @@
 import React, { useEffect, useRef } from "react";
 import { postRegister, post2faEnable } from "../utils/ApiRequest";
 
-export default function OtpSet(props) {
-  const img_src = useRef(null);
+interface OtpSetProps {
+  onChangePage: (page: string) => void;
+}
+
+export default function OtpSet(props: OtpSetProps) {
+  const img_src = useRef<HTMLImageElement>(null);
 
   useEffect(() => {
     postRegister()
       .then((response) => {
-        img_src.current.src = response.data;
+        if (img_src.current) {
+          img_src.current.src = response.data;
+        }
       })
       .catch((error) => {
         console.log(error);
@@ -20,6 +26,7 @@ export default function OtpSet(props) {
     });
     props.onChangePage("google_auth");
   };
+
   return (
     <div
       style={{
@@ -42,6 +49,7 @@ export default function OtpSet(props) {
           marginTop: "30px",
         }}
         ref={img_src}
+        alt="QR Code"
       ></img>
       <button
         onClick={btnOnClick}

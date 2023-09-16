@@ -8,34 +8,39 @@ import {
   getUserByNickname,
 } from "../utils/ApiRequest";
 
-type friendMap = {
+type FriendMap = {
   nickname: string;
   id: number;
   status: number;
 };
-export default function Friends_list() {
-  const [friendList, setFriendList] = useState<friendMap[]>([]);
+
+export default function FriendsList() {
+  const [friendList, setFriendList] = useState<FriendMap[]>([]);
   const [id, setId] = useState(0);
-  const [currUser, setCurrUser] = useState(null); // 현재 유저 상태
-  const searchText = useRef(null);
+  const [currUser, setCurrUser] = useState<number | null>(null);
+  const searchText = useRef<HTMLInputElement | null>(null);
+
   function searchUser() {
-    getUserByNickname(searchText.current.value)
-      .then((result) => {
-        if (result.data) {
-          setModalOpen(true);
-          setCurrUser(result.data.id);
-        } else {
+    if (searchText.current) {
+      getUserByNickname(searchText.current.value)
+        .then((result) => {
+          if (result.data) {
+            setModalOpen(true);
+            setCurrUser(result.data.id);
+          } else {
+            alert("해당 유저가 없습니다");
+          }
+        })
+        .catch((err) => {
           alert("해당 유저가 없습니다");
-        }
-      })
-      .catch((err) => {
-        alert("해당 유저가 없습니다");
-      });
+        });
+    }
   }
+
   function init() {
     getWhoami().then((myid) => {
       getFriendList(myid.data.id).then((friends) => {
-        const newFriendList = [...friendList]; // 기존 배열 복사
+        const newFriendList = [...friendList];
         for (let i = 0; i < friends.data.length; i++) {
           newFriendList.push({
             nickname: friends.data[i].nickname,
@@ -43,7 +48,7 @@ export default function Friends_list() {
             status: friends.data[i].status,
           });
         }
-        setFriendList(newFriendList); // 한 번만 호출
+        setFriendList(newFriendList);
       });
     });
   }
@@ -62,9 +67,13 @@ export default function Friends_list() {
   const closeModal = (): void => {
     setModalOpen(false);
   };
+
   useEffect(() => {
     init();
     const pollingInterval = setInterval(init, 10000);
+    return () => {
+      clearInterval(pollingInterval);
+    };
   }, []);
 
   return (
@@ -72,7 +81,6 @@ export default function Friends_list() {
       {friendList.map((friend) => (
         <li key={"friendList" + friend.id}>
           <a className="chat_btn" onClick={() => openModal(friend.id)}>
-            {/* 온라인 오프라인지 아직 db에 없기때문에 임의로 지정 */}
             <div>{friend.status ? "🟢" : "🔴"}</div>
             <div>{friend.nickname}</div>
           </a>

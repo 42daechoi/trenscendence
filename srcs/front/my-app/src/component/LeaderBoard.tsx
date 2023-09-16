@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import "../css/LeaderBoard.css";
 import { getLeaderBoard } from "../utils/ApiRequest";
 
-type leaderBoardState = {
+type LeaderBoardState = {
   nickname: string;
   gameLog: string;
   rate: string;
@@ -11,12 +11,12 @@ type leaderBoardState = {
 const styles: string[] = ["gold", "silver", "#af6114"];
 
 export default function LeaderBoard() {
-  const [leaderBoard, setLeaderBoard] = useState<leaderBoardState[]>([]);
+  const [leaderBoard, setLeaderBoard] = useState<LeaderBoardState[]>([]);
   useEffect(() => {
     getLeaderBoard()
       .then((result) => {
-        let newLeaderBoard: leaderBoardState[] = [];
-        result.data.forEach((element) => {
+        let newLeaderBoard: LeaderBoardState[] = [];
+        result.data.forEach((element: { nickname:string, wins:number, loses:number }) => {
           const nick: string = element.nickname;
           const gameLog: string = `${element.wins + element.loses}전 ${
             element.wins
@@ -28,7 +28,7 @@ export default function LeaderBoard() {
               : `${Math.floor(
                   (element.wins / (element.wins + element.loses)) * 100
                 )}%`);
-          const tmpLB: leaderBoardState = {
+          const tmpLB: LeaderBoardState = {
             nickname: nick,
             gameLog: gameLog,
             rate: rate,
