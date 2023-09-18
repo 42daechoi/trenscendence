@@ -33,11 +33,8 @@ export class User {
   @Min(0)
   intraId: string;
 
-  @Column({ unique: true, nullable: true })
+  @Column({ nullable: true })
   nickname: string;
-
-  @Column({ unique: true, nullable: true })
-  name: string;
 
   @Column({
     default: UserStatus.OFFLINE,
@@ -60,9 +57,6 @@ export class User {
 
   @Column({ default: 0 })
   xp: number;
-
-  @Column({ default: -1 })
-  rank: number;
 
   @Column({ nullable: false, default: false })
   currentAvatarData: boolean;
@@ -89,18 +83,18 @@ export class User {
   @Column({ nullable: true })
   ft_pictureUrl: string;
 
-  @AfterInsert()
-  logInsert() {
-    // console.log('Inserted User with id', this.id);
-  }
-
-  @AfterUpdate()
-  logUpdate() {
-    // console.log('Updated User with id', this.id);
-  }
-
-  @AfterRemove()
-  logRemove() {
-    // console.log('Removed User with id', this.id);
-  }
+//  @AfterInsert()
+//  logInsert() {
+//	console.log('Inserted User with id', this.id);
+//  }
+//
+//  @AfterUpdate()
+//  logUpdate() {
+//    console.log('Updated User with id', this.id);
+//  }
+//
+//  @AfterRemove()
+//  logRemove() {
+//    console.log('Removed User with id', this.id);
+//  }
 }

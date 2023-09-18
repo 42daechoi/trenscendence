@@ -26,7 +26,6 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     // const user = await this.userService.findUserById(payload.sub);
     const user = await this.authService.tokenValidateUser(payload);
 //	this.logger.log(`Validating JWT token for user ${payload.intraId}`);
-//    console.log("jwt logging!! " + payload.intraId);
     if (!user) {
       this.logger.log("Unauthorized access caught by JwtStrategy");
       throw new UnauthorizedException({
