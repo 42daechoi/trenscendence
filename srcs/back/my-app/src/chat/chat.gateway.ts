@@ -1112,23 +1112,33 @@ export class ChatGateway
     if (channel === undefined)
     {
       this.lastchannel.set(user.id, 0);
-      this.handlehome(user.id, user.socket);
+      
+      user.channelname = '$home';
+      user.socket.join(user.channelname);
+
+      channel.member++; //이동한 채널 명수 늘리기.
+      channel.users.push(user.id); //이동한 채널 유저 목록에 추가.
+      user.socket.emit('join', {
+        flag: true,
+        list: channel.users,
+        channelname: user.channelname,
+      });
+      user.socket.broadcast.to(user.channelname).emit('update', true); //입장 메시지    
     }
     else
     {
-      //user.socket.leave(user.channelname);
       user.channelname = channel.channelname;
-          user.socket.join(user.channelname);
+      user.socket.join(user.channelname);
 
-          channel.member++; //이동한 채널 명수 늘리기.
-          channel.users.push(user.id); //이동한 채널 유저 목록에 추가.
-          user.socket.emit('join', {
-            flag: true,
-            list: channel.users,
-            channelname: user.channelname,
-          });
+      channel.member++; //이동한 채널 명수 늘리기.
+      channel.users.push(user.id); //이동한 채널 유저 목록에 추가.
+      user.socket.emit('join', {
+        flag: true,
+        list: channel.users,
+        channelname: user.channelname,
+      });
 
-          user.socket.broadcast.to(user.channelname).emit('update', true); //입장 메시지
+      user.socket.broadcast.to(user.channelname).emit('update', true); //입장 메시지
     }
   }
 }
