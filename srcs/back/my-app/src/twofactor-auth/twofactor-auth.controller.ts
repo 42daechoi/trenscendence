@@ -35,12 +35,16 @@ export class TwoFactorAuthController {
     @Res() response: Response,
     @CurrentUser() user: User,
   ): Promise<string | void> {
-    const otpauthUrl =
-      await this.twoFactorAuthService.generateTwoFactorAuthSecret(user);
-    const qrCode = await this.twoFactorAuthService.getQrCodeAsDataUrl(
-      otpauthUrl,
-    );
-    response.send(qrCode);
+    try {
+      const otpauthUrl =
+        await this.twoFactorAuthService.generateTwoFactorAuthSecret(user);
+      const qrCode = await this.twoFactorAuthService.getQrCodeAsDataUrl(
+        otpauthUrl,
+      );
+      response.send(qrCode);
+    } catch (error) {
+      this.logger.log('register========================', error);
+    }
   }
 
   @Post('enable')
@@ -51,8 +55,12 @@ export class TwoFactorAuthController {
     //    @Body() twoFactorAuthCode: TwoFactorAuthCodeDto,
   ) {
     //    this.validateCode(user, twoFactorAuthCode.twoFactorAuthCode);
-    await this.twoFactorAuthService.enableTwoFactor(user);
-    this.logger.log(`2FA has been enabled for user ${user.id}`);
+    try {
+      await this.twoFactorAuthService.enableTwoFactor(user);
+      this.logger.log(`2FA has been enabled for user ${user.id}`);
+    } catch (error) {
+      this.logger.log('enable========================', error);
+    }
   }
 
   @Post('disable')
@@ -63,8 +71,12 @@ export class TwoFactorAuthController {
     //	@Body() twoFactorAuthCode: TwoFactorAuthCodeDto,
   ) {
     //    this.validateCode(user, twoFactorAuthCode.twoFactorAuthCode);
-    await this.twoFactorAuthService.disableTwoFactor(user);
-    this.logger.log(`2FA has been disabled for user ${user.id}`);
+    try {
+      await this.twoFactorAuthService.disableTwoFactor(user);
+      this.logger.log(`2FA has been disabled for user ${user.id}`);
+    } catch (error) {
+      this.logger.log('disable========================', error);
+    }
   }
 
   @Post('rest')
@@ -78,16 +90,18 @@ export class TwoFactorAuthController {
   @Post('authenticate')
   @HttpCode(200)
   @UseGuards(PartialJwtGuard)
-  async authenticate (
+  async authenticate(
     @CurrentUser() user: User,
     @Body() twoFactorAuthCode: TwoFactorAuthCodeDto,
     @Res({ passthrough: true }) res: Response,
   ): Promise<any> {
-    const isCodeValid = await this.validateCode(user, twoFactorAuthCode.twoFactorAuthCode);
+    const isCodeValid = await this.validateCode(
+      user,
+      twoFactorAuthCode.twoFactorAuthCode,
+    );
     if (isCodeValid == false) {
       this.logger.log('2FA code not valid');
       throw new UnauthorizedException('2FA: wrong authentication code');
-     
     }
     //give TokenPayload and getJwtToken
     const full_token = await this.authService.validateUser(
@@ -102,15 +116,19 @@ export class TwoFactorAuthController {
     return;
   }
 
-  private async validateCode(user: User, twoFactorAuthCode: string) : Promise<null | boolean>{
+  private async validateCode(
+    user: User,
+    twoFactorAuthCode: string,
+  ): Promise<null | boolean> {
     this.logger.log(
       `Attempting to validate user ${user.id} with 2FA code ${twoFactorAuthCode}`,
     );
-    const isCodeValid = await this.twoFactorAuthService.isTwoFactorAuthCodeValid(
-      twoFactorAuthCode,
-      user,
-    );
-    return (isCodeValid);
+    const isCodeValid =
+      await this.twoFactorAuthService.isTwoFactorAuthCodeValid(
+        twoFactorAuthCode,
+        user,
+      );
+    return isCodeValid;
     // if (isCodeValid)
     //   return ();
     // if (!isCodeValid) {
