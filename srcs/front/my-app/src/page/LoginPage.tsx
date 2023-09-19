@@ -1,9 +1,11 @@
 import "../css/LoginPage.css";
-import { getWhoami } from "../utils/ApiRequest";
+import { getWhoami, getRidi } from "../utils/ApiRequest";
 
 import { useSocket } from "../component/SocketContext";
 import { useEffect, useState } from "react";
 import { useGameSocket } from "../component/SocketContext";
+const serverUrl : string = process.env.REACT_APP_SERVER_URL;
+
 const authUrl:string = process.env.REACT_APP_AUTH_URL;
 function LoginPage() {
   const gameSocket = useGameSocket();
@@ -21,7 +23,6 @@ function LoginPage() {
   }, []);
   useEffect(() => {
     if (socket) {
-      console.log("1");
       if (isLogin === true) {
         if (gameSocket)
         {
@@ -32,18 +33,29 @@ function LoginPage() {
               window.location.reload();
           })
         }
-        console.log("2");
         socket.disconnect();
-      } else console.log("3");
+      } 
     }
   }, [socket, isLogin, gameSocket]);
   const login42 = () => {
     getWhoami()
       .then((result) => {
-        window.location.href = authUrl;
+        try{
+          window.location.href = `${serverUrl}/auth/login`;
+        }
+        catch (error){
+          console.log("#########      CATCH REDIRECT!!!     #$###$#$#$  ");
+          //window.location.href = `${serverUrl}/auth/login`;
+        }
       })
       .catch((err) => {
-        window.location.href = authUrl;
+        try{
+          window.location.href = `${serverUrl}/auth/login`;
+        }
+        catch (error){
+          console.log("#########      CATCH REDIRECT!!!    #$###$#$#$  ");
+          //window.location.href = `${serverUrl}/auth/login`;
+        }
       });
   };
   return (

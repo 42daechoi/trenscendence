@@ -26,6 +26,7 @@ export default function GoogleAuth() {
     const fullotp = otp + otp2;  
     postAuthenticate(fullotp)
       .then((response) => {
+        console.log(response);
         if (response.data) navigate("/main");
       })
       .catch(() => {

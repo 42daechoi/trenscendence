@@ -330,7 +330,7 @@ function ModalWindow(props: { modalType: string }): JSX.Element | null {
 
   function ModifyNicknameSetting() {
     const textbox = useRef<HTMLInputElement>(null);
-
+    
     const handleFileUpload = () => {
       if (textbox.current) {
         if (textbox.current.value) {
@@ -342,8 +342,11 @@ function ModalWindow(props: { modalType: string }): JSX.Element | null {
             alert("닉네임은 13 글자를 초과할 수 없습니다.");
             return;
           }
-          modifyNickname(textbox.current.value, false);
-          setInfo({ ...info, nickname: textbox.current.value });
+          const newName: string = textbox.current.value;
+          modifyNickname(textbox.current.value, false).then((res) => {
+            setInfo({ ...info, nickname: newName });
+            
+          }).catch((error) =>{});
           textbox.current.value = "";
         } else alert("닉네임 수정 실패");
       }

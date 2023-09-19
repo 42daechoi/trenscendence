@@ -20,19 +20,13 @@ function App() {
 
   const [isOn, setIsOn] = useState<boolean>(false);
   const checkOnRef = useRef<NodeJS.Timeout | null>(null);
-  const count = useRef(0);
   useEffect(() => {
     function checkOn(setIsSet : React.Dispatch<React.SetStateAction<boolean>>, setIsLogin: React.Dispatch<React.SetStateAction<boolean>>, setIsOn: React.Dispatch<React.SetStateAction<boolean>>) {
-      if (count) {
-        count.current += 1;
-      }
-      if (count.current === 5) 
-        if (checkOnRef.current)  
-          clearInterval(checkOnRef.current);
       getWhoami()
         .then((result) => {
           if (result.data.status === 0) {
             setIsOn(true);
+            console.log("whoami");
           }
           setIsLogin(true);
           setIsSet(true);

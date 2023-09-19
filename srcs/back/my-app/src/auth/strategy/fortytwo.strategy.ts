@@ -53,12 +53,16 @@ export class FortytwoStrategy extends PassportStrategy(Strategy) {
     try {
 		const req = this.http.get('https://api.intra.42.fr/v2/me', {
 		  headers: { Authorization: `Bearer ${accessToken}` },
-		});
+    }
+     );
       const { data } = await lastValueFrom(req);
-      if (!data) throw new UnauthorizedException();
+      if (!data) {
+        //throw new UnauthorizedException();
+      }
       return data;
-    } catch (error) {}
+    } catch (error) {
 
-    throw new UnauthorizedException();
+      //throw new UnauthorizedException();
+    }
   }
 }

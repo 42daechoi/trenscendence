@@ -6,16 +6,13 @@ import { getWhoami } from "../utils/ApiRequest";
 
 export default function FullTFA() {
   const [curPage, setCurPage] = useState("google_auth");
-  const [curState, setState] = useState(true);
   useEffect(() => {
     getWhoami()
       .then((response) => {
-        response.data.twoFASecret === null
-          ? setCurPage("otp_set")
-          : setCurPage("google_auth");
-        if (response.data.twoFASecret && !response.data.twoFA)
+        if (!response.data.twoFA)
           setCurPage("otp_set");
-        response.data.twoFA === true ? setState(true) : setState(false);
+        else
+          setCurPage("google_auth");
         console.log(response.data.twoFA);
       })
       .catch((error) => {

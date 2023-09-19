@@ -6,6 +6,7 @@ import {
   UseGuards,
   Req,
   Res,
+  Logger,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
 import { AuthService } from './auth.service';
@@ -22,19 +23,52 @@ import { JwtAuthGuard } from './guards/auth-jwt.guard';
 import { TokenType } from './interfaces/token-payload.interface';
 import { UserStatus } from 'src/typeorm/user.entity';
 import { ConfigService } from '@nestjs/config';
+import { HttpService } from '@nestjs/axios';
+
 
 @Controller('auth')
 export class AuthController {
   constructor(
+    private httpService: HttpService,
     private authService: AuthService,
     private usersService: UsersService,
     private configService: ConfigService,
   ) {}
+  private logger = new Logger(AuthController.name); 
+
+  //login
+  @Get('login')
+  async login(@Req() req: Request, @Res({ passthrough: true }) res: any){
+    const url = this.configService.get('AUTH_URL');
+    this.logger.log("redirect called");
+    try{
+      this.logger.log("Success to redirect 42 redirect");
+      // const response = await this.httpService
+			// .get(url);
+      // this.logger.log(JSON.stringify(response));
+      res.redirect(
+        `${this.configService.get('AUTH_URL')}`
+      );
+    }
+    catch{
+      this.logger.log("Failed to redirect 42 redirect");
+      res.redirect(`${this.configService.get('REDIRECT_URL')}/`);
+      //return "456";
+    }
+
+  }
+
 
   //42login
+  
   @UseGuards(FortyTwoAuthGuard)
   @Get('loginfortytwo/callback')
   async login42(@Req() req: Request, @Res({ passthrough: true }) res: any) {
+
+      if (!req.query.code) {
+        res.redirect(`${this.configService.get('REDIRECT_URL')}/`);
+      }
+      
     //we will get auth CODE for accessing public intra data.
     //console.log('auth/loginfortytwo/callback');
     const intraId: string = res.req.user.login;
