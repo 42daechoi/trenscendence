@@ -152,6 +152,7 @@ export class GameGateway
 
   @SubscribeMessage('whoamiGateway')
   async idnetifyId(
+    
     @ConnectedSocket() socket: Socket,
     @CurrentUserWs() userId: string,
   ) {
