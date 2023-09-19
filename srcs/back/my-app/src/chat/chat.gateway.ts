@@ -219,7 +219,6 @@ export class ChatGateway
     const user = users.find((u) => u.id === chatobj.id);
     if (!user) return;
 
-    // mute 체크
     const channel_check = await this.chatService.findChannelByChannelname(user.channelname);
     if (channel_check === undefined)
     {
@@ -229,18 +228,18 @@ export class ChatGateway
       return;
     }
 
-    if (user.id !== channel_check.host)
-    {
-      if(channel_check.mute)
-      {
-        console.log('----------------------------------------');
-        console.log('                  mute                  ');
-        console.log('----------------------------------------');
-        return;
-      }
-    }
-
     if (chatobj.flag == 'broad') {
+      //* mute일 때 체크
+      if (user.id !== channel_check.host)
+      {
+        if(channel_check.mute)
+        {
+          console.log('----------------------------------------');
+          console.log('                  mute                  ');
+          console.log('----------------------------------------');
+          return;
+        }
+      }
       //* 유저가 속한 채널에 채팅.
       console.log('----------------------------------------');
       console.log('             broad chat part            ');
@@ -818,6 +817,87 @@ export class ChatGateway
 
 
   //*********************************************************************//
+  //****************************  gamehome   ****************************//
+  //*********************************************************************//
+  @SubscribeMessage('gamehome')
+  async handlegamehome(
+    @MessageBody() id: number,
+    @ConnectedSocket() socket: Socket,
+  ) {
+    console.log('----------------------------------------');
+    console.log('-----------------HOME-------------------');
+    console.log('userId: ', id);
+    console.log('----------------------------------------');
+
+    // 유저 확인
+    let user = await this.chatService.findUserById(id);
+    if (!user) return;
+
+    // 이전 채널 정보 업데이트
+    let beforeChannel = await this.chatService.findChannelByChannelname(
+      user.channelname,
+    );
+    if (!beforeChannel)
+      return;
+    console.log('before', beforeChannel);
+    if (beforeChannel.channelname === '$home') {
+      console.log('----------------------------------------');
+      console.log('         you are alread home            ');
+      console.log('----------------------------------------');
+      return;
+    }
+
+    beforeChannel.member--;
+      //유저 목록에서 삭제.
+    const removeIdx = beforeChannel.users.indexOf(user.id);
+    if (removeIdx !== -1) {
+      beforeChannel.users.splice(removeIdx, 1);
+    }
+      //이전 채널에서 유저가 operator였을 경우
+    if (beforeChannel.operator.includes(user.id)) {
+      const removeIdx = beforeChannel.operator.indexOf(user.id);
+      if (removeIdx !== -1) beforeChannel.operator.splice(removeIdx, 1);
+    }
+
+      //이전 채널에서 유저가 host였을 경우
+    if (beforeChannel.host === user.id) {
+      //채널 목록에서 삭제
+      const removeChannelIdx = (
+        await this.chatService.getChannels()
+      ).findIndex((c : channelDTO) => c.channelname === beforeChannel.channelname);
+      if (removeChannelIdx !== -1) {
+        const channels: channelDTO[] = await this.chatService.getChannels();
+        channels.splice(removeChannelIdx, 1);
+      }
+      for (const checkid of beforeChannel.users) {
+          let user = await this.chatService.findUserById(checkid);
+          this.handleleave(user.socket);
+      }
+    }
+
+    let channel = await this.chatService.findChannelByChannelname('$home');
+    socket.leave(user.channelname);
+    user.channelname = channel.channelname;
+    socket.join(user.channelname);
+
+    channel.member++; //이동한 채널 명수 늘리기.
+    channel.users.push(user.id); //이동한 채널 유저 목록에 추가.
+    socket.emit('join', {
+      flag: true,
+      list: channel.users,
+      channelname: user.channelname,
+    });
+
+    socket.broadcast.to(user.channelname).emit('update', true); //입장 메시지
+
+    console.log('----------------------------------------');
+    console.log('---------------ALL CHANNELS-------------');
+    console.log(await this.chatService.getChannels()); //  마지막에 채널들 다 잘 수정되었는지 확인
+    console.log('----------------------------------------');
+  }
+
+
+  //*********************************************************************//
   //********************* block list update  ****************************//
   //*********************************************************************//
   @SubscribeMessage('blocklistupdate')
@@ -857,10 +937,10 @@ export class ChatGateway
     this.lastchannel.set(target.id, target_channel.channel_id);
 
     if (host.channelname !== '$home') {
-      await this.handlehome(host.id, host.socket);
+      await this.handlegamehome(host.id, host.socket);
     }
     if (target.channelname !== '$home') {
-      await this.handlehome(target.id, target.socket);
+      await this.handlegamehome(target.id, target.socket);
     }
 
     await this.handlecreate(
