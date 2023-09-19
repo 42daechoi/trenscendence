@@ -59,6 +59,7 @@ export default function MainPage() {
   useEffect(() => {
     if (!socket) return;
     if (!gameSocket) return;
+    socket.emit("moving", "");
     gameSocket.emit("checksocket", "", (response: number) => {
       if (response === 1)
         setTimeout(() => {

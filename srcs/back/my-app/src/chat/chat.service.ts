@@ -35,28 +35,20 @@ export class ChatService {
         let channel = this.channels.find(c => c.channelname === chname);
         return channel;
     }
+
+    async findChannelByChannelid(@MessageBody() chid: number) : Promise<channelDTO> {
+        let channel = this.channels.find(c => c.channel_id === chid);
+        return channel;
+    }
   
     async getUserBlocklist(@MessageBody() id: number) : Promise<Map<number, string>>  {
         const block_users : User[] = await this.usersService.getUserBlocks(id);
 1
-        // console.log("###################block-list########################");
-        // console.log("block_users + ");
-        // console.log(block_users);
-        // console.log("###########################################");
-        
         let   block_list : Map<number, string> = new Map();
-        
-        // console.log("###################block-list#2222222222222222222222#######################");
-        // console.log(block_list);
-        // console.log("###########################################");
-        
+       
         for (const blockuser of block_users) {
             block_list.set(blockuser.id, blockuser.nickname);
         }
-        
-        // console.log("###################block-list#33333333333333333333#######################");
-        // console.log(block_list);
-        // console.log("###########################################");
         return block_list;
     }
 }

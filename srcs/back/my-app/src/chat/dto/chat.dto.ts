@@ -36,11 +36,16 @@ export class opDTO {
     target: number;
 }
 
+export class banDTO {
+    user: number;
+    target: number;
+}
+
 
 //* where-rep obj
 //* 채널 객체
 export interface channelDTO {
-    channelname: string;
+    channelname?: string | null;
     host?: number | null; //home의 경우 host 없음.
     operator: number[];
     users: number[];
@@ -48,6 +53,9 @@ export interface channelDTO {
     maxmember: number;
     option: string;
     password?: string | null;
+    mute: boolean;
+    banlist: number[];
+    channel_id: number;
 }
 
 //* userDTO (서버에서 관리)

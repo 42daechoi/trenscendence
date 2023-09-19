@@ -65,11 +65,14 @@ function useSocketConnection() {
     const newSocket = io(`${socketUrl}/chat`, { withCredentials: true });
 
     const whoAmI = async () => {
-      getWhoami()
+     getWhoami()
         .then((resposne) => {
           const data = resposne.data;
           if (data) {
-            newSocket.emit("bind", data.id);
+            newSocket.emit("bind", data.id, (resposne : number)=>{
+              if (resposne === 1)
+                setSocket(newSocket);
+            });
             console.log("data", data.id);
           }
         })
@@ -77,7 +80,6 @@ function useSocketConnection() {
           console.log(error);
         });
     };
-    setSocket(newSocket);
     whoAmI();
 
     // newSocket.on("exit", () => {

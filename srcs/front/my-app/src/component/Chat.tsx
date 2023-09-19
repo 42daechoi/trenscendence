@@ -305,7 +305,47 @@ function Chat(props:ChatProps) {
           });
         chat = "";
         return;
-      } else if (chat[0] === "/" && chat[1] === "/") {
+      } 
+      else if (chat.substring(0, 5) === "/ban ")
+      {
+        const banstring:string = chat.substring(5, chat.length);
+        getUserByNickname(banstring)
+          .then((res)=>{
+            if (res.data.id === undefined)
+            {
+              alert("없는 유저입니다.");
+              return;
+            }
+            else if (socket)
+            {
+              socket.emit("ban", {user : data.id, target : res.data.id}, (response:number) =>{
+              if (response === 1)
+                alert("ban 권한이 없습니다.");
+              else
+                alert("ban 성공");
+            });
+            }
+
+          })
+          .catch((error)=>console.log(error));
+          chat = "";
+          return;
+      }
+      else if (chat.substring(0, 5) === "/mute")
+      {
+        if (socket)
+          socket.emit("mute", data.id, (response:number)=>{
+            if (response === 1)
+              alert("mute 권한이 없습니다.");
+            else if (response === 0)
+              alert("mute 성공");
+            else if (response === 2)
+              alert("현재 mute 상태입니다.");
+          });
+          chat = "";
+          return;
+      }
+      else if (chat[0] === "/" && chat[1] === "/") {
         const firstSpaceIdx = chat.indexOf(" ");
         if (firstSpaceIdx === -1) return;
         const target_name: string = chat.substring(2, firstSpaceIdx);
