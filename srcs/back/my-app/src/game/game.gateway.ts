@@ -134,6 +134,7 @@ export class GameGateway
   }
 
   async idnetifyId(
+    
     @ConnectedSocket() socket: Socket,
     @CurrentUserWs() userId: string,
   ) {

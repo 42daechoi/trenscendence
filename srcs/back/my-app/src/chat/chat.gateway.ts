@@ -75,7 +75,8 @@ export class ChatGateway
       password: null as string | null,
       mute: false,
       banlist: [] as number[],
-      channel_id : this.channel_num++
+      channel_id : this.channel_num++,
+      gamestate : false
     };
     const channels: channelDTO[] = await this.chatService.getChannels();
 
@@ -111,7 +112,7 @@ export class ChatGateway
       });
     }
 
-    await asySleep(500);
+    await asySleep(1000);
 
     let user = await this.chatService.findUserBySocketId(socket.id);
     if (user) {
@@ -127,9 +128,8 @@ export class ChatGateway
       if (user.channelname !== '$home')
       {
         let channel = await this.chatService.findChannelByChannelname(
-          user.channelname,
+          user.channelname
         );
-      
         if (channel) {
           channel.member--;
             //일반 유저목록에서 삭제
@@ -139,6 +139,7 @@ export class ChatGateway
           }
             socket.broadcast.to(channel.channelname).emit('update', false); //퇴장 메시지
           }
+
       }
       else 
       {
@@ -182,6 +183,7 @@ export class ChatGateway
       channelname: null,
       socket: socket,
       interval: null,
+
       blocklist: block_list,
     };
 
@@ -320,7 +322,7 @@ export class ChatGateway
   async handlecreate(
     @MessageBody() room: roomDTO,
     @ConnectedSocket() socket: Socket,
-  ) {
+  ): Promise<number> {
     console.log('----------------------------------------');
     console.log('-----------------CREATE-----------------');
     console.log(room);
@@ -359,13 +361,15 @@ export class ChatGateway
       password: room.password,
       mute: false,
       banlist: [] as number[],
-      channel_id: this.channel_num++ 
+      channel_id: this.channel_num++,
+      gamestate: false
     };
 
     //game option시 방제 변경.
     if (newChannel.option === 'game')
     {
-      newChannel.channelname = newChannel.channelname + user_info.id;
+      newChannel.channelname = 'game'+ user_info.id;
+      newChannel.gamestate = true;
     }
 
     if (newChannel.option === 'public' || newChannel.option === 'private') {
@@ -409,7 +413,7 @@ export class ChatGateway
   async handlemodify(
     @MessageBody() room: roomDTO,
     @ConnectedSocket() socket: Socket,
-  ) {
+  ) : Promise<number> {
     console.log('----------------------------------------');
     console.log('-----------------MODIFY-----------------');
     console.log(room);
@@ -449,6 +453,7 @@ export class ChatGateway
     console.log('----------------------------------------');
 
     socket.emit('modify', modifyingchannel);
+    return 1;
   }
 
 
@@ -459,7 +464,7 @@ export class ChatGateway
   async handlejoin(
     @MessageBody() joinobj: joinDTO,
     @ConnectedSocket() socket: Socket,
-  ) {
+  ) : Promise<number> {
 
     // 유저 확인
     let user = await this.chatService.findUserById(joinobj.id);
@@ -551,6 +556,7 @@ export class ChatGateway
           channel.users.push(user.id); //이동한 채널 유저 목록에 추가.
           socket.emit('join', {
             flag: true,
+
             list: channel.users,
             channelname: user.channelname,
           });
@@ -570,6 +576,7 @@ export class ChatGateway
       return;
       }
     }
+    return 1;
   }
 
 
@@ -853,27 +860,7 @@ export class ChatGateway
     if (removeIdx !== -1) {
       beforeChannel.users.splice(removeIdx, 1);
     }
-      //이전 채널에서 유저가 operator였을 경우
-    if (beforeChannel.operator.includes(user.id)) {
-      const removeIdx = beforeChannel.operator.indexOf(user.id);
-      if (removeIdx !== -1) beforeChannel.operator.splice(removeIdx, 1);
-    }
 
-      //이전 채널에서 유저가 host였을 경우
-    if (beforeChannel.host === user.id) {
-      //채널 목록에서 삭제
-      const removeChannelIdx = (
-        await this.chatService.getChannels()
-      ).findIndex((c : channelDTO) => c.channelname === beforeChannel.channelname);
-      if (removeChannelIdx !== -1) {
-        const channels: channelDTO[] = await this.chatService.getChannels();
-        channels.splice(removeChannelIdx, 1);
-      }
-      for (const checkid of beforeChannel.users) {
-          let user = await this.chatService.findUserById(checkid);
-          this.handleleave(user.socket);
-      }
-    }
 
     let channel = await this.chatService.findChannelByChannelname('$home');
     socket.leave(user.channelname);
@@ -920,7 +907,7 @@ export class ChatGateway
   //******************************  game  *******************************//
   //*********************************************************************//
   @SubscribeMessage('gamechatroom')
-  async handlegameset(@MessageBody() gamers: gameDTO) {
+  async handlegameset(@MessageBody() gamers: gameDTO){
     console.log('----------------------------------------');
     console.log('-----------------GAME SET---------------');
     // console.log('hostId : ', gamers.host);
@@ -933,6 +920,7 @@ export class ChatGateway
     //여기서 이전 채널 업데이트.
     const host_channel = await this.chatService.findChannelByChannelname(host.channelname);
     this.lastchannel.set(host.id, host_channel.channel_id);
+
     const target_channel = await this.chatService.findChannelByChannelname(target.channelname);
     this.lastchannel.set(target.id, target_channel.channel_id);
 
@@ -943,7 +931,7 @@ export class ChatGateway
       await this.handlegamehome(target.id, target.socket);
     }
 
-    await this.handlecreate(
+    const ret = await this.handlecreate(
       {
         id: host.id,
         maxmember: 2,
@@ -952,19 +940,22 @@ export class ChatGateway
       },
       host.socket
     );
+    if (ret === 1)
+      console.log(ret);
     host.socket.emit('oneOnOne', '');
-    const host_user: User = await this.usersService.findUserById(host.id);
     
-    await this.handlejoin(
+    const ret1 = await this.handlejoin(
       {
         id: target.id,
-        channelname: host_user.nickname + host_user.id,
+        channelname: 'game' + host.id,
         password: null,
       },
       target.socket
     );
+    if (ret1 === 1)
+      console.log(ret1);
 
-    await this.handlemodify(
+    const ret2 = await this.handlemodify(
       {
         id: host.id,
         maxmember: 2,
@@ -973,6 +964,9 @@ export class ChatGateway
       },
       host.socket
     );
+    if (ret2 === 1)
+      console.log(ret2);
+    return 1;
   }
 
 
@@ -1072,13 +1066,65 @@ export class ChatGateway
   }
 
 
+  @SubscribeMessage('leavegame')
+  async handleleavegame(@ConnectedSocket() socket : Socket){
+    const user = await this.chatService.findUserBySocketId(socket.id);
+    if (!user) return;
+    socket.leave(user.channelname);
+    const channelid = this.lastchannel.get(user.id);
+    const channel = await this.chatService.findChannelByChannelid(channelid);
+    const beforeChannel = await this.chatService.findChannelByChannelname(user.channelname);
+    if (beforeChannel)
+    {
+      if (beforeChannel.host === user.id)
+      { 
+        const removeChannelIdx = (
+          await this.chatService.getChannels()
+        ).findIndex((c : channelDTO) => c.channelname === beforeChannel.channelname);
+        if (removeChannelIdx !== -1) {
+          (await this.chatService.getChannels()).splice(
+            removeChannelIdx,
+            1,
+          );
+        }
+      }
+    } 
+    if (channel === undefined)
+    {
+      this.handleleave(socket);
+      return;
+    }
+    if (channel.users.includes(user.id))
+    {
+      return;
+    }
+    user.channelname = channel.channelname;
+    socket.join(channel.channelname);
+    channel.member++;
+    channel.users.push(user.id);
+
+
+    socket.emit('join', {
+      flag: true,
+      list: channel.users,
+      channelname: channel.channelname,
+    });
+
+    socket.broadcast.to(channel.channelname).emit('update', true);
+    this.lastchannel.set(user.id,channelid);
+  }
+
+
   //*********************************************************************//
   //****************************  moving  *******************************//
   //*********************************************************************//
   @SubscribeMessage('moving')
   async handlemoving(@ConnectedSocket() socket: Socket,) {
     const user = await this.chatService.findUserBySocketId(socket.id);
+    if (user.channelname !== null)
+      return;
     const channel_id = this.lastchannel.get(user.id);
+
     if (channel_id === undefined)
     {      
       const channel = await this.chatService.findChannelByChannelid(0);
@@ -1094,6 +1140,7 @@ export class ChatGateway
       });
       user.socket.broadcast.to(user.channelname).emit('update', true); //입장 메시지    
       this.lastchannel.set(user.id, 0);
+      return ;
     }
     else
     {
@@ -1115,10 +1162,11 @@ export class ChatGateway
         this.lastchannel.set(user.id, 0);
         return;
       }
+      if (user.channelname === channel.channelname)
+        return;
       user.channelname = channel.channelname;
       console.log("user.channelname : ", user.channelname);
       user.socket.join(user.channelname);
-
       channel.member++; //이동한 채널 명수 늘리기.
       channel.users.push(user.id); //이동한 채널 유저 목록에 추가.
       user.socket.emit('join', {
@@ -1126,7 +1174,6 @@ export class ChatGateway
         list: channel.users,
         channelname: user.channelname,
       });
-
       user.socket.broadcast.to(user.channelname).emit('update', true); //입장 메시지
       this.lastchannel.set(user.id, channel.channel_id);
     }

@@ -56,6 +56,7 @@ export interface channelDTO {
     mute: boolean;
     banlist: number[];
     channel_id: number;
+    gamestate: boolean;
 }
 
 //* userDTO (서버에서 관리)
