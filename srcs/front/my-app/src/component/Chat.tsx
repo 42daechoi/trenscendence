@@ -90,7 +90,8 @@ function Chat(props:ChatProps) {
               "chat chat-start",
               img
             );
-          });
+          })
+          .catch((error)=>{console.log(error);});
       });
     }
   };
@@ -272,6 +273,10 @@ function Chat(props:ChatProps) {
             .catch((error) => {
               console.log(error);
             });
+        })
+        .catch((error)=>{ 
+          alert("실패");
+          return;
         });
         chat = "";
         return;
@@ -301,6 +306,7 @@ function Chat(props:ChatProps) {
             );
           })
           .catch((error) => {
+            
             console.log(error);
           });
         chat = "";
@@ -327,7 +333,7 @@ function Chat(props:ChatProps) {
             }
 
           })
-          .catch((error)=>console.log(error));
+          .catch((error)=>alert("실패"));
           chat = "";
           return;
       }
@@ -361,6 +367,9 @@ function Chat(props:ChatProps) {
                 msg: msg,
               });
             }
+          })
+          .catch((error)=>{
+            alert("실패");
           });
 
         addMessage(

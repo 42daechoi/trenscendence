@@ -314,15 +314,11 @@ export default function GameWaiting(prop: {
       }
       if (socket && chatSocket) {
         socket.emit("whoamiGateway", "", (response: number) => {
-          if (client === 0) chatSocket.emit("home", response);
-          else
-            setTimeout(() => {
-              chatSocket.emit("home", response);
-            }, 500);
+          chatSocket.emit("leavegame", "");
         });
       }
     };
-  }, [socket]);
+  }, [socket, chatSocket]);
 
   useEffect(() => {
     if (exit === 1) {
