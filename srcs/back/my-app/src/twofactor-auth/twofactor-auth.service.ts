@@ -15,22 +15,28 @@ export class TwoFactorAuthService {
   async generateTwoFactorAuthSecret(user: User) {
     this.logger.log(`Generating 2FA secret for user ${user.id}`);
 	//generate secret key
-    const secret = authenticator.generateSecret();
+	try {
+		const secret = authenticator.generateSecret();
 
-	//hash encode
-	//ENCRYPTION
-	const ENCRYPTION_SECRET = this.configServie.get('TFA_SECRET');
-	const encrypted = CryptoJS.AES.encrypt(secret, ENCRYPTION_SECRET).toString();
+		//hash encode
+		//ENCRYPTION
+		const ENCRYPTION_SECRET = this.configServie.get('TFA_SECRET');
+		const encrypted = CryptoJS.AES.encrypt(secret, ENCRYPTION_SECRET).toString();
 
-	//get APP name
-//    const appName = process.env.TWOFA_APP_NAME ?? "Pong";
-	const appName = "tr42";
+		//get APP name
+		const appName = "tr42";
 
-	//generate otpauthUrl
-    const otpauthUrl = authenticator.keyuri(user.intraId, appName, secret);
+		//generate otpauthUrl
+		const otpauthUrl = authenticator.keyuri(user.intraId, appName, secret);
 
-    await this.userService.update(user.id, {twoFASecret: encrypted});
-    return otpauthUrl;
+		await this.userService.update(user.id, {twoFASecret: encrypted});
+		return otpauthUrl;
+		
+	} catch (e) {
+		this.logger.log("Failed to create secret key. please try again.");
+		return (null);
+		/* handle error */
+	}
   }
 
   async pipeQrCodeStream(stream: Response, otpauthUrl: string) {
@@ -57,12 +63,11 @@ export class TwoFactorAuthService {
   }
 
   async enableTwoFactor(user: User) {
-    await this.userService.update(user.id, { ...user, twoFA: true });
+    await this.userService.update(user.id, { twoFA: true });
   }
 
   async disableTwoFactor(user: User) {
     await this.userService.update(user.id, {
-      ...user,
       twoFA: false,
       twoFASecret: null
     });

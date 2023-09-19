@@ -32,6 +32,8 @@ export const CurrentUserWs = createParamDecorator(
 		const jwtService = new JwtService();
 		const payload : any = jwtService.decode(jwtCookie);
 		const userId = payload.id;
+		if (userId)
+			logger.log("findind user id with ws decorator")
 		return (userId);
   },
 );

@@ -5,7 +5,6 @@ import { Result } from './interfaces/game.interface';
 import { currentAuthUser } from 'src/auth/decorators/auth-user.decorator';
 import { User } from 'src/typeorm';
 import {UsersService} from 'src/users/users.service';
-import { CurrentUser } from 'src/users/decorators/current-user.decorator';
 
 @Controller('game')
 export class GameController {
@@ -14,7 +13,7 @@ export class GameController {
 	@Get('gameStats/my')
 	@UseGuards(JwtAuthGuard)
 	public async getMyGames(
-		@CurrentUser() user : User
+		@currentAuthUser() user : User
 	){
 		const games: Result[] = await this.gameService.getGameStatForPlayer(user.id)
 		return ({games: games});

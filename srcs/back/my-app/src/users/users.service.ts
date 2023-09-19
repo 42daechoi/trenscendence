@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from '../typeorm/user.entity';
@@ -14,6 +14,7 @@ const scrypt = promisify(_scrypt);
 
 @Injectable()
 export class UsersService {
+	private readonly logger = new Logger(UsersService.name);
     constructor(
     @InjectRepository(User) private userRepository: Repository<User>,
     private httpService: HttpService,
@@ -96,24 +97,22 @@ export class UsersService {
     }
     if (attrs.ft_pictureUrl) {
       const url = attrs.ft_pictureUrl;
-      const response = await this.httpService
-        .get(url, { responseType: 'arraybuffer' })
-        .toPromise();
-      user.profilePicture = Buffer.from(response.data, 'binary');
-      user.ft_pictureUrl = attrs.ft_pictureUrl;
-      delete attrs.profilePicture;
+	  try{
+		  const response = await this.httpService
+			.get(url, { responseType: 'arraybuffer' })
+			.toPromise();
+		  user.profilePicture = Buffer.from(response.data, 'binary');
+		  user.ft_pictureUrl = attrs.ft_pictureUrl;
+	  }
+	  catch(error){
+		  this.logger.log("Failed to download picture. please try again");
+	  }
     }
     if (attrs.profilePicture) {
       //console.log('#########       PROFILE BUFFER INPUT        #########');
-      //console.log(attrs.profilePicture.length);
       const buffer = Buffer.from(attrs.profilePicture);
       user.profilePicture = buffer;
-      //console.log(user.profilePicture);
     }
-    // ######## IMPORTANT ########
-    //console.log('======before====');
-    //console.log(user.profilePicture);
-    //console.log('======after====');
 
     Object.assign(user, attrs);
     return this.userRepository.save(user);
@@ -307,9 +306,6 @@ export class UsersService {
     const user: User | null = await this.userRepository.findOne({
       where: { socketId: socket_id },
     });
-    //		if (!user) {
-    //			throw new NotFoundException('User not found');
-    //		}
     return user;
   }
 
