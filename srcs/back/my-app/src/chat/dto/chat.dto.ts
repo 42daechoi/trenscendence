@@ -37,7 +37,7 @@ export class opDTO {
 }
 
 export class banDTO {
-    id: number;
+    user: number;
     target: number;
 }
 

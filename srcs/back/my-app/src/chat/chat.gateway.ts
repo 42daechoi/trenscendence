@@ -906,6 +906,15 @@ export class ChatGateway
 
     const check: number = channel.channel_id;
 
+    if (channel === undefined)
+    {
+      return (1);
+    }
+
+    if (channel.mute)
+    {
+      return (2);
+    }
 
     if (channel.host === user.id)
     {
@@ -917,7 +926,9 @@ export class ChatGateway
           channel_check.mute = false;
         }
       }, 30000);
+      return (0);
     }
+    return (1);
   }
 
 
@@ -926,7 +937,7 @@ export class ChatGateway
   //*********************************************************************//
   @SubscribeMessage('ban')
   async handleban(@MessageBody() ban: banDTO) {
-    const user = await this.chatService.findUserById(ban.id);
+    const user = await this.chatService.findUserById(ban.user);
     const target = await this.chatService.findUserById(ban.target);
     const channel = await this.chatService.findChannelByChannelname(user.channelname);
 
@@ -935,14 +946,14 @@ export class ChatGateway
       if (!channel.operator.includes(user.id))
       {
         console.log("         no access         ");
-        return;
+        return (1);
       }
     }
 
     if (target.id === channel.host)
     {
       console.log("         target is host         ");
-      return;
+      return (1);
     }
 
     await this.handlekick({
@@ -951,6 +962,7 @@ export class ChatGateway
     }, user.socket);
     
     channel.banlist.push(target.id);
+    return (0);
   }
 
 
@@ -1006,7 +1018,23 @@ export class ChatGateway
     else
     {
       const channel = await this.chatService.findChannelByChannelid(channel_id);
-      
+      if (!channel)
+      {
+        const channel = await this.chatService.findChannelByChannelid(0);
+        user.channelname = '$home';
+        user.socket.join(user.channelname);
+
+        channel.member++; //이동한 채널 명수 늘리기.
+        channel.users.push(user.id); //이동한 채널 유저 목록에 추가.
+        user.socket.emit('join', {
+          flag: true,
+          list: channel.users,
+          channelname: user.channelname,
+        });
+        user.socket.broadcast.to(user.channelname).emit('update', true); //입장 메시지    
+        this.lastchannel.set(user.id, 0);
+        return;
+      }
       user.channelname = channel.channelname;
       console.log("user.channelname : ", user.channelname);
       user.socket.join(user.channelname);
