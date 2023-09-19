@@ -1,6 +1,5 @@
 import {
   WebSocketGateway,
-  WebSocketServer,
   SubscribeMessage,
   OnGatewayConnection,
   OnGatewayDisconnect,
@@ -24,8 +23,6 @@ import { UsersService } from 'src/users/users.service';
 import { Inject, Logger } from '@nestjs/common';
 import { User } from 'src/typeorm';
 import { ChatService } from './chat.service';
-import { UserDto } from 'src/users/dtos/users.dto';
-import { UserStatus } from 'src/typeorm/user.entity';
 
 @WebSocketGateway({
   namespace: 'chat',
@@ -56,6 +53,7 @@ export class ChatGateway
     }, 1000);
   }
 
+
   //**********************************************************************//
   //****************************** init **********************************//
   //**********************************************************************//
@@ -85,16 +83,18 @@ export class ChatGateway
 
   }
 
+
   //**********************************************************************//
   //**************************** connection ******************************//
   //**********************************************************************//
   handleConnection(@ConnectedSocket() socket: Socket) {
-    //connection은 그냥 체크.
-    console.log('----------------------------------------');
-    console.log('----------------CONNECTION--------------');
-    console.log('Client connected: ', socket.id);
-    console.log('----------------------------------------');
+      // //connection은 그냥 체크.
+      console.log('----------------------------------------');
+      console.log('----------------CONNECTION--------------');
+      console.log('Client connected: ', socket.id);
+      console.log('----------------------------------------');
   }
+
 
   //**********************************************************************//
   //************************** disconnection *****************************//
@@ -111,9 +111,7 @@ export class ChatGateway
       });
     }
 
-    this.logger.log("####   SLEEPING!!!   ##### ===> " + socket.id);
     await asySleep(500);
-    this.logger.log("####   DISCONN!!!   ##### ===> " + socket.id);
 
     let user = await this.chatService.findUserBySocketId(socket.id);
     if (user) {
@@ -141,7 +139,7 @@ export class ChatGateway
           }
             socket.broadcast.to(channel.channelname).emit('update', false); //퇴장 메시지
           }
-        }
+      }
       else 
       {
         const channels: channelDTO[] = await this.chatService.getChannels();
@@ -152,18 +150,14 @@ export class ChatGateway
           home.users.splice(removeIdx, 1);
         }
         socket.broadcast.to(home.channelname).emit('update', false); //퇴장 메시지
-        //home = null;
       }
 
-            //마지막 user 객체 정리
-        user.blocklist = null;
-        user = null;
+      //마지막 user 객체 정리
+      user.blocklist = null;
+      user = null;
     } 
-      console.log('----------------------------------------');
-      console.log('--------------DICONNECTION--------------');
-      // console.log('Client connected: ', socket.id);
-      console.log('----------------------------------------');
-    }
+  }
+
 
   //*********************************************************************//
   //***************************  bind  **********************************//
@@ -173,8 +167,6 @@ export class ChatGateway
     @MessageBody() id: number,
     @ConnectedSocket() socket: Socket,
   ) {
-
-    this.logger.log("####   BIND!!!   ##### ===> " + socket.id);
     console.log('----------------------------------------');
     console.log('-----------------BIND-------------------');
     console.log('Userid: ', id);
@@ -196,13 +188,9 @@ export class ChatGateway
     const Users: userDTO[] = await this.chatService.getUsers();
     Users.push(user);
     this.startSendingAllInfo(user);
-
-    console.log('----------------------------------------');
-    console.log('-----------------BIND USER--------------');
-    //console.log(user);
-    console.log('----------------------------------------');
     return (1);
   }
+
 
   //*********************************************************************//
   //****************************  chat   ********************************//
@@ -233,6 +221,14 @@ export class ChatGateway
 
     // mute 체크
     const channel_check = await this.chatService.findChannelByChannelname(user.channelname);
+    if (channel_check === undefined)
+    {
+      console.log('----------------------------------------');
+      console.log('           channel undefined            ');
+      console.log('----------------------------------------');    
+      return;
+    }
+
     if (user.id !== channel_check.host)
     {
       if(channel_check.mute)
@@ -290,6 +286,7 @@ export class ChatGateway
     }
   }
 
+
   //*********************************************************************//
   //****************************  where  ********************************//
   //*********************************************************************//
@@ -315,6 +312,7 @@ export class ChatGateway
     console.log('----------------------------------------');
     socket.emit('where', channel);
   }
+
 
   //*********************************************************************//
   //***************************  create  ********************************//
@@ -391,13 +389,19 @@ export class ChatGateway
     socket.leave('$home');
     user.channelname = newChannel.channelname;
     socket.join(user.channelname);
+    
+    //game방이 아닐 때 현재 방정보 업데이트
+    if (newChannel.option !== 'game')
+    {
+      this.lastchannel.set(user.id, newChannel.channel_id);
+    }
 
     socket.emit('create', newChannel);
-    this.lastchannel.set(user.id, newChannel.channel_id);
 
     socket.broadcast.to(home.channelname).emit('update', false); //퇴장 메시지
     socket.broadcast.to(user.channelname).emit('update', true); //입장 메시지
   }
+
 
   //*********************************************************************//
   //***************************  modify  ********************************//
@@ -448,6 +452,7 @@ export class ChatGateway
     socket.emit('modify', modifyingchannel);
   }
 
+
   //*********************************************************************//
   //****************************  join   ********************************//
   //*********************************************************************//
@@ -456,17 +461,6 @@ export class ChatGateway
     @MessageBody() joinobj: joinDTO,
     @ConnectedSocket() socket: Socket,
   ) {
-    console.log('----------------------------------------');
-    console.log('-----------------JOIN-------------------');
-    console.log(
-      'userid: ',
-      joinobj.id,
-      ' channelname: ',
-      joinobj.channelname,
-      ' password: ',
-      joinobj.password,
-    );
-    console.log('----------------------------------------');
 
     // 유저 확인
     let user = await this.chatService.findUserById(joinobj.id);
@@ -488,7 +482,6 @@ export class ChatGateway
       console.log('----------------------------------------');
       return;
     }
-
     if (channel.banlist.includes(user.id))
     {
       console.log('----------------------------------------');
@@ -498,10 +491,11 @@ export class ChatGateway
     }
 
     // 채널 옵션 확인
-    // if (channel.option === 'private') {
-    //   socket.emit('join', { flag: false, list: null });
-    //   return;
-    // } else 
+    if (channel.option === 'private') {
+      socket.emit('join', { flag: false, list: null });
+      return;
+    }
+
     if (channel.option === 'protected') {
       if (channel.password !== joinobj.password) {
         console.log('----------------------------------------');
@@ -542,7 +536,7 @@ export class ChatGateway
               (await this.chatService.getChannels()).splice(
                 removeChannelIdx,
                 1,
-              ); // 11111111111111111
+              );
             }
             for (const checkid of beforeChannel.users) {
               let user = await this.chatService.findUserById(checkid);
@@ -562,39 +556,23 @@ export class ChatGateway
             channelname: user.channelname,
           });
 
-          this.lastchannel.set(user.id, channel.channel_id);
+          //game이 아닐 때 업데이트
+          if (channel.option !== 'game')
+          {
+            this.lastchannel.set(user.id, channel.channel_id);
+          }
           socket.broadcast.to(user.channelname).emit('update', true); //입장 메시지
     } else {
       console.log('----------------------------------------');
       console.log('           room is fulled               ');
       console.log('----------------------------------------');
 
-      // if (user.channelname === null)
-      // {
-      //   await this.handlejoin({
-      //     id: user.id,
-      //     channelname: '$home',
-      //     password: null
-      //   }, user.socket)
-        
-      //   const channel = await this.chatService.findChannelByChannelname('$home');
-      //   socket.emit('join', {
-      //     flag: true,
-      //     list: channel.users,
-      //     channelname: user.channelname,
-      //   });
-      //  }
-      
       socket.emit('join', { flag: false, list: null, channelname: null });
       return;
+      }
     }
   }
-    //전체 채널 객체 뽑아서 확인하기
-    console.log('----------------------------------------');
-    console.log('---------------ALL CHANNELS-------------');
-    console.log(await this.chatService.getChannels()); //  마지막에 채널들 다 잘 수정되었는지 확인
-    console.log('----------------------------------------');
-  }
+
 
   //*********************************************************************//
   //*****************************  op  **********************************//
@@ -889,21 +867,21 @@ export class ChatGateway
       {
         id: host.id,
         maxmember: 2,
-        option: 'public',
+        option: 'game',
         password: null,
       },
-      host.socket,
+      host.socket
     );
     host.socket.emit('oneOnOne', '');
     const host_user: User = await this.usersService.findUserById(host.id);
-
+    
     await this.handlejoin(
       {
         id: target.id,
-        channelname: host_user.nickname,
+        channelname: host_user.nickname + host_user.id,
         password: null,
       },
-      target.socket,
+      target.socket
     );
 
     await this.handlemodify(
@@ -913,7 +891,7 @@ export class ChatGateway
         option: 'private',
         password: null,
       },
-      host.socket,
+      host.socket
     );
   }
 
@@ -926,12 +904,18 @@ export class ChatGateway
     const user = await this.chatService.findUserById(id);
     const channel = await this.chatService.findChannelByChannelname(user.channelname);
 
+    const check: number = channel.channel_id;
+
+
     if (channel.host === user.id)
     {
       channel.mute = true;
       
-      setTimeout(() => {
-        channel.mute = false;
+      setTimeout(async () => {
+        const channel_check = await this.chatService.findChannelByChannelid(check);
+        if (channel_check !== undefined) {
+          channel_check.mute = false;
+        }
       }, 30000);
     }
   }
@@ -953,24 +937,31 @@ export class ChatGateway
         console.log("         no access         ");
         return;
       }
-    }  
+    }
+
     if (target.id === channel.host)
     {
       console.log("         target is host         ");
       return;
     }
+
     await this.handlekick({
       id: user.id,
       target: target.id
     }, user.socket);
+    
     channel.banlist.push(target.id);
   }
 
+
+  //*********************************************************************//
+  //****************************  leave  ********************************//
+  //*********************************************************************//
   @SubscribeMessage('leave')
   async handleleave(@ConnectedSocket() socket: Socket,){
     const user = await this.chatService.findUserBySocketId(socket.id);
-    if (!user)
-      return;
+    if (!user) return;
+    
     socket.leave(user.channelname);
     user.channelname = '$home';
     socket.join('$home');
@@ -983,9 +974,12 @@ export class ChatGateway
       list: home.users,
       channelname: user.channelname,
     });
+
     socket.broadcast.to(user.channelname).emit('update', true);
     this.lastchannel.set(user.id,0);
   }
+
+
   //*********************************************************************//
   //****************************  moving  *******************************//
   //*********************************************************************//
