@@ -16,21 +16,16 @@ import {
   ConnectedSocket,
   WsResponse,
 } from '@nestjs/websockets';
-import { Server, Namespace, Socket } from 'socket.io';
+import { Namespace, Socket } from 'socket.io';
 import { UsersService } from 'src/users/users.service';
 import { User } from 'src/typeorm';
 import { GameService } from './game.service';
-import { JwtAuthGuard } from 'src/auth/guards/auth-jwt.guard';
-import { CurrentUser } from 'src/users/decorators/current-user.decorator';
 import { JwtService } from '@nestjs/jwt';
-import { TokenPayload } from 'src/auth/interfaces/token-payload.interface';
-import { WsJwtGuard } from './guards/ws.jwt.guard';
 import { AuthService } from 'src/auth/auth.service';
 import { CurrentUserWs } from './decorators/ws.current-user.decorator';
 import { ConfigService } from '@nestjs/config';
 import { ChatService } from 'src/chat/chat.service';
 import { UserStatus } from 'src/typeorm/user.entity';
-const ORIGIN = process.env.CORS_ORIGIN;
 
 @WebSocketGateway({
   namespace: 'game',
@@ -47,8 +42,6 @@ export class GameGateway
     @Inject(UsersService) private usersService: UsersService,
     @Inject(AuthService) private authService: AuthService,
     @Inject(GameService) private gameService: GameService,
-    @Inject(JwtService) private jwtService: JwtService,
-    @Inject(ConfigService) private readonly configService: ConfigService,
     @Inject(ChatService) private readonly chatService: ChatService,
   ) {}
   //@WebSocketServer 데코레이터 부분을 주목해주세요.
@@ -104,21 +97,11 @@ export class GameGateway
         this.logger.log(`❌❌❌  ${socket.id} socket blocked  ❌❌❌`);
         socket.emit("connectionBlock");
         return;
-        return new ForbiddenException('Forbidden access');
+        //return new ForbiddenException('Forbidden access');
       }
       this.logger.log('binding socket id with user id ' + user.intraId);
-      // await this.authService.updateUserStatusOnline(user);
 
       await this.usersService.update(user.id, { socketId: socket.id });//bind
-      //const guarantee : User = await this.usersService.findUserBySocketId(socket.id);
-      // if (guarantee){
-      //   await this.authService.updateUserStatusOnline(user);
-      // }
-      // else{
-      //   await this.authService.updateUserStatusOffline(user);
-      //   return ;
-      // }
-
       await this.authService.updateUserStatusOnline(user);
       await this.gameService.userComeNsp(socket);
       return Boolean(user);
@@ -150,7 +133,6 @@ export class GameGateway
     return { event: 'bindId', data: { socketId: socket.id, userId } };
   }
 
-  @SubscribeMessage('whoamiGateway')
   async idnetifyId(
     @ConnectedSocket() socket: Socket,
     @CurrentUserWs() userId: string,

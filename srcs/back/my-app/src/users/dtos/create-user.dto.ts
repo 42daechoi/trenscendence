@@ -6,10 +6,4 @@ export class CreateUserDto {
 
 	@IsString()
 	nickname: string;
-//
-//	@IsString()
-//	full_name: string;
-//
-//	@IsString()
-//	photo: URL;
 }
