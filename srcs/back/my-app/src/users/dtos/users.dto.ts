@@ -17,12 +17,6 @@ export class UserDto{
 	lose: number;
 
 	@Expose()
-	rate: number;
-
-	@Expose()
-	rank: number;
-
-	@Expose()
 	friends : User[];
 
 	@Expose()

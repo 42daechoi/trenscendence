@@ -29,14 +29,6 @@ export class UpdateUserDto {
   loses: number;
 
   @IsOptional()
-  @IsNumber()
-  rate: number;
-
-  @IsOptional()
-  @IsNumber()
-  rank: number;
-
-  @IsOptional()
   @IsBoolean()
   currentAvatarData: boolean;
 

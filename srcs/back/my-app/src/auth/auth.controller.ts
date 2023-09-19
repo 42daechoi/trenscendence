@@ -11,7 +11,6 @@ import { Request, Response } from 'express';
 import { AuthService } from './auth.service';
 import { CreateUserDto } from 'src/users/dtos/create-user.dto';
 import { UsersService } from 'src/users/users.service';
-import { Serialize } from 'src/interceptors/serialize.interceptor';
 import { UserDto } from 'src/users/dtos/users.dto';
 import { FortyTwoAuthGuard } from './guards/auth.fortytwoGuard';
 import { FortytwoStrategy } from './strategy/fortytwo.strategy';
@@ -69,9 +68,8 @@ export class AuthController {
       return res.redirect(
         `${this.configService.get('REDIRECT_URL')}/partial-tfa`,
       );
-      // return res.redirect('http://localhost:3000/partial-tfa');
-    } else {
-      //this.authService.updateUserStatusOnline(user);
+    } 
+	else {
       //if no avata data
       if (user.currentAvatarData == false) {
         const smallProfilePictureUrl: string =
@@ -82,24 +80,17 @@ export class AuthController {
         return res.redirect(
           `${this.configService.get('REDIRECT_URL')}/create-account`,
         );
-        // return res.redirect('http://localhost:3000/create-account');
       }
-      //else redirect to main page
       else {
-        const test_url = `${this.configService.get('REDIRECT_URL')}/main`;
-        //console.log('@@@@@@    test URL    @@@@@@@@@', test_url);
         return res.redirect(`${this.configService.get('REDIRECT_URL')}/main`);
-        // return res.redirect('http://localhost:3000/main');
       }
     }
   }
 
   @Post('/signup')
-  @Serialize(CreateUserDto)
   async createUser(@Body() body: any) {
     const user_intraId = body.intraId;
     const user_nickname = body.intraId;
-    //console.log('In auth controller finding userid: ' + user_intraId);
     //create new user
     const new_user = await this.authService.signup({
       intraId: user_intraId,
@@ -134,21 +125,6 @@ export class AuthController {
     //bake cookie
     this.authService.setJwtCookie(res, user_token.accessToken);
     this.authService.setJwtHeader(res, user_token.accessToken);
-    //redirect to 2FA
-    //#################################
-    //#########     2FA     ###########
-    //#################################
-    //		if (user.twoFA == true){
-    //			return res.redirect('http://localhost:3000/main');
-    //		}
-    //		if (user.currentAvatarData == false){
-    //			return res.redirect('http://localhost:3000/create-account');
-    //		}
-    //		else{
-    //			return res.redirect('http://localhost:3000/main');
-    //		}
-    //else redirect to main page
-    //await this.authService.updateUserStatusOnline(user);
     res.json(user_token);
     return user;
   }
@@ -156,7 +132,6 @@ export class AuthController {
   @Get('/authentication')
   @UseGuards(JwtAuthGuard)
   async isAuth(@Req() req: Request, @Res() res: Response): Promise<any> {
-    //console.log('checking Authentication user in request');
     const user: any = req.user;
     res.json(user);
     return user;
@@ -171,7 +146,6 @@ export class AuthController {
   @Post('/signout')
   @UseGuards(JwtAuthGuard)
   async signOut(
-    @Req() req: Request,
     @Res() res: Response,
     @currentAuthUser() user: User,
   ): Promise<any> {
