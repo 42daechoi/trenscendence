@@ -15,6 +15,12 @@ export const apiRequest = <T = any,>(
   });
 };
 
+
+export function getRidi<T = any>(): Promise<AxiosResponse<T>> {
+  return apiRequest("get", `${serverUrl}/auth/login`);
+}
+
+
 export function postAuthenticate<T = any>(
   fullotp: string
 ): Promise<AxiosResponse<T>> {
@@ -38,6 +44,7 @@ export function post2faDisable<T = any>(): Promise<AxiosResponse<T>> {
 export function getWhoami<T = any>(): Promise<AxiosResponse<T>> {
   return apiRequest("get", `${serverUrl}/users/whoami`);
 }
+
 
 export function getLoginfortytwo<T = any>(): Promise<AxiosResponse<T>> {
   return apiRequest("get", `${serverUrl}/auth/loginfortytwo/callback`);

@@ -33,7 +33,7 @@ export class User {
   @Min(0)
   intraId: string;
 
-  @Column({ nullable: true })
+  @Column({ nullable: true, unique: true })
   nickname: string;
 
   @Column({
