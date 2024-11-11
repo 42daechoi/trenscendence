@@ -1,9 +1,9 @@
-Front : Docker, React, Typescript
-Back : Docker, Nest.js, MariaDB
+Front : Docker, React, Typescript  
+Back : Docker, Nest.js, MariaDB  
 
-로그인 : 42seoul OAuth, 2FA
-채팅, 게임 : WebSocket
-유저 정보, 친구 목록 : RESTFul Api
+로그인 : 42seoul OAuth, 2FA  
+채팅, 게임 : WebSocket  
+유저 정보, 친구 목록 : RESTFul Api  
 
 42 서울 OAuth를 통해 로그인하여 진행할 수 있는 게임 홈페이지이다.
 2차 인증을 지원하며 친구 추가, 1:1 매칭 신청, 퀵 매치로 게임 매칭을 진행할 수 있다.
